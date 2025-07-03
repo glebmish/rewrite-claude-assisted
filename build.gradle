@@ -1,0 +1,45 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // OpenRewrite BOM for dependency management
+    implementation platform('org.openrewrite:rewrite-bom:8.37.1')
+    
+    // Core OpenRewrite dependencies
+    implementation 'org.openrewrite:rewrite-java'
+    implementation 'org.openrewrite:rewrite-xml'
+    implementation 'org.openrewrite:rewrite-properties'
+    implementation 'org.openrewrite:rewrite-yaml'
+    implementation 'org.openrewrite:rewrite-json'
+    
+    // Testing dependencies
+    testImplementation platform('org.junit:junit-bom:5.10.1')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.assertj:assertj-core:3.24.2'
+    testImplementation 'org.openrewrite:rewrite-test'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+// Configure publishing if needed
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+        }
+    }
+}

@@ -34,3 +34,7 @@ Here's the step-by-step workflow I have in mind:
 * Embeddings, vector DB and multi-query searches for sematic search of matching recipes
 * MCPs, e.g. semantic search MCP
 * Claude Code commands
+
+## 2025-07-03
+Strating off with a tooling that's completely new to me - VSCode + Claude Code.
+Have almost nothing installed on this laptop, so when I asked Claude Code to generate scaffolding (gradle, .gitignore, etc) it started to fail. I had to intervene and setup missing tools manually (as it requires sudo)
