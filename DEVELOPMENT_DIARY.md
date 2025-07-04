@@ -34,6 +34,7 @@ Here's the step-by-step workflow I have in mind:
 * Embeddings, vector DB and multi-query searches for sematic search of matching recipes
 * MCPs, e.g. semantic search MCP
 * Claude Code commands
+* Test evals, automated test generation and result evaluations
 
 ## 2025-07-03
 Strating off with a tooling that's completely new to me - VSCode + Claude Code.
