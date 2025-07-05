@@ -1,9 +1,15 @@
 # Rewrite Assist command
 This command is located in the repository with custom OpenRewrite recipes. You're an experienced software engineer who is an expert in Java and refactoring. You always strive to break down complicated task on small atomic changes. This skill is essential for creating great OpenRewrite recipes by combining existing recipes and writing the new ones.
 
-While executing this command, execute the following workflow step-by-step.
-Save your thought process and all other output to scratchpad md files located in .scratchpad directory. They must be prefixed with current date and time.
+This is a multi-phased command. While executing this command, execute the following workflow phase by phase. Focus only on the current phase, do not plan for all phases at once. Perform all checks and initializations for a phase before you plan and execute work for this phase.
 
+### Scratchpad
+* Use `<yyyy-mm-dd-hh-mm>-<command>.md` scratchpad file located in .scratchpad directory to log your actions. User current date and time for the scratchpad name. 
+* Before starting any action, log your intentions and reasons you decided to do that. After action is complete, log the results. If action fails, log the fact of the failure and your analysis of it.
+  * for example, if you executed bash `cd` command and it says that directory is not found, you must log that. Log all similar errors. 
+* This scratchpad must contain a detailed log of what you've done, what issues you've encounterd, commands you ran and your thought process. Only append, do not rewrite previous entries in the scratchpad. This file will be later usage for performance evaluated by people or AI, so it's very improtant for it to be truthful and sequential.
+
+### Cost analysis
 At the beginning of the workflow use ccusage cli to save current token usage and cost. At the end of the workflow use ccusage again. Save before and after stats to the scratchpad and also compute the cost of the workflow run in tokens and usd.
 
 ## Input Handling:
@@ -20,10 +26,10 @@ At the beginning of the workflow use ccusage cli to save current token usage and
 
 ### Interactive mode
 /pr-workspace
-> Please enter GitHub PR URLs
-> https://github.com/owner/repo/pull/123 https://github.com/owner/repo/pull/456 https://github.com/another/repo/pull/789
+> Claude: Please enter GitHub PR URLs
+> User: https://github.com/owner/repo/pull/123 https://github.com/owner/repo/pull/456 https://github.com/another/repo/pull/789
 
-## Step 1: Process input and fetch repositories
+## Phase 1: Process input and fetch repositories
 ###  Parse and Validate PRs
   * Extract repository information (owner, repo name) and PR numbers from input
   * Group PRs by repository to minimize cloning operations
@@ -31,29 +37,7 @@ At the beginning of the workflow use ccusage cli to save current token usage and
   * Handle edge cases like private repos with no access or invalid PR numbers gracefully
 
 ### Repository Setup
-All repositories must be fetched into .workspace directory that is ignored by .gitignore
-
-### Directory Structure:
-
-.workspace/
-├── owner-repo-name/          # Main repo directory
-│   ├── main/                 # Default branch worktree
-│   └── pr-123/               # PR branch worktree
-│   └── pr-456/               # Another PR branch worktree
-└── another-owner-repo/
-    ├── main/
-    └── pr-789/
-
-### Operations:
-
-* Create .workspace directory if it doesn't exist
-* For each repository:
-  * Create directory named {owner}-{repo-name} in .workspace
-  * Shallow clone the repository's default branch (usually main or master)
-  * Set up the main branch as a git worktree in main/ subdirectory
-* For each PR in that repository:
-  * Fetch the PR branch: git fetch origin pull/{pr-number}/head:pr-{pr-number}
-  * Create a worktree for the PR branch in pr-{pr-number}/ subdirectory
+Clone repositories and fetch PR branches
 
 ### Error Handling & User Feedback
 * Check if git is available and configured
@@ -67,15 +51,12 @@ All repositories must be fetched into .workspace directory that is ignored by .g
 * Summarize what was successfully set up vs. what failed
 
 ### Additional Features
-* Check if directories already exist and ask before overwriting
-* Option to update existing PR branches if they already exist
-* Display a summary of created worktrees and their paths
-* Optionally open the workspace in the user's preferred editor/IDE
+* Check if directories already exist. Anything in .workspace directory is safe to delete and override.
+* If Pr branches already exist, make sure they are up-to-date
 
 ### Implementation Requirements
 * Dependencies to check/install:
   * Git (required)
-  * GitHub CLI (gh) for authentication (optional but recommended)
 
 ### Output Format
 Provide clear, structured output showing:
@@ -92,5 +73,3 @@ Provide clear, structured output showing:
 * Handles errors gracefully without leaving partial/broken state
 * Works with both public and private repositories (with proper auth)
 * Efficient - doesn't re-clone repositories unnecessarily
-
-### Step 2: Analyze diff changes, think about why this changes were made and compile a list of goals that are targeted
