@@ -39,3 +39,17 @@ Here's the step-by-step workflow I have in mind:
 ## 2025-07-03
 Strating off with a tooling that's completely new to me - VSCode + Claude Code.
 Have almost nothing installed on this laptop, so when I asked Claude Code to generate scaffolding (gradle, .gitignore, etc) it started to fail. I had to intervene and setup missing tools manually (as it requires sudo)
+
+## 2025-07-04
+To have some repos to test the workflow on, asked Claude to generate two outdated Java services, create github action configs and push them to GitHub. It did that with no issues at all
+Stared to design the workflow. Went for a custom slash command `/rewrite-assist`. Used Claude to generate initial prompt that accepts list of PRs, and clones repos. I'm surprised how detailed it is.
+Claude Code really struggled to clone them in the way I described: with different git worktrees for main and PR branch. That shows a room for improvement, it should probably be event more detailed. I asked Claude to dump session to a scratchpad for further analysis.
+Using ccusage to track how much tokens I use to get a feel of the potential costs. For now my Claude Pro subscption was enough, but it probably won't be.
+Food for thought: docs recommend to chain complex thought: https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/chain-prompts . That goes against my initial idea of one large meta-prompt for the whole workflow. Will see how it will behave for the more complicated prompts
+
+## 2025-07-05
+Improved cloning, seems like now it works well. Explaining general rules where it comes to cloning and worktree helped it apply them for specific cases.
+Trying to use cratchpads and so far don't like the level of details it prints. I'd expect it to be more of a debug log for everything Claude does, instead it's a short description of its actione.
+Trying to track costs for a single workflow run. Natively there's no way to do that when you're on subscription. Using ccusage, but it doesn't give a good breakdown on the cost of a session. Working around that by asking Claude to get before and after usage and calculate the costs.
+Claude really struggles to navigate, `cd` commands it executes often assume a wrong directory. Trying to work around that by instructing it to get back after the command (`cd -`). It doesn't always work, because sometimes it does multiple `cd` commands before trying to go back. Told it to initialize an env var for the root directory and use it when confused, but didn't see it being used yet.
+For some reason it tries to use gh cli to get diff instead of using locally clonned worktrees and diffing between them. Need to adjust that part.
