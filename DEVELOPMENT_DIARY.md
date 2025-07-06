@@ -4,7 +4,7 @@ Documenting my work on the project to see how my understanding of AI-assisted wo
 ## Project goal
 There's a framework called OpenRewrite. It enabled mass refactoring based on rules and code. It's a great tool to have in a large company, but learning curve is steeep!
 Yes, they have a lot of existing recipes. But as soon as you want to do one step away from the existing recipes, you're cooked. Assembling a custom recipe from 100s of existing small steps is hard, writing code for new recipes in many times harder.
-I want to build an AI-assisted workflow that handles most or all of the complexity of doing that. Rather then burning tokens and refactor code with AI, I want to use it to build a realiable recipe and then mass refactor with it 'for free'.\
+I want to build an AI-assisted workflow that handles most or all of the complexity of doing that. Rather then burning tokens and refactor code with AI, I want to use it to build a realiable recipe and then mass refactor with it 'for free'.
 
 ### Workflow
 Here's the step-by-step workflow I have in mind:
@@ -62,3 +62,21 @@ Here's the step-by-step workflow I have in mind:
 * Level of details in scratchpad is far from enough. It should be super detailed for later evaluations.
     * Improved instruction for the scratchpad, now it is detailed. Still doesn't show everything, e.g. it doesn't say anything about it being confused about current working directory and fixing it with `pwd`, I could only see it in the terminal window.
 * There are no articles and tools I could find on evaluating Claude Code, only on evaluating Claude API. That's especially difficult because there won't be any interactivity in evals and the whole workflow should be done autonomously from start to finish.
+
+## 2025-07-06
+* Cloning is very stable now. Logging to scratchpad is more detailed too.
+* Added intent extraction and mappig to recipes. Generated prompt using Claude Opus and passing existing command and link to https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/claude-4-best-practices . Result was pretty good.
+* Asked Claude Opus to research OpenRewrite and compile a document. The result is high quality. I added it to `docs/` in the repo and ask Claude Code to read it before extracting the intent of the changes.
+* It's now a bit too eager on the intent extraction, need to tune it to now assume that much (e.g. it now tries to match it to the business motivation of the change). During another run, it started to anlyze additional technical debt which wasn't touched in the PR.
+* Mapping to recipes benefits from being able to list all recipes with `./gradlew rewriteDiscover`. This is a bare minimum though. It might benefit more from access to the source code for the recipes that match the intent. It might also benefit from a better matching with embeddings and vector DB - that can potentially reduce token usage and decrease latency.
+* Testing on a simple case - Java 8 app where it's updated to Java 11 in Gradle and Github action. It was sucessfully matched to `org.openrewrite.gradle.UpdateJavaCompatibility` and `org.openrewrite.yaml.ChangePropertyValue` with correct arguments. No hallucinations there.
+  * Arguments are very surprising because `rewriteDiscover` command doesn't show it. Is it coming from a general Claude knowledge or does it make any additional requests that are not in the scratchpad?
+* Another run on the same case failed, it couldn't match any recipes. It might be that an additional prompt I've added confused Claude and he started to search recipes in the current repo instead of looking at all available recipes. Here it is:
+  * Write down how you've discovered each recipe that you use, arguments and other relevant knowldege. It can be your general pretraining knowledge or a knowledge acquired from runnig a command (e.g. `gradle` execution), reading a web page (e.g. one of the pages from OpenRewrite docs), cloning and analyzing a code
+* I wasn't able to see it to the end as I've reached the usage limit, so I'm not sure if that was a dead end or not.
+* Cost-wise so far it looks to be ~40 cents per run
+* It's clear that evaluations should start early and be perfromed often. I'm almost at the point where I can start it. What I need it:
+  * Focus on compiling existing recipes now, no new code
+  * Teach Claude how to run the recipe it came up with on the main branch of the repo and compare with the PR. That is going to be the main success criteria.
+  * Create a testest with >=20 different repos with PRs of a different difficulty levels.
+* That will help me run manual evals. At some point I'll have to find a way to automate all of it.
