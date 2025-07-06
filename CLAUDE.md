@@ -15,3 +15,7 @@ Always clone repositories to the .workspace directory and use repository name as
 Always use shallow clone: `git clone --depth 1 {repo-url} {directory}`
 When you want to create worktrees use: `git worktree add ../{repository-name-}-{branch-name} {branch}`
 Fetch PRs using: `git fetch origin pull/{pr-number}/head:pr-{pr-number}`
+
+### Current date and time
+
+* `date +"%Y-%m-%d-%H-%M"` - get formatted date and time. If a different format is needed, you may modify this command.

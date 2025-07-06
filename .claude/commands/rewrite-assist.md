@@ -4,9 +4,9 @@ This command is located in the repository with custom OpenRewrite recipes. You'r
 This is a multi-phased command. While executing this command, execute the following workflow phase by phase. Focus only on the current phase, do not plan for all phases at once. Perform all checks and initializations for a phase before you plan and execute work for this phase.
 
 ### Scratchpad
-* Use `<yyyy-mm-dd-hh-mm>-<command>.md` scratchpad file located in .scratchpad directory to log your actions. User current date and time for the scratchpad name. 
+* Use `<yyyy-mm-dd-hh-MM>-<command>.md` scratchpad file located in .scratchpad directory to log your actions. User current date and time for the scratchpad name.
 * Before starting any action, log your intentions and reasons you decided to do that. After action is complete, log the results. If action fails, log the fact of the failure and your analysis of it.
-  * for example, if you executed bash `cd` command and it says that directory is not found, you must log that. Log all similar errors. 
+  * for example, if you executed bash `cd` command and it says that directory is not found, you must log that. Log all similar errors.
 * This scratchpad must contain a detailed log of what you've done, what issues you've encounterd, commands you ran and your thought process. Only append, do not rewrite previous entries in the scratchpad. This file will be later usage for performance evaluated by people or AI, so it's very improtant for it to be truthful and sequential.
 
 ### Cost analysis
@@ -73,3 +73,112 @@ Provide clear, structured output showing:
 * Handles errors gracefully without leaving partial/broken state
 * Works with both public and private repositories (with proper auth)
 * Efficient - doesn't re-clone repositories unnecessarily
+
+## Phase 2: Intent Extraction
+
+### OpenRewrite Best Practices Review
+* Read and analyze `docs/openrewrite.md` to understand OpenRewrite best practices and patterns
+* Log key insights and relevant patterns to the scratchpad that will guide recipe selection
+* Note any specific constraints or recommendations for recipe composition
+
+### PR Analysis and Intent Extraction
+For each PR:
+* Analyze the PR title, description, and commit messages
+* Review the actual code changes (diffs) to understand the transformation patterns
+* Extract and categorize intents at two levels:
+  
+  #### Wide Goals (Strategic Intent)
+  * Identify the overarching objective (e.g., "migrate from JUnit 4 to JUnit 5", "upgrade Spring Boot version", "replace deprecated APIs")
+  * Determine if this is a framework migration, API update, code modernization, security fix, or performance optimization
+  * Log the business/technical motivation if apparent from PR context
+  
+  #### Narrow Goals (Tactical Changes)
+  * List specific code transformations observed (e.g., "replace @Before with @BeforeEach", "change import statements", "update method signatures")
+  * Identify patterns in the changes (e.g., "all occurrences of X are replaced with Y", "conditional replacements based on context")
+  * Note any edge cases or exceptions to the general pattern
+  * Capture any manual adjustments that don't follow the pattern
+
+### Intent Documentation
+* Create a structured summary in the scratchpad with:
+  * PR URL and title
+  * Wide goal(s) with confidence level (high/medium/low)
+  * List of narrow goals grouped by type
+  * Any ambiguities or areas needing clarification
+  * Potential challenges for automation
+
+### Validation
+* Cross-reference extracted intents with the actual code changes
+* Flag any inconsistencies between stated intent (PR description) and actual changes
+* Note if multiple unrelated changes are bundled in a single PR
+
+## Phase 3: Mapping Intention to Recipes
+
+### Recipe Discovery Setup
+* Execute `./gradlew rewriteDiscover` to generate the comprehensive list of available recipes
+* Parse and index the output, organizing recipes by:
+  * Category/namespace (e.g., org.openrewrite.java.spring.*)
+  * Type of transformation
+  * Target framework/library versions
+* Log the total number of discovered recipes and major categories to the scratchpad
+
+### Intent-to-Recipe Matching
+For each extracted intent from Phase 2:
+
+#### Direct Recipe Matching
+* Search for recipes that directly address the wide goal
+* Use keyword matching, regex patterns, and semantic similarity
+* Score matches based on:
+  * Exact name match
+  * Description relevance
+  * Category alignment
+  * Version compatibility
+
+#### Composite Recipe Analysis
+* For intents without direct recipe matches, identify combinations of existing recipes
+* Analyze if narrow goals can be achieved by:
+  * Sequencing multiple recipes
+  * Configuring recipe parameters
+  * Using precondition recipes
+
+#### Gap Analysis
+* Document intents that cannot be addressed by existing recipes
+* Categorize gaps as:
+  * Requires custom recipe development
+  * Needs recipe parameter tuning
+  * Outside OpenRewrite scope
+  * Requires manual intervention
+
+### Repository Analysis (if needed)
+When existing recipes are insufficient:
+* Clone the target repository to `.workspace/<owner>/<repo>/analysis`
+* Analyze the codebase structure to understand:
+  * Build system and dependencies
+  * Code patterns and conventions
+  * Potential recipe application challenges
+* Use static analysis to validate recipe applicability
+
+### Recipe Recommendation Report
+Create a structured mapping in the scratchpad:
+```
+PR: [URL]
+Wide Goal: [Description]
+Recommended Approach:
+  Primary Recipe: [Recipe name or "Custom needed"]
+  Supporting Recipes: [List]
+  Configuration: [Key parameters]
+  Confidence: [High/Medium/Low]
+  Caveats: [Any limitations or manual steps needed]
+```
+
+Write down how you've discovered each recipe that you use, arguments and other relevant knowldege. It can be your general pretraining knowledge or a knowledge acquired from runnig a command (e.g. `gradle` execution), reading a web page (e.g. one of the pages from OpenRewrite docs), cloning and analyzing a code
+
+### Validation and Testing Preparation
+* For high-confidence matches, prepare recipe YAML configurations
+* Document test scenarios to validate recipe effectiveness
+* Note any prerequisites (dependency versions, file structures) for recipe execution
+
+### Error Handling
+* Handle missing or corrupted `rewriteDiscover` output
+* Manage cases where recipe discovery times out or fails
+* Provide fallback strategies when automated matching is inconclusive
+* Log all matching attempts and their outcomes for debugging
