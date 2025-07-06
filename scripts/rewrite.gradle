@@ -1,0 +1,16 @@
+initscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies { classpath("org.openrewrite:plugin:7.3.0") }
+}
+rootProject {
+    plugins.apply(org.openrewrite.gradle.RewritePlugin)
+    dependencies {
+        <dependencies>
+    }
+    rewrite {
+        <activeRecipe>
+        setExportDatatables(true)
+    }
+}
