@@ -69,8 +69,10 @@ Here's the step-by-step workflow I have in mind:
 * Asked Claude Opus to research OpenRewrite and compile a document. The result is high quality. I added it to `docs/` in the repo and ask Claude Code to read it before extracting the intent of the changes.
 * It's now a bit too eager on the intent extraction, need to tune it to now assume that much (e.g. it now tries to match it to the business motivation of the change). During another run, it started to anlyze additional technical debt which wasn't touched in the PR.
 * Mapping to recipes benefits from being able to list all recipes with `./gradlew rewriteDiscover`. This is a bare minimum though. It might benefit more from access to the source code for the recipes that match the intent. It might also benefit from a better matching with embeddings and vector DB - that can potentially reduce token usage and decrease latency.
+  * Fixed build.gradle to actually discover all the recipes. There are now few thousands recipes include github actions specific ones.
 * Testing on a simple case - Java 8 app where it's updated to Java 11 in Gradle and Github action. It was sucessfully matched to `org.openrewrite.gradle.UpdateJavaCompatibility` and `org.openrewrite.yaml.ChangePropertyValue` with correct arguments. No hallucinations there.
   * Arguments are very surprising because `rewriteDiscover` command doesn't show it. Is it coming from a general Claude knowledge or does it make any additional requests that are not in the scratchpad?
+  * With a more complete list of recipes, it was able to find github actions specific recipe that is a better match.
 * Another run on the same case failed, it couldn't match any recipes. It might be that an additional prompt I've added confused Claude and he started to search recipes in the current repo instead of looking at all available recipes. Here it is:
   * Write down how you've discovered each recipe that you use, arguments and other relevant knowldege. It can be your general pretraining knowledge or a knowledge acquired from runnig a command (e.g. `gradle` execution), reading a web page (e.g. one of the pages from OpenRewrite docs), cloning and analyzing a code
 * I wasn't able to see it to the end as I've reached the usage limit, so I'm not sure if that was a dead end or not.
@@ -80,3 +82,5 @@ Here's the step-by-step workflow I have in mind:
   * Teach Claude how to run the recipe it came up with on the main branch of the repo and compare with the PR. That is going to be the main success criteria.
   * Create a testest with >=20 different repos with PRs of a different difficulty levels.
 * That will help me run manual evals. At some point I'll have to find a way to automate all of it.
+* Asked Claude to create a very detailed spec for 5 slightly outdated apps and then asked Claude Code to create thouse apps. I'm now hitting usage limits, so I need to use scratchapd as a checkpoint and continue later.
+* Generated recipe validation phase for rewrite-assist command. Tried it as it was generated and it's completely useful, couldn't run any validations. Heavy tuning needed.
