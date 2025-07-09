@@ -84,3 +84,20 @@ Here's the step-by-step workflow I have in mind:
 * That will help me run manual evals. At some point I'll have to find a way to automate all of it.
 * Asked Claude to create a very detailed spec for 5 slightly outdated apps and then asked Claude Code to create thouse apps. I'm now hitting usage limits, so I need to use scratchapd as a checkpoint and continue later.
 * Generated recipe validation phase for rewrite-assist command. Tried it as it was generated and it's completely useful, couldn't run any validations. Heavy tuning needed.
+
+## 2025-07-09
+* Last few days spent generatind data for test evals. Mostly Claude churning through 10 services. Had to do a lot of cleanup and fixing after it, not great.
+  * https://github.com/orgs/openrewrite-assist-testing-dataset/repositories
+  * Need to generate some PRs on top of that
+* Discovered that Claude Code saves all conversations a json files. Great for evals!
+
+### Eval ideas
+* Start with a lite eval - 5 to 10 PRs with a small targeted change, no new recipes implementations yet
+* Another instance of Claude analyzes each log and scores it.
+* Main goal - `claude -p` achieves the same change as in PR by generating a yaml recipe and running it
+  * That's called Correctness%
+* Additional goals
+  * Smoothness - how many tool use or thought errors happenned
+  * Latency - how long it took
+  * Cost efficiency - tokens spent
+  * Repeatability - same PR = same result
