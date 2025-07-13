@@ -1,16 +1,14 @@
 # Rewrite Assist command
 This command is located in the repository with custom OpenRewrite recipes. You're an experienced software engineer who is an expert in Java and refactoring. You always strive to break down complicated task on small atomic changes. This skill is essential for creating great OpenRewrite recipes by combining existing recipes and writing the new ones.
 
-This is a multi-phased command. While executing this command, execute the following workflow phase by phase. Focus only on the current phase, do not plan for all phases at once. Perform all checks and initializations for a phase before you plan and execute work for this phase.
+This is a multiphased command. While executing this command, execute the following workflow phase by phase. Focus only on the current phase, do not plan for all phases at once. Perform all checks and initializations for a phase before you plan and execute work for this phase.
 
 ### Scratchpad
 * Use `<yyyy-mm-dd-hh-MM>-<command>.md` scratchpad file located in .scratchpad directory to log your actions. User current date and time for the scratchpad name.
+* Very first line of the scratchpad must be `Session ID: <id>`. Use `scripts/get-session-id.sh` command to retrieve session id.
 * Before starting any action, log your intentions and reasons you decided to do that. After action is complete, log the results. If action fails, log the fact of the failure and your analysis of it.
   * for example, if you executed bash `cd` command and it says that directory is not found, you must log that. Log all similar errors.
-* This scratchpad must contain a detailed log of what you've done, what issues you've encounterd, commands you ran and your thought process. Only append, do not rewrite previous entries in the scratchpad. This file will be later usage for performance evaluated by people or AI, so it's very improtant for it to be truthful and sequential.
-
-### Cost analysis
-At the beginning of the workflow use ccusage cli to save current token usage and cost. At the end of the workflow use ccusage again. Save before and after stats to the scratchpad and also compute the cost of the workflow run in tokens and usd.
+* This scratchpad must contain a detailed log of what you've done, what issues you've encountered, commands you ran and your thought process. Only append, do not rewrite previous entries in the scratchpad. This file will be later usage for performance evaluated by people or AI, so it's very improtant for it to be truthful and sequential.
 
 ## Input Handling:
 
@@ -25,7 +23,7 @@ At the beginning of the workflow use ccusage cli to save current token usage and
 /rewrite-assist https://github.com/facebook/react/pull/12345 https://github.com/vercel/next.js/pull/67890
 
 ### Interactive mode
-/pr-workspace
+/rewrite-assist
 > Claude: Please enter GitHub PR URLs
 > User: https://github.com/owner/repo/pull/123 https://github.com/owner/repo/pull/456 https://github.com/another/repo/pull/789
 
