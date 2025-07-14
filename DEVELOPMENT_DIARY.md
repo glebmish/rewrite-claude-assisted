@@ -101,3 +101,16 @@ Here's the step-by-step workflow I have in mind:
   * Latency - how long it took
   * Cost efficiency - tokens spent
   * Repeatability - same PR = same result
+
+## 2025-07-14
+Starting to apply more elaborate approaches
+* Discovered full Claude Code logs and decided to use them for evaluation. They're not in the workspace though, so had to do some work:
+  * I want Claude Code to save Session ID in scratchpad, but itdoesn't know about its own session id, so I added a script to fetch it.
+Assuming latest log for the give workspace is the correct one.
+  * Log is located outside of the working directory and I don't want to just give access to all logs. Instead I added a script
+to fetch a log based on session id. This script also calculates costs, so I no longer use ccusage for that.
+* Moved cost analysis to a separate command. This new command fetches logs and uses scratchpad, logs and costs to analyze the run.
+* Split one large slash command to multiple files. In the aggregate command I provide a series of commands to execute and explain
+that to run a slash command it should find the prompt in the .claude directory. That seems to work well. Helps with maintainability and
+Claude focus (one of the best practices)
+* The whole workflow is very raw now and the next big goal is to instrument verification. It doesn't work at all now.
