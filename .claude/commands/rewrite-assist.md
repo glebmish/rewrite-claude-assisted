@@ -8,7 +8,7 @@ This command coordinates a multiphase workflow by executing individual commands 
 * When you start executing a new phase, update todo list with more details for the given phase.
 * Keep a detailed log of each phase execution in the same scratchpad.
 
-Each phase is described as a slash command. To get the prompt for the slash command, read a file in `.claude/commands/<phase-name>.md`
+Phase can be described   as a slash command (`/<command-name>`). To get the prompt for the slash command, read a file in `.claude/commands/<command-name>.md`
 
 ## Workflow Overview
 
@@ -20,7 +20,7 @@ Parse GitHub PR URLs, clone repositories, and set up PR branches for analysis.
 ### Phase 2: `/extract-intent <pairs of repository-path:pr-branch-name>` - Intent Analysis  
 Analyze PRs to extract both strategic (wide) and tactical (narrow) transformation intents.
 
-### Phase 3: `/map-recipes <intents>` - Recipe Mapping
+### Phase 3: Recipe Mapping
 Discover available OpenRewrite recipes and map extracted intents to appropriate recipes.
 
 ## Input Handling
