@@ -16,7 +16,13 @@ repositories {
 
 dependencies {
     // OpenRewrite BOM for dependency management
-    rewrite platform('org.openrewrite.recipe:rewrite-recipe-bom:3.10.1')
+    implementation platform('org.openrewrite.recipe:rewrite-recipe-bom:3.10.1')
+    
+    // Core OpenRewrite dependencies for compiling recipes
+    implementation 'org.openrewrite:rewrite-core'
+    implementation 'org.openrewrite:rewrite-java'
+    implementation 'org.openrewrite:rewrite-gradle'
+    implementation 'org.openrewrite.recipe:rewrite-java-dependencies'
     
     rewrite "org.openrewrite.maven:rewrite-maven-plugin"
     rewrite "org.openrewrite:rewrite-csharp"
