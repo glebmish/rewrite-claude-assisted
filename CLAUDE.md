@@ -28,12 +28,22 @@ Prefix and java and gradle command for non-default java versions with `JAVA_HOME
 For Java 8 projects use Java 11 jdk
 
 ### Scratchpad Management
-* While executing any slash command you must use a scratchpad
+
 * Use `scripts/get-session-id.sh` command to retrieve session id.
-* Very first line of the scratchpad must be `Session ID: <id>`.
-* Use `<yyyy-mm-dd-hh-MM>-<command-name>-<session-id>.md` scratchpad file located in .scratchpad directory.
+* Very first line of each scratchpad must be `Session ID: <id>`.
+
+Always keep the following types of scratchpads
+
+* Slash command execution log:
+  * Use `<yyyy-mm-dd-hh-MM>-<command-name>-<session-id>.md` scratchpad file located in .scratchpad directory
   * If there's already a file for the given session id, keep writing to this file
-* Append only, you cannot modify lines that were added before.
-* Make it very comprehensive and detailed even when you execute multiple commands in a row.
-* Log the execution of each phase, all commands with the reason why you execute it and its results
-* Track overall progress and any issues encountered across phases
+  * Append only, you cannot modify lines that were added before.
+  * Make it very comprehensive, detailed and truthful even when you execute multiple commands in a row.
+  * Log the execution of each phase, all commands with the reason why you execute it and its results
+  * Track overall progress and any issues encountered across phases
+* Context scrachpad:
+  * Use `<yyyy-mm-dd-hh-MM>-<session-id>-context.md` scratchpad file located in .scratchpad directory
+  * Use this scratchpad to maintain context across main agent and subagents
+  * All subagents must read this file on start
+  * All subagents may append to this file
+  * It must be clearly stated what subagents contributed each part of the scratchpad
