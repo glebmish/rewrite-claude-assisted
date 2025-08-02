@@ -7,6 +7,7 @@ initscript {
 rootProject {
     plugins.apply(org.openrewrite.gradle.RewritePlugin)
     dependencies {
+        rewrite platform('org.openrewrite.recipe:rewrite-recipe-bom:3.10.1')
         <dependencies>
     }
     rewrite {

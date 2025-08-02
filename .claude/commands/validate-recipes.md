@@ -2,20 +2,11 @@
 
 This command tests OpenRewrite recipes against PRs and validates their effectiveness. You're an experienced software engineer who is an expert in Java and refactoring.
 
-## Scratchpad Setup
-* Use `<yyyy-mm-dd-hh-MM>-validate-recipes.md` scratchpad file located in .scratchpad directory to log your actions. Use current date and time for the scratchpad name.
-* Very first line of the scratchpad must be `Session ID: <id>`. Use `scripts/get-session-id.sh` command to retrieve session id.
-* Before starting any action, log your intentions and reasons you decided to do that. After action is complete, log the results. If action fails, log the fact of the failure and your analysis of it.
-* This scratchpad must contain a detailed log of what you've done, what issues you've encountered, commands you ran and your thought process. Only append, do not rewrite previous entries in the scratchpad.
-
-## Prerequisites
-* Recipe mapping should be completed (use `/map-recipes` command first)
-* Repositories should be available in `.workspace/` directory
-* Recipe recommendations should be documented in scratchpad
-
 ## Recipe YAML Generation
 For each repository with mapped recipes:
-* Create a recipe YAML file at `.workspace/<owner>/<repo>/rewrite.yml`
+* Choose one wider recipe and one narrower recipe
+* To test each recipe separately create a separate branch called `openrewrite-test-wide` and `operewrite-test-narrow` and use these branches to create separate worktrees
+* In each worktree, create a recipe YAML file at `.workspace/<worktree>/rewrite.yml`
 * Structure the recipe based on previous recommendations:
   ```yaml
   ---
@@ -24,59 +15,24 @@ For each repository with mapped recipes:
   displayName: Recipe for PR #<PR_NUMBER>
   description: Automated recipe to replicate changes from PR #<PR_NUMBER>
   recipeList:
-    - [Primary recipe identified in previous phase]
-    - [Supporting recipes as needed]
+    - [recipes]
   ```
 * Include any necessary recipe configurations and parameters
-* Copy the same file to each repository root for testing
 * Log the generated recipe structure to the scratchpad
 
 ## Gradle Init Script Generation
-Create `rewrite.gradle` initscript for each repository:
-* Analyze the root `build.gradle` or `build.gradle.kts` file to:
-  * Identify existing OpenRewrite dependencies and versions
-  * Determine the appropriate recipe dependencies needed
-  * Check for any existing rewrite configurations to avoid conflicts
-
-* Generate the initscript at `.workspace/<repo>/rewrite.gradle`:
-  ```gradle
-  initscript {
-      repositories {
-          mavenCentral()
-      }
-      dependencies { classpath("org.openrewrite:plugin:7.3.0") }
-  }
-  rootProject {
-      plugins.apply(org.openrewrite.gradle.RewritePlugin)
-      dependencies {
-          rewrite platform('org.openrewrite.recipe:rewrite-recipe-bom:3.10.1')
-          <dependencies>
-      }
-      rewrite {
-          <activeRecipe>
-          setExportDatatables(true)
-      }
-  }
-  ```
-
-* Populate the `<dependencies>` block with:
-  * Existing rewrite dependencies from build.gradle
-  * Additional dependencies required by the selected recipes
-
+Copy `rewrite.gradle` initscript from `scripts/` to each worktree
+* Populate the `<dependencies>` block with the dependencies required for the recipe
+* Don't set versions for openrewrite depencies, since they will be relying on bom that is already provided in the initscript
 * Set `<activeRecipe>` to the generated recipe name from the YAML file
 
 ## Dry Run Execution
 For each repository:
-* Ensure you're on the main/master branch (not the PR branch)
+* Ensure you're in the correct worktree
 * Execute the dry run command:
   ```bash
   ./gradlew rewriteDryRun --init-script rewrite.gradle
   ```
-* Capture the full output including:
-  * Recipe execution logs
-  * Generated diff output
-  * Any warnings or errors
-  * Execution time and statistics
 
 ## Diff Analysis and Validation
 Compare the rewriteDryRun output with the original PR diff:
@@ -101,21 +57,6 @@ Calculate and log:
 * 100% coverage with no extra changes: Full success
 * >90% coverage with minor extras: Partial success, may need recipe tuning
 * <90% coverage: Requires recipe revision or custom recipe development
-
-## Results Documentation
-Create a validation report in the scratchpad:
-```
-Repository: <owner>/<repo>
-PR: #<number>
-Recipe: <name>
-Validation Results:
-  Coverage: <percentage>
-  Precision: <percentage>
-  Missing Changes: <list or none>
-  Extra Changes: <list or none>
-  Status: SUCCESS|PARTIAL|FAILED
-  Recommendations: <next steps if not successful>
-```
 
 ## Error Handling and Edge Cases
 * Handle cases where:
