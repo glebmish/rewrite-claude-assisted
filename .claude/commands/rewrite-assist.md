@@ -23,6 +23,9 @@ Analyze PRs to extract both strategic (wide) and tactical (narrow) transformatio
 ### Phase 3: Recipe Mapping
 Discover available OpenRewrite recipes and map extracted intents to appropriate recipes.
 
+### Phase 4: Recipe validation
+Test each recipe produced on the previous phase and make the final decision on what recipe is the final version.
+
 ## Input Handling
 
 * If GitHub PR URLs are provided as arguments, use those directly
