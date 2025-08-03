@@ -114,3 +114,29 @@ to fetch a log based on session id. This script also calculates costs, so I no l
 that to run a slash command it should find the prompt in the .claude directory. That seems to work well. Helps with maintainability and
 Claude focus (one of the best practices)
 * The whole workflow is very raw now and the next big goal is to instrument verification. It doesn't work at all now.
+
+## 2025-08-03
+* Moving from commands to subagents seem to improve the quality of execution. Great feature. It also takes care of:
+  * focus on a current task - I tried to solve it with prompting and splitting command on multiple files
+  * maintainability - similar to splitting command on different files
+  * Using parallel execution where needed
+  * Using think tool where needed - before it seems like once it's enabled it kept being enabled for further steps
+* What subagents lack are the statefulness - the ability to pass comands to the same instance that have done a task before.
+  * Would probably improve iterations - e.g. create recipe (agent 1), validate (agent 2), update based on feedback (agent 1), revalidate (agent 2)
+  * I also sometimes ask Claude why it decided to do some weird thing and how I could improve the prompt to avoid it. 
+Seems like with subagents the context of what subagent was doing is missing in the main conversation (that makes sense) and I cannot ask why it did that.
+* Along with moving to subagents, also improving prompts:
+  * better instructions for how recipes should be assembled. Specifically, prompting to challenge gaps and trying to find 
+lower level recipes that can be used for these sections helped. BUT, now I see model trying to hack the recipe by ultra-focused 
+text changes instead of semantically correct changes (e.g. `replace text A with text B` instead of `Update Java version in Gradle`)
+* Cannot figure out how subagent history work. Seems like sometimes it's a separate session and sometimes it's saved to the
+same session with `isSidechain=true`
+* Fixed Gradle initscript for openrewrite and prompts for recipe validation. It is unreliable, but now it works _sometimes_
+* Next primary goal - Github actions to run non interactive recipe creation based on a PR and collect artifacts. This is a major building block for evals.
+* I'm absolutely sure now that embeddings to discovery recipes and some kind of document storage for full recipe documentation files will
+significantly improve correctness and cost efficiency of the workflow. Some great tools for that:
+  * Discovery mechanisms in OpenRewrite plugin. Existing tasks but most importantly the ability to write my own tasks 
+that will print out necessary information for all recipes in the classpath.
+  * Docs: https://github.com/openrewrite/rewrite-docs and docs generator: https://github.com/openrewrite/rewrite-recipe-markdown-generator
+  * Important that these things allow me to extend data with custom recipes since they'll also be a part of the classpath during gradle execution
+* Doing all of the development on Pro subscription means that I have to step away from the keyboard once limit is up :\
