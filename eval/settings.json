@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(rm:*)",
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(diff:*)",
+      "Bash(echo:*)",
+      "Bash(cat:*)",
+      "Bash(grep:*)",
+      "Bash(cp:*)",
+      "Bash(java:*)",
+      "Bash(chmod:*)",
+      "Bash(echo:*)",
+      "Bash(sed:*)",
+      "Bash(scripts/fetch-session.sh:*)",
+      "Bash(scripts/get-session-id.sh:*)",
+      "Bash(update-alternatives:*)",
+      "Bash(git:*)",
+      "Bash(gh:*)",
+      "Bash(./gradlew:*)",
+      "WebFetch(domain:docs.openrewrite.org)",
+      "WebFetch(domain:github.com)",
+      "Write",
+      "Edit"
+    ],
+    "deny": [
+      "Bash(git push:*)",
+      "Bash(gh repo delete:*)"
+    ]
+  }
+}

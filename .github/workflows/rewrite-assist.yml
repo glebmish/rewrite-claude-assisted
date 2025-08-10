@@ -1,0 +1,56 @@
+name: 'OpenRewrite Rewrite-Assist Evaluator'
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_url:
+        description: 'GitHub PR URL to analyze'
+        required: true
+        type: string
+      strict_mode:
+        description: 'Enable strict mode (give up immediately on failures)'
+        required: false
+        default: true
+        type: boolean
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  rewrite-assist:
+    runs-on: ubuntu-latest
+    name: 'Analyze PR with OpenRewrite'
+    container:
+      image: bboygleb/rewrite-assist
+      env:
+        CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+    steps:
+      - name: 'Run Claude Code workflow'
+        run: |
+          PR_URL="${{ github.event_name == 'pull_request' && github.event.pull_request.html_url || github.event.inputs.pr_url }}"
+          STRICT_ARG="${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.strict_mode == true) || (github.event_name == 'pull_request') && '--strict' || '' }}"
+          /entrypoint.sh $STRICT_ARG "$PR_URL"
+
+      - name: 'Upload Claude configuration artifacts'
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: claude-config-${{ github.run_number }}
+          path: ~/.claude/projects/**/*.jsonl
+          if-no-files-found: ignore
+          include-hidden-files: true
+
+      - name: 'Upload scratchpad artifacts'
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: scratchpad-${{ github.run_number }}
+          path: ${{ github.workspace }}/.scratchpad/**
+          if-no-files-found: ignore
+          include-hidden-files: true

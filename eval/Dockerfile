@@ -1,0 +1,41 @@
+FROM ubuntu:22.04
+
+# Prevent interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    wget \
+    git \
+    jq \
+    ca-certificates \
+    ssh \
+    vim  \
+    gh \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Java 11 and 17
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openjdk-11-jdk-headless \
+    openjdk-17-jdk-headless \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Claude CLI
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash && \
+    . /root/.nvm/nvm.sh && \
+    nvm install node && \
+    npm install -g @anthropic-ai/claude-code
+
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+ENV PATH="${JAVA_HOME}/bin:/usr/bin/versions/node/v24.5.0/bin:${PATH}"
+
+# Create working directory structure
+RUN mkdir -p /workspace
+WORKDIR /workspace
+
+COPY entrypoint.sh /
+COPY settings.json /
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
