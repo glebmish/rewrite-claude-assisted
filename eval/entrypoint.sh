@@ -1,9 +1,46 @@
 #!/bin/bash
 set -euxo pipefail
 
+# Set up cleanup trap
+trap cleanup EXIT
+
 # Logging function
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"
+}
+
+# Background workflow monitoring
+start_workflow_monitor() {
+    log "Starting background workflow monitor"
+
+    # Start background monitoring process
+    (
+        while true; do
+            sleep 15
+            # Find the earliest JSONL file in ~/.claude/projects and subdirectories
+            local jsonl_file=$(find ~/.claude/projects -name "*.jsonl" -type f -printf '%T@ %p\n' | sort -n | head -1 | cut -d' ' -f2-)
+
+            if [[ -z "$jsonl_file" ]]; then
+                log "Warning: No JSONL files found in ~/.claude/projects"
+            else
+                tail -n 4 "$jsonl_file" | claude --model haiku -p "Summarize last few messages from a Claude Code session as one short sentence of 10-20 words in the form of 'this is finished', 'doing something else now', 'accessing something'. Be specific." 2>/dev/null || true
+            fi
+        done
+    ) &
+    
+    # Store PID for cleanup
+    MONITOR_PID=$!
+    export MONITOR_PID
+    log "Workflow monitor started with PID: $MONITOR_PID"
+}
+
+# Cleanup function
+cleanup() {
+    if [[ -n "${MONITOR_PID:-}" ]]; then
+        log "Stopping workflow monitor (PID: $MONITOR_PID)"
+        kill $MONITOR_PID 2>/dev/null || true
+        wait $MONITOR_PID 2>/dev/null || true
+    fi
 }
 
 # Parse arguments
@@ -100,6 +137,9 @@ EOF
 # Parse settings file to get tool restrictions
 log "Parsing settings file: $SETTINGS_FILE"
 parse_settings_file "$SETTINGS_FILE"
+
+# Start workflow monitor
+start_workflow_monitor
 
 # Execute rewrite-assist command
 log "Executing rewrite-assist command"
