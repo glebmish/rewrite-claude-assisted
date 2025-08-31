@@ -140,3 +140,7 @@ that will print out necessary information for all recipes in the classpath.
   * Docs: https://github.com/openrewrite/rewrite-docs and docs generator: https://github.com/openrewrite/rewrite-recipe-markdown-generator
   * Important that these things allow me to extend data with custom recipes since they'll also be a part of the classpath during gradle execution
 * Doing all of the development on Pro subscription means that I have to step away from the keyboard once limit is up :\
+* Couple of things that would be useful as CC features:
+  * ability to pass config that should be applied (to replace allowedTools flag that is less convenient)
+  * visualizing subagent work as a tab that you can switch to
+
