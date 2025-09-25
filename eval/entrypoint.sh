@@ -11,20 +11,21 @@ log() {
 
 # Background workflow monitoring
 start_workflow_monitor() {
+    sleep 15
     log "Starting background workflow monitor"
+
+    # Find the earliest JSONL file in ~/.claude/projects and subdirectories
+    local jsonl_file=$(find ~/.claude/projects -name "*.jsonl" -type f -printf '%T@ %p\n' | sort -n | head -1 | cut -d' ' -f2-)
+
+    if [[ -z "$jsonl_file" ]]; then
+      log "Warning: No JSONL files found in ~/.claude/projects"
+    fi
 
     # Start background monitoring process
     (
         while true; do
             sleep 15
-            # Find the earliest JSONL file in ~/.claude/projects and subdirectories
-            local jsonl_file=$(find ~/.claude/projects -name "*.jsonl" -type f -printf '%T@ %p\n' | sort -n | head -1 | cut -d' ' -f2-)
-
-            if [[ -z "$jsonl_file" ]]; then
-                log "Warning: No JSONL files found in ~/.claude/projects"
-            else
-                tail -n 4 "$jsonl_file" | claude --model haiku -p "Summarize last few messages from a Claude Code session as one short sentence of 10-20 words in the form of 'this is finished', 'doing something else now', 'accessing something'. Be specific." 2>/dev/null || true
-            fi
+            tail -n 4 "$jsonl_file" | claude --model haiku -p "Summarize last few messages from a Claude Code session as one short sentence of 10-20 words in the form of 'this is finished', 'doing something else now', 'accessing something'. Be specific." 2>/dev/null || true
         done
     ) &
     

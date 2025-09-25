@@ -49,3 +49,7 @@ ALWAYS keep the following types of scratchpads
   * All subagents must read this file on start
   * All subagents may append to this file
   * It must be clearly stated what subagents contributed each part of the scratchpad
+
+### General direction
+* Do not use subagents unnecessarily
+* When tool use fails and this is a bash command with pipes, simplify it and try again before failing (even in strict mode)
