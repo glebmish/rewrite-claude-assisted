@@ -15,13 +15,14 @@ start_workflow_monitor() {
     # Start background monitoring process
     (
         while [[ -z ${jsonl_file:-} ]]; do
-            sleep 15
+            sleep 5
             # Find the earliest JSONL file in ~/.claude/projects and subdirectories
             jsonl_file=$(find ~/.claude/projects -name "*.jsonl" -type f -printf '%T@ %p\n' | sort -n | head -1 | cut -d' ' -f2-)
+            echo "claude_log_file=$jsonl_file" >> $GITHUB_OUTPUT
         done
 
         while true; do
-            sleep 15
+            sleep 30
             tail -n 4 "$jsonl_file" | claude --model haiku -p "Summarize last few messages from a Claude Code session as one short sentence of 10-20 words in the form of 'this is finished', 'doing something else now', 'accessing something'. Be specific." 2>/dev/null || true
         done
     ) &
@@ -45,7 +46,7 @@ cleanup() {
 STRICT_MODE=false
 PR_URL=""
 TIMEOUT_MINUTES=60
-SETTINGS_FILE="$(dirname "$0")/settings.json"
+SETTINGS_FILE="$(dirname "$0")settings.json"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
