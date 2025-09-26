@@ -11,18 +11,15 @@ log() {
 
 # Background workflow monitoring
 start_workflow_monitor() {
-    sleep 15
     log "Starting background workflow monitor"
-
-    # Find the earliest JSONL file in ~/.claude/projects and subdirectories
-    local jsonl_file=$(find ~/.claude/projects -name "*.jsonl" -type f -printf '%T@ %p\n' | sort -n | head -1 | cut -d' ' -f2-)
-
-    if [[ -z "$jsonl_file" ]]; then
-      log "Warning: No JSONL files found in ~/.claude/projects"
-    fi
-
     # Start background monitoring process
     (
+        while [[ -z ${jsonl_file:-} ]]; do
+            sleep 15
+            # Find the earliest JSONL file in ~/.claude/projects and subdirectories
+            jsonl_file=$(find ~/.claude/projects -name "*.jsonl" -type f -printf '%T@ %p\n' | sort -n | head -1 | cut -d' ' -f2-)
+        done
+
         while true; do
             sleep 15
             tail -n 4 "$jsonl_file" | claude --model haiku -p "Summarize last few messages from a Claude Code session as one short sentence of 10-20 words in the form of 'this is finished', 'doing something else now', 'accessing something'. Be specific." 2>/dev/null || true
@@ -157,7 +154,7 @@ if [[ -n "$CLAUDE_DISALLOWED_TOOLS" ]]; then
     CLAUDE_CMD="$CLAUDE_CMD --disallowedTools \"$CLAUDE_DISALLOWED_TOOLS\""
 fi
 
-CLAUDE_CMD="$CLAUDE_CMD -p \"/rewrite-assist $PR_URL"
+CLAUDE_CMD="$CLAUDE_CMD -p \"execute custom claude code command: /rewrite-assist $PR_URL"
 if [[ "$STRICT_MODE" == "true" ]]; then
     CLAUDE_CMD="$CLAUDE_CMD. Give up IMMEDIATELY when something fails (tool access is not granted, tool use failed). Finish the conversation and explicitly state the reason you did. Print full tool name and command."
 fi
