@@ -52,6 +52,9 @@ jobs:
         GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
     steps:
+      - name: 'Checkout repository'
+        uses: actions/checkout@v4
+
       - name: 'Run Claude Code workflow'
         id: run_claude_code_workflow
         run: |
