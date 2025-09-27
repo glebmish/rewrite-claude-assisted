@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ssh \
     vim  \
     gh \
+    tree \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Java 11 and 17
@@ -24,11 +25,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install Claude CLI
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash && \
     . /root/.nvm/nvm.sh && \
-    nvm install node && \
+    nvm install 24.9.0 && \
     npm install -g @anthropic-ai/claude-code
 
 ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-ENV PATH="${JAVA_HOME}/bin:/usr/bin/versions/node/v24.5.0/bin:${PATH}"
+ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
 # Create working directory structure
 RUN mkdir -p /workspace
