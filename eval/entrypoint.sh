@@ -80,14 +80,19 @@ if [[ -z "$PR_URL" ]]; then
     exit 1
 fi
 
+# Export for use in scripts
+export CLAUDE_CODE_OAUTH_TOKEN
+export GH_TOKEN
+export PR_URL
+export TIMEOUT_MINUTES
+export DEBUG_MODE
+
 CLAUDE_CODE_OAUTH_TOKEN="${CLAUDE_CODE_OAUTH_TOKEN}"
 GH_TOKEN="${GH_TOKEN}"
 SSH_PRIVATE_KEY="${SSH_PRIVATE_KEY}"
 
-if [[ "$DEBUG_MODE" == "true" ]]; then
-  pwd
-  tree .
-fi
+pwd
+tree .
 
 log "Setting up SSH key"
 mkdir -p /root/.ssh
@@ -95,13 +100,6 @@ echo "$SSH_PRIVATE_KEY" > /root/.ssh/id_rsa
 chmod 600 /root/.ssh/id_rsa
 ssh-keyscan github.com >> /root/.ssh/known_hosts
 log "SSH key configured successfully"
-
-# Export for use in scripts
-export CLAUDE_CODE_OAUTH_TOKEN
-export GH_TOKEN
-export PR_URL
-export TIMEOUT_MINUTES
-export DEBUG_MODE
 
 # Parse settings file and generate Claude tool flags
 parse_settings_file() {
@@ -156,7 +154,7 @@ log "Executing rewrite-assist command"
 START_TIME=$(date +%s)
 
 # Build the claude command
-CLAUDE_CMD="claude"
+CLAUDE_CMD="claude --model sonnet"
 
 # Add debug flag if enabled
 if [[ "$DEBUG_MODE" == "true" ]]; then
