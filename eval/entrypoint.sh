@@ -155,11 +155,10 @@ if [[ -n "$CLAUDE_DISALLOWED_TOOLS" ]]; then
     CLAUDE_CMD="$CLAUDE_CMD --disallowedTools \"$CLAUDE_DISALLOWED_TOOLS\""
 fi
 
-CLAUDE_CMD="$CLAUDE_CMD -p \"execute custom claude code command: /rewrite-assist $PR_URL"
+CLAUDE_CMD="$CLAUDE_CMD -p \"execute custom claude code command: read .claude/commands/rewrite-assist.md and execute the workflow precisely with the following input: $PR_URL\""
 if [[ "$STRICT_MODE" == "true" ]]; then
     CLAUDE_CMD="$CLAUDE_CMD. Give up IMMEDIATELY when something fails (tool access is not granted, tool use failed). Finish the conversation and explicitly state the reason you did. Print full tool name and command."
 fi
-CLAUDE_CMD="$CLAUDE_CMD\""
 
 # Execute with timeout
 if timeout "${TIMEOUT_MINUTES}m" bash -c "$CLAUDE_CMD"; then
