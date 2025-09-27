@@ -8,7 +8,7 @@ This command coordinates a multiphase workflow by executing individual commands 
 * When you start executing a new phase, update todo list with more details for the given phase.
 * Keep a detailed log of each phase execution in the same scratchpad.
 
-Phase can be described   as a slash command (`/<command-name>`). To get the prompt for the slash command, read a file in `.claude/commands/<command-name>.md`
+Phase can be described as a slash command (`/<command-name>`). To get the prompt for the slash command, read a file in `.claude/commands/<command-name>.md`
 
 ## Workflow Overview
 
