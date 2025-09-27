@@ -44,6 +44,7 @@ cleanup() {
 
 # Parse arguments
 STRICT_MODE=false
+DEBUG_MODE=false
 PR_URL=""
 TIMEOUT_MINUTES=60
 SETTINGS_FILE="$(dirname "$0")settings.json"
@@ -54,16 +55,20 @@ while [[ $# -gt 0 ]]; do
             STRICT_MODE=true
             shift
             ;;
+        --debug)
+            DEBUG_MODE=true
+            shift
+            ;;
+        --timeout)
+            TIMEOUT_MINUTES="$2"
+            shift 2
+            ;;
         --settings-file)
             SETTINGS_FILE="$2"
             shift 2
             ;;
         *)
-            if [[ -z "$PR_URL" ]]; then
-                PR_URL="$1"
-            else
-                TIMEOUT_MINUTES="$1"
-            fi
+            PR_URL="$1"
             shift
             ;;
     esac
@@ -79,6 +84,11 @@ CLAUDE_CODE_OAUTH_TOKEN="${CLAUDE_CODE_OAUTH_TOKEN}"
 GH_TOKEN="${GH_TOKEN}"
 SSH_PRIVATE_KEY="${SSH_PRIVATE_KEY}"
 
+if [[ "$DEBUG_MODE" == "true" ]]; then
+  pwd
+  tree .
+fi
+
 log "Setting up SSH key"
 mkdir -p /root/.ssh
 echo "$SSH_PRIVATE_KEY" > /root/.ssh/id_rsa
@@ -91,6 +101,7 @@ export CLAUDE_CODE_OAUTH_TOKEN
 export GH_TOKEN
 export PR_URL
 export TIMEOUT_MINUTES
+export DEBUG_MODE
 
 # Parse settings file and generate Claude tool flags
 parse_settings_file() {
@@ -147,6 +158,11 @@ START_TIME=$(date +%s)
 # Build the claude command
 CLAUDE_CMD="claude"
 
+# Add debug flag if enabled
+if [[ "$DEBUG_MODE" == "true" ]]; then
+    CLAUDE_CMD="$CLAUDE_CMD --debug"
+fi
+
 # Add tool restrictions if available
 if [[ -n "$CLAUDE_ALLOWED_TOOLS" ]]; then
     CLAUDE_CMD="$CLAUDE_CMD --allowedTools \"$CLAUDE_ALLOWED_TOOLS\""
@@ -155,10 +171,11 @@ if [[ -n "$CLAUDE_DISALLOWED_TOOLS" ]]; then
     CLAUDE_CMD="$CLAUDE_CMD --disallowedTools \"$CLAUDE_DISALLOWED_TOOLS\""
 fi
 
-CLAUDE_CMD="$CLAUDE_CMD -p \"execute custom claude code command: read .claude/commands/rewrite-assist.md and execute the workflow precisely with the following input: $PR_URL\""
+CLAUDE_PROMPT="execute custom claude code command: read .claude/commands/rewrite-assist.md and execute the workflow precisely with the following input: $PR_URL."
 if [[ "$STRICT_MODE" == "true" ]]; then
-    CLAUDE_CMD="$CLAUDE_CMD. Give up IMMEDIATELY when something fails (tool access is not granted, tool use failed). Finish the conversation and explicitly state the reason you did. Print full tool name and command."
+    CLAUDE_PROMPT="$CLAUDE_PROMPT Give up IMMEDIATELY when something fails (tool access is not granted, tool use failed). Finish the conversation and explicitly state the reason you did. Print full tool name and command."
 fi
+CLAUDE_CMD="$CLAUDE_CMD -p \"$CLAUDE_PROMPT\""
 
 # Execute with timeout
 if timeout "${TIMEOUT_MINUTES}m" bash -c "$CLAUDE_CMD"; then

@@ -12,6 +12,11 @@ on:
         required: false
         default: true
         type: boolean
+      debug:
+        description: 'Enable debug mode for verbose logging'
+        required: false
+        default: false
+        type: boolean
   workflow_call:
     inputs:
       pr_url:
@@ -22,6 +27,11 @@ on:
         description: 'Enable strict mode (give up immediately on failures)'
         required: false
         default: true
+        type: boolean
+      debug:
+        description: 'Enable debug mode for verbose logging'
+        required: false
+        default: false
         type: boolean
   pull_request:
     types: [ opened, synchronize, reopened ]
@@ -47,12 +57,14 @@ jobs:
         run: |
           PR_URL="${{ inputs.pr_url }}"
           STRICT_ARG="${{ inputs.strict_mode == true && '--strict' || '' }}"
+          DEBUG_ARG="${{ inputs.debug == true && '--debug' || '' }}"
 
           echo "Event: ${{ github.event_name }}"
           echo "PR_URL: $PR_URL"
           echo "STRICT_ARG: $STRICT_ARG"
+          echo "DEBUG_ARG: $DEBUG_ARG"
 
-          /entrypoint.sh $STRICT_ARG "$PR_URL"
+          /entrypoint.sh $STRICT_ARG $DEBUG_ARG "$PR_URL"
 
       - name: 'Upload Claude configuration artifacts'
         uses: actions/upload-artifact@v4
