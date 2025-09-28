@@ -79,76 +79,19 @@ jobs:
     if: always()
     
     steps:
+      - name: 'Checkout repository'
+        uses: actions/checkout@v4
+
       - name: 'Download all artifacts'
         uses: actions/download-artifact@v4
         with:
           path: artifacts/
           pattern: '*-*'
-      
+
       - name: 'Analyze and generate suite summary'
         run: |
-          mkdir -p suite-results
-          
-          # Parse PR summary from matrix generation
-          pr_summary="${{ needs.generate-matrix.outputs.pr_summary }}"
-          
-          suite_report="suite-results/suite-summary.txt"
-          echo "Simple Suite Eval - Final Summary" > $suite_report
-          echo "Generated: $(date)" >> $suite_report
-          echo "========================================" >> $suite_report
-          echo "" >> $suite_report
-          
-          # Process each PR configuration
-          IFS='|' read -ra PRS <<< "$pr_summary"
-          
-          for pr_config in "${PRS[@]}"; do
-            IFS=':' read -ra parts <<< "$pr_config"
-            pr_url="${parts[0]}"
-            pr_num="${parts[1]}"
-            expected_runs="${parts[2]}"
-            
-            echo "PR #$pr_num ($expected_runs runs expected)" >> $suite_report
-            echo "URL: $pr_url" >> $suite_report
-            
-            # Count artifacts and files for this PR
-            total_claude=0
-            total_scratchpad=0
-            actual_runs=0
-            
-            # Find artifacts matching this PR number
-            for artifact_dir in artifacts/*/; do
-              if [[ "$artifact_dir" == *"-$pr_num"* ]] || [[ "$artifact_dir" == *"$pr_num"* ]]; then
-                actual_runs=$((actual_runs + 1))
-                
-                # Count files in this run's artifacts
-                if [ -d "$artifact_dir" ]; then
-                  claude_count=$(find "$artifact_dir" -name "claude-config-*" -type d -exec find {} -type f \; 2>/dev/null | wc -l)
-                  scratchpad_count=$(find "$artifact_dir" -name "scratchpad-*" -type d -exec find {} -type f \; 2>/dev/null | wc -l)
-                  
-                  total_claude=$((total_claude + claude_count))
-                  total_scratchpad=$((total_scratchpad + scratchpad_count))
-                  
-                  echo "  Run $actual_runs: $claude_count claude files, $scratchpad_count scratchpad files" >> $suite_report
-                fi
-              fi
-            done
-            
-            echo "  Summary:" >> $suite_report
-            echo "    Completed runs: $actual_runs/$expected_runs" >> $suite_report
-            echo "    Total claude config files: $total_claude" >> $suite_report
-            echo "    Total scratchpad files: $total_scratchpad" >> $suite_report
-            if [ "$actual_runs" -gt 0 ]; then
-              echo "    Average claude files per run: $((total_claude / actual_runs))" >> $suite_report
-              echo "    Average scratchpad files per run: $((total_scratchpad / actual_runs))" >> $suite_report
-            fi
-            echo "" >> $suite_report
-          done
-          
-          # Display final summary
-          echo "========================================="
-          echo "SIMPLE SUITE EVAL - FINAL SUMMARY"
-          echo "========================================="
-          cat $suite_report
+          chmod +x eval/analysis/analyze-suite-results.sh
+          eval/analysis/analyze-suite-results.sh
       
       - name: 'Upload suite results'
         uses: actions/upload-artifact@v4
