@@ -69,11 +69,11 @@ jobs:
 
           /entrypoint.sh $STRICT_ARG $DEBUG_ARG "$PR_URL"
 
-      - name: 'Upload Claude configuration artifacts'
+      - name: 'Upload Claude log artifacts'
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: claude-config-${{ github.run_number }}
+          name: claude-log-${{ github.run_number }}
           path: ${{steps.run_claude_code_workflow.outputs.claude_log_file}}
           if-no-files-found: ignore
           include-hidden-files: true
