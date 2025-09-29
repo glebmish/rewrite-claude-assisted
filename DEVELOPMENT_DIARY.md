@@ -144,3 +144,17 @@ that will print out necessary information for all recipes in the classpath.
   * ability to pass config that should be applied (to replace allowedTools flag that is less convenient)
   * visualizing subagent work as a tab that you can switch to
 
+2025-09-29
+* Had a long pause in project work and when I started again it hit me with failures. 
+  * Looks like github actions don't checkout code automatically and the workflow there didn't base it on my prompts at all
+  * Spend a lot of time looking for a rootcause
+* Was able to run workflow in github by itself and more importantly generate a matrix and run a whole suite for evals
+  * Just a single PR in the eval suite for now to figure out the evaluation criteria
+  * Workflow works well
+  * Artifacts are collected
+  * Analysis of all work doesn't really work
+* Many times fallen into the trap. When I don't really know how to implement something non-trivial and let Claude do something,
+the result is not something useful to start with, but instead and overcomplicated mess that is a chore to get to a useful state.
+That's what going on with suite analysis now. Fixing it.
+* Coming up with a robust analysis of a single run. Should probably result in multiple files and should run as a part of
+main evaluation action, not suite analysis. Suite analysis will only combine results, probably with a script, not a claude code command.
