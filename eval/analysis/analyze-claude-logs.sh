@@ -92,7 +92,11 @@ analyze_claude_log() {
     echo "      Workflow status: $workflow_status"
 
     # Show top tools used
-    if [[ ${#tool_usage[@]} -gt 0 ]]; then
+    local tool_count=0
+    for tool in "${!tool_usage[@]}"; do
+        tool_count=$((tool_count + 1))
+    done
+    if [[ $tool_count -gt 0 ]]; then
         echo "      Top tools used:"
         for tool in "${!tool_usage[@]}"; do
             echo "        $tool: ${tool_usage[$tool]} times"

@@ -61,13 +61,12 @@ jobs:
           PR_URL="${{ inputs.pr_url }}"
           STRICT_ARG="${{ inputs.strict_mode == true && '--strict' || '' }}"
           DEBUG_ARG="${{ inputs.debug == true && '--debug' || '' }}"
-
-          echo "Event: ${{ github.event_name }}"
-          echo "PR_URL: $PR_URL"
-          echo "STRICT_ARG: $STRICT_ARG"
-          echo "DEBUG_ARG: $DEBUG_ARG"
-
           /entrypoint.sh $STRICT_ARG $DEBUG_ARG "$PR_URL"
+
+      - name: 'Analyze Claude Code workflow'
+        id: analyze_claude_code_workflow
+        run: |
+          claude -p "analyze rewrite assist session ${{steps.run_claude_code_workflow.outputs.claude_log_file}}"
 
       - name: 'Upload Claude log artifacts'
         uses: actions/upload-artifact@v4
@@ -75,6 +74,15 @@ jobs:
         with:
           name: claude-log-${{ github.run_number }}
           path: ${{steps.run_claude_code_workflow.outputs.claude_log_file}}
+          if-no-files-found: ignore
+          include-hidden-files: true
+
+      - name: 'Upload Run metadata file'
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: claude-log-${{ github.run_number }}
+          path: ${{steps.run_claude_code_workflow.outputs.run_metadata_file}}
           if-no-files-found: ignore
           include-hidden-files: true
 
