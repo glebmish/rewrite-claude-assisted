@@ -12,6 +12,7 @@ log() {
 # Background workflow monitoring
 start_workflow_monitor() {
     log "Starting background workflow monitor"
+    GITHUB_OUTPUT=${GITHUB_OUTPUT:-/dev/null}
     # Start background monitoring process
     (
         while [[ -z ${jsonl_file:-} ]]; do
@@ -80,16 +81,13 @@ if [[ -z "$PR_URL" ]]; then
     exit 1
 fi
 
-# Export for use in scripts
-export CLAUDE_CODE_OAUTH_TOKEN
-export GH_TOKEN
-export PR_URL
-export TIMEOUT_MINUTES
-export DEBUG_MODE
-
 CLAUDE_CODE_OAUTH_TOKEN="${CLAUDE_CODE_OAUTH_TOKEN}"
 GH_TOKEN="${GH_TOKEN}"
 SSH_PRIVATE_KEY="${SSH_PRIVATE_KEY}"
+
+# Export to make available for tools
+export CLAUDE_CODE_OAUTH_TOKEN
+export GH_TOKEN
 
 pwd
 tree .
@@ -132,15 +130,6 @@ parse_settings_file() {
     export CLAUDE_DISALLOWED_TOOLS="$disallowed_tools"
 }
 
-# Initialize metadata
-mkdir -p metadata
-cat > metadata/execution-start.json << EOF
-{
-  "pr_url": "$PR_URL",
-  "start_time": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
-  "timeout_minutes": $TIMEOUT_MINUTES,
-}
-EOF
 
 # Parse settings file to get tool restrictions
 log "Parsing settings file: $SETTINGS_FILE"
@@ -194,7 +183,8 @@ DURATION=$((END_TIME - START_TIME))
 log "Execution completed with status: $EXECUTION_STATUS (duration: ${DURATION}s)"
 
 # Create final metadata
-cat > metadata/execution-complete.json << EOF
+METADATA_FILE="$(pwd)/metadata.json"
+cat > $METADATA_FILE << EOF
 {
   "pr_url": "$PR_URL",
   "status": "$EXECUTION_STATUS",
@@ -202,9 +192,9 @@ cat > metadata/execution-complete.json << EOF
   "duration_seconds": $DURATION,
   "start_time": "$(date -d @$START_TIME -u +"%Y-%m-%dT%H:%M:%SZ")",
   "end_time": "$(date -d @$END_TIME -u +"%Y-%m-%dT%H:%M:%SZ")",
-  "artifacts_collected": true
 }
 EOF
+echo "run_metadata_file=$METADATA_FILE" >> $GITHUB_OUTPUT
 
 log "Evaluation complete"
 exit $EXIT_CODE

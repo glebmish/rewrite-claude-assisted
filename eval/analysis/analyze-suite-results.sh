@@ -1,8 +1,4 @@
 #!/bin/bash
-
-# Simple Suite Eval - Analysis Script
-# Analyzes artifacts from rewrite-assist workflow runs
-
 set -euo pipefail
 
 # Script directory
@@ -14,7 +10,7 @@ source "$SCRIPT_DIR/analyze-scratchpads.sh"
 source "$SCRIPT_DIR/analyze-pr-precision.sh"
 
 # Default values
-ARTIFACTS_DIR="artifacts"
+ARTIFACTS_DIR="${ARTIFACTS_DIR:-artifacts}"
 OUTPUT_DIR="suite-results"
 SUITE_REPORT="$OUTPUT_DIR/suite-summary.txt"
 
