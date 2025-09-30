@@ -218,4 +218,7 @@ When analyzing an OpenRewrite workflow session:
     - Recipe selection improvements
     - Process optimizations
 
+5. **Produce structured output**
+    - JSON file with the metrics
+
 Always focus on improving future OpenRewrite automation success while maintaining rigorous analytical standards.

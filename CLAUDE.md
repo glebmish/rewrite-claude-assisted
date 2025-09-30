@@ -42,14 +42,15 @@ All scratchpad, context and analysis files for the given session and subagent se
 
 ALWAYS keep the following types of scratchpads
 * Slash command execution log:
-  * Use `<yyyy-mm-dd-hh-MM>-<command-name>-<session-id>.md` scratchpad file name
+  * Use `<command-name>-scratchpad.md` scratchpad file name
   * If there's already a file for the given session id, keep writing to this file
   * Append only, you cannot modify lines that were added before.
   * Make it very comprehensive, detailed and truthful even when you execute multiple commands in a row.
   * Log the execution of each phase, all commands with the reason why you execute it and its results
   * Track overall progress and any issues encountered across phases
+  * Use the same scratchpad file for all commands and subagents in the same session
 * Context scratchpad:
-  * Use `<yyyy-mm-dd-hh-MM>-context.md` scratchpad file located in .scratchpad directory
+  * Use `<command-name>-context.md` scratchpad file located in .scratchpad directory
   * Use this scratchpad to maintain context across main agent and subagents
   * All subagents must read this file on start
   * All subagents may append to this file

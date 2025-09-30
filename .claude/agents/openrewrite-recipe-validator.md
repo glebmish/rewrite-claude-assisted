@@ -1,6 +1,6 @@
 ---
 name: openrewrite-recipe-validator
-description: Use this agent PROACTIVELY to validate OpenRewrite recipes against PR changes. MUST BE USED when: (1) Testing recipe effectiveness against actual PR diffs (2) Comparing recipe coverage (3) Validating recipe accuracy and precision (4) Analyzing gaps between recipe output and intended changes. Examples: 'validate Spring Boot migration recipe against PR #123', 'test if this recipe covers all changes in the security fix PR', 'compare coverage of broad vs targeted recipes for our refactoring'.
+description: Use this agent PROACTIVELY to validate OpenRewrite recipes against PR changes. MUST BE USED when: (1) Testing recipe effectiveness against actual PR diffs (2) Comparing recipe coverage (3) Validating recipe accuracy and precision (4) Analyzing gaps between recipe output and intended changes. Examples: 'validate Spring Boot migration recipe against PR #123', 'test if this recipe covers all changes in the security fix PR', 'compare coverage of broad vs targeted recipes for our refactoring. ALWAYS pass a filepath of the current scratchpad for this agent to append to it.'
 model: sonnet
 color: orange
 ---
@@ -62,26 +62,23 @@ Copy `rewrite.gradle` with proper dependencies and recipe name. Script is locate
 ```bash
 cd <full-path>/.workspace/<test-worktree>
 # Execute OpenRewrite dry run
-JAVA_HOME=<applicable-java-home> ./gradlew rewriteDryRun --init-script rewrite.gradle > rewrite-output.log 2>&1
-# extract the diff for analysis. Typically it's located in build/reports/rewrite/rewrite.path. If not found, check the log to locate the diff file
+JAVA_HOME=<applicable-java-home> ./gradlew rewrite --init-script rewrite.gradle > rewrite-output.log 2>&1
 ```
 
 ### Error Handling Checklist
 - Gradle wrapper present and executable
 - Java version is explicitly providing using JAVA_HOME override for gradle command
-- Java version compatible with project
+- Java version compatible with project. Both Java 11 and Java 17 are available and you must pick the correct one.
 - Dependencies resolve correctly
 - Recipe YAML syntax valid
 - No compilation errors blocking execution
+- If the above checks didn't help, NEVER attempt to resolve the issue by changing something in the project
 
 ## Phase 4: Diff Analysis & Metrics
 
-### Comparison Methodology
-```bash
-# Normalize diffs for comparison
-# Remove timestamps, line numbers, file headers that differ
-diff -u pr-<PR_NUMBER>-original.diff rewrite-changes.diff > comparison.diff
-```
+Extract the diff for analysis. Since rewrite command is doing actual changes `git diff` should show diff with the main branch.
+Additionally, diff with PR branch must be extracted (`git diff <pr> HEAD`).
+For each validated recipe, save both diffs to the scratchpad directory. Also save recipe yaml file.f
 
 ### Over-application troubleshooting
 
