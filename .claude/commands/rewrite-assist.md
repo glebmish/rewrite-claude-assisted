@@ -26,6 +26,13 @@ Discover available OpenRewrite recipes and map extracted intents to appropriate 
 ### Phase 4: Recipe validation
 Test each recipe produced on the previous phase and make the final decision on what recipe is the final version.
 
+### Phase 5: Final decision
+Based on the results, choose the final recommended recipe. Final result must reside in the subdirectory of 
+where scratchpad file is written called `result`. Following files are expected:
+* `recommended-recipe.yaml` - recipe file
+* `recommended-recipe.diff` - diff of this recipe from main
+* `recommended-recipe-to-pr.diff` - diff of this recipe from the given PR branch
+
 ## Input Handling
 
 * If GitHub PR URLs are provided as arguments, use those directly
@@ -46,7 +53,6 @@ Test each recipe produced on the previous phase and make the final decision on w
 > Claude: Please enter GitHub PR URLs
 > User: https://github.com/owner/repo/pull/123 https://github.com/owner/repo/pull/456
 ```
-
 
 ## Error Handling
 * If any phase fails, stop the workflow and report the failure
