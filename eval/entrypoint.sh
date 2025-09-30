@@ -182,8 +182,11 @@ DURATION=$((END_TIME - START_TIME))
 
 log "Execution completed with status: $EXECUTION_STATUS (duration: ${DURATION}s)"
 
+SCRATCHPAD_DIR=$(ls -d -1 $PWD/.scratchpad/*)
+echo "scratchpad_file=$SCRATCHPAD_DIR/rewrite-assist-scratchpad.md" >> $GITHUB_OUTPUT
+
 # Create final metadata
-METADATA_FILE="$(pwd)/workflow-metadata.json"
+METADATA_FILE="$SCRATCHPAD_DIR/workflow-metadata.json"
 cat > $METADATA_FILE << EOF
 {
   "pr_url": "$PR_URL",
@@ -194,10 +197,6 @@ cat > $METADATA_FILE << EOF
   "end_time": "$(date -d @$END_TIME -u +"%Y-%m-%dT%H:%M:%SZ")",
 }
 EOF
-echo "run_metadata_file=$METADATA_FILE" >> $GITHUB_OUTPUT
-
-SCRATCHPAD_DIR=$(ls -d -1 $PWD/.scratchpad/*)
-echo "scratchpad_file=$SCRATCHPAD_DIR/rewrite-assist-scratchpad.md" >> $GITHUB_OUTPUT
 
 log "Evaluation complete"
 exit $EXIT_CODE
