@@ -8,7 +8,7 @@
 ## Bash Commands
 
 ### Changing directory
-ALWAYS use full path whenever you use `cd` command
+ALWAYS use full path whenever you use `cd` command or call scripts
 
 ### Cloning repositories
 Always clone repositories to the .workspace directory and use repository name as directory name
@@ -34,6 +34,8 @@ For Java 8 projects use Java 11 jdk
 
 ### Scratchpad Management
 
+* !!IMPORTANT!! When scratchpad file is passed to you in the inital prompt, append to this file and do not
+attempt to resolve session or create a new file
 * At the beginning of main session get current date and time and create `.scratchpad/<yyyy-mm-dd-hh-MM>` directory.
 All scratchpad, context and analysis files for the given session and subagent sessions must be saved to this directory.
 * Pass the context on what the current directory is to each subagent. They must use this existing directory.
