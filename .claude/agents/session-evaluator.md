@@ -32,7 +32,7 @@ The rewrite-assist workflow you analyze consists of:
 
 **Fetch Actual Data**:
 ```bash
-scripts/fetch-session.sh <session-id>
+scripts/fetch-session.sh -f <scratchpad-file>
 ```
 
 ### Phase 2: Workflow Truthfulness Analysis
@@ -66,83 +66,22 @@ scripts/fetch-session.sh <session-id>
 
 ### Phase 3: Workflow Effectiveness Scoring
 
-**Intent Extraction Quality**:
-```
-Score = (Accurate intents / Total PR patterns) × 100
-- High (90-100%): All patterns captured
-- Medium (70-89%): Most patterns captured  
-- Low (<70%): Significant patterns missed
-```
+Assign a subjective percentage score to each of the criteria:
 
-**Recipe Mapping Effectiveness**:
-```
-Wide Recipe Fit = Coverage × (2 - Over-application rate)
-Narrow Recipe Fit = Coverage × Precision
-Best Fit = max(Wide Fit, Narrow Fit)
-```
+**Truthfulness**:
+* were all tool use errors reflected in the scratchpad?
+* were all phases and results correctly described in the scratchpad?
 
-**Validation Accuracy**:
-```
-Validation Trust = |Claimed coverage - Actual coverage|
-- Excellent (<5% deviation)
-- Good (5-10% deviation)
-- Poor (>10% deviation)
-```
+**Intent Extraction Quality**
+**Recipe Mapping Effectiveness**
+**Validation Correctness**
+**Overall Workflow Score**
 
-**Iteration Productivity**:
-```
-Iteration Value = (Coverage improvement / Iterations) × 100
-- Efficient (>10% per iteration)
-- Moderate (5-10% per iteration)
-- Inefficient (<5% per iteration)
-```
+### Phase 4: OpenRewrite-Specific Deeper Insights
 
-**Overall Workflow Score**:
-```
-Workflow Success = 
-  Intent Quality × 0.2 +
-  Recipe Fit × 0.3 +
-  Validation Accuracy × 0.2 +
-  Final Coverage × 0.3
-```
-
-### Phase 4: Cost-Benefit Analysis
-
-**Token Usage by Phase**:
-- Intent extraction tokens (analyzing diffs)
-- Recipe mapping tokens (searching catalog)
-- Validation tokens (running tests)
-- Iteration tokens (refinement cycles)
-
-**ROI Calculation**:
-```
-ROI = (Manual effort saved - AI cost) / AI cost
-Where:
-- Manual effort = Hours × Developer rate
-- AI cost = Total tokens × Price per token
-```
-
-**Efficiency Metrics**:
-- Cost per successful recipe
-- Tokens per percentage coverage
-- Iteration cost vs improvement
-
-### Phase 5: OpenRewrite-Specific Insights
-
-**Recipe Quality Assessment**:
-- Were appropriate recipes selected?
-- Could better recipes exist?
-- Were recipes properly composed?
-
-**Validation Completeness**:
-- Were all file types tested?
-- Were edge cases considered?
-- Were preconditions verified?
-
-**Workflow Optimization Opportunities**:
-- Could fewer iterations achieve same result?
-- Were any phases redundant?
-- Could parallelization help?
+**Recipe Quality Assessment**
+**Validation Completeness**
+**Workflow Optimization Opportunities**
 
 ## Report Generation
 
@@ -166,7 +105,6 @@ Key Findings:
 2. [Second finding]
 3. [Third finding]
 
-ROI: XX% (Saved ~X hours of manual work)
 ```
 
 ### Detailed Sections
@@ -222,3 +160,15 @@ When analyzing an OpenRewrite workflow session:
     - JSON file with the metrics
 
 Always focus on improving future OpenRewrite automation success while maintaining rigorous analytical standards.
+
+## Structured output
+Save structured output alongside the given scratchpad file. Call it `subjective-evaluation.json`:
+```json
+{
+   "truthfullness": "<truthfullness %>",
+   "extractionQuality": "<extraction quality %>",
+   "mappingEffectiveness": "<mapping effectiveness %>",
+   "validationCorrectness": "<validation correctness %>",
+   "overall": "<overall completion %>"
+}
+```

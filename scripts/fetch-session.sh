@@ -104,20 +104,14 @@ fi
 
 echo "Session file validated for project: $CURRENT_PROJECT_DIR"
 
-# Create .sessions directory if it doesn't exist
-mkdir -p ./.sessions
-
-# Determine output filename based on input mode
+SESSION_DEST_DIR="./.sessions"
 if [ -n "$SCRATCHPAD_FILE" ]; then
-    # Use scratchpad filename without extension
-    OUTPUT_NAME=$(basename "$SCRATCHPAD_FILE" .md)
-else
-    # Use session ID as filename
-    OUTPUT_NAME="$UUID"
+  SESSION_DEST_DIR=$(dirname "$SCRATCHPAD_FILE")
 fi
+mkdir -p "${SESSION_DEST_DIR}"
 
-# Copy session file to ./.sessions with determined name + .jsonl extension
-DEST_FILE="./.sessions/${OUTPUT_NAME}-log.jsonl"
+# Copy session file with determined name + .jsonl extension
+DEST_FILE="$SESSION_DEST_DIR/claude-log.jsonl"
 cp "$SESSION_FILE" "$DEST_FILE"
 
 echo "Session file copied to: $DEST_FILE"
@@ -132,7 +126,7 @@ PRICE_CACHE_CREATION_TOKENS=3.75     # Cache creation (5m): $3.75 per million
 PRICE_CACHE_READ_TOKENS=0.30         # Cache hits & refreshes: $0.30 per million
 
 # Use jq to extract usage data, sum up each field, calculate costs, and create the cost JSON
-COST_FILE="./.sessions/${OUTPUT_NAME}-cost.json"
+COST_FILE="${SESSION_DEST_DIR}/${OUTPUT_NAME}-cost.json"
 
 cat "$DEST_FILE" | jq -s --arg price_input "$PRICE_INPUT_TOKENS" \
                         --arg price_output "$PRICE_OUTPUT_TOKENS" \

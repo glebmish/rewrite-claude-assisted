@@ -61,5 +61,7 @@ where scratchpad file is written called `result`. Following files are expected:
 
 ## Success Criteria
 * All phases complete successfully
-* Well-documented workflow progress in scratchpad
+* Well-documented workflow progress in rewrite-assist-scratchpad.md scratchpad
+* PR diff saved
+* Recipe yaml and diff files saved for each evaluated recipe
 * Actionable recommendations for recipe deployment or refinement
