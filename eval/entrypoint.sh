@@ -24,7 +24,7 @@ start_workflow_monitor() {
 
         while true; do
             sleep 30
-            tail -n 4 "$jsonl_file" | claude --model haiku -p "Summarize last few messages from a Claude Code session as one short sentence of 10-20 words in the form of 'this is finished', 'doing something else now', 'accessing something'. Be specific." 2>/dev/null || true
+            tail -n 4 "$jsonl_file" | -model haiku -p "Summarize last few messages from a Claude Code session as one short sentence of 10-20 words in the form of 'this is finished', 'doing something else now', 'accessing something'. Be specific." 2>/dev/null || true
         done
     ) &
     
@@ -183,7 +183,7 @@ DURATION=$((END_TIME - START_TIME))
 log "Execution completed with status: $EXECUTION_STATUS (duration: ${DURATION}s)"
 
 # Create final metadata
-METADATA_FILE="$(pwd)/metadata.json"
+METADATA_FILE="$(pwd)/workflow-metadata.json"
 cat > $METADATA_FILE << EOF
 {
   "pr_url": "$PR_URL",
@@ -195,6 +195,9 @@ cat > $METADATA_FILE << EOF
 }
 EOF
 echo "run_metadata_file=$METADATA_FILE" >> $GITHUB_OUTPUT
+
+SCRATCHPAD_DIR=$(ls -d -1 $PWD/.scratchpad/*)
+echo "scratchpad_file=$SCRATCHPAD_DIR/rewrite-assist-scratchpad.md" >> $GITHUB_OUTPUT
 
 log "Evaluation complete"
 exit $EXIT_CODE
