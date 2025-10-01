@@ -116,39 +116,4 @@ cp "$SESSION_FILE" "$DEST_FILE"
 
 echo "Session file copied to: $DEST_FILE"
 
-# Extract and sum usage costs from the log
-echo "Extracting usage costs..."
-
-# Claude Sonnet 4 pricing constants (per million tokens)
-PRICE_INPUT_TOKENS=3.00              # Base input tokens: $3 per million
-PRICE_OUTPUT_TOKENS=15.00            # Output tokens: $15 per million  
-PRICE_CACHE_CREATION_TOKENS=3.75     # Cache creation (5m): $3.75 per million
-PRICE_CACHE_READ_TOKENS=0.30         # Cache hits & refreshes: $0.30 per million
-
-# Use jq to extract usage data, sum up each field, calculate costs, and create the cost JSON
-COST_FILE="${SESSION_DEST_DIR}/${OUTPUT_NAME}-cost.json"
-
-cat "$DEST_FILE" | jq -s --arg price_input "$PRICE_INPUT_TOKENS" \
-                        --arg price_output "$PRICE_OUTPUT_TOKENS" \
-                        --arg price_cache_creation "$PRICE_CACHE_CREATION_TOKENS" \
-                        --arg price_cache_read "$PRICE_CACHE_READ_TOKENS" '
-  map(select(.message.usage != null) | .message.usage) |
-  {
-    input_tokens: map(.input_tokens // 0) | add,
-    cache_creation_input_tokens: map(.cache_creation_input_tokens // 0) | add,
-    cache_read_input_tokens: map(.cache_read_input_tokens // 0) | add,
-    output_tokens: map(.output_tokens // 0) | add,
-    service_tier: (map(.service_tier) | unique | join(", "))
-  } |
-  . + {
-    input_tokens_cost: (.input_tokens * ($price_input | tonumber) / 1000000),
-    cache_creation_input_tokens_cost: (.cache_creation_input_tokens * ($price_cache_creation | tonumber) / 1000000),
-    cache_read_input_tokens_cost: (.cache_read_input_tokens * ($price_cache_read | tonumber) / 1000000),
-    output_tokens_cost: (.output_tokens * ($price_output | tonumber) / 1000000)
-  } |
-  . + {
-    total_cost: (.input_tokens_cost + .cache_creation_input_tokens_cost + .cache_read_input_tokens_cost + .output_tokens_cost)
-  }
-' > "$COST_FILE"
-
-echo "Usage costs saved to: $COST_FILE"
+echo "Session file copied successfully."

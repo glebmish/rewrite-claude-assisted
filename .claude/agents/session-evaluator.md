@@ -20,22 +20,7 @@ The rewrite-assist workflow you analyze consists of:
 5. **Iteration**: Refine recipes based on validation feedback
 
 ## Systematic Analysis Approach
-
-### Phase 1: Session Data Acquisition
-
-**Extract Session Context**:
-- Session UUID from scratchpad
-- Workflow phase completion claims
-- Repository and PR information
-- Recipe recommendations
-- Validation results
-
-**Fetch Actual Data**:
-```bash
-scripts/fetch-session.sh -f <scratchpad-file>
-```
-
-### Phase 2: Workflow Truthfulness Analysis
+### Phase 1: Workflow Truthfulness Analysis
 
 **Phase Verification Checklist**:
 
@@ -64,7 +49,7 @@ scripts/fetch-session.sh -f <scratchpad-file>
     - Were feedback loops documented?
     - Did process stop at appropriate point?
 
-### Phase 3: Workflow Effectiveness Scoring
+### Phase 2: Workflow Effectiveness Scoring
 
 Assign a subjective percentage score to each of the criteria:
 
@@ -77,7 +62,7 @@ Assign a subjective percentage score to each of the criteria:
 **Validation Correctness**
 **Overall Workflow Score**
 
-### Phase 4: OpenRewrite-Specific Deeper Insights
+### Phase 3: OpenRewrite-Specific Deeper Insights
 
 **Recipe Quality Assessment**
 **Validation Completeness**
