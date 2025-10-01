@@ -34,9 +34,3 @@ ENV PATH="${JAVA_HOME}/bin:/usr/bin/versions/node/v24.5.0/bin:${PATH}"
 # Create working directory structure
 RUN mkdir -p /workspace
 WORKDIR /workspace
-
-COPY entrypoint.sh /
-COPY settings.json /
-RUN chmod +x /entrypoint.sh
-
-ENTRYPOINT ["/entrypoint.sh"]
