@@ -48,7 +48,7 @@ STRICT_MODE=false
 DEBUG_MODE=false
 PR_URL=""
 TIMEOUT_MINUTES=60
-SETTINGS_FILE="$(dirname "$0")settings.json"
+SETTINGS_FILE="$(dirname "$0")/settings.json"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
