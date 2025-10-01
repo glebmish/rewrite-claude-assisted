@@ -61,12 +61,16 @@ jobs:
           PR_URL="${{ inputs.pr_url }}"
           STRICT_ARG="${{ inputs.strict_mode == true && '--strict' || '' }}"
           DEBUG_ARG="${{ inputs.debug == true && '--debug' || '' }}"
-          /entrypoint.sh $STRICT_ARG $DEBUG_ARG "$PR_URL"
+          eval/entrypoint.sh $STRICT_ARG $DEBUG_ARG "$PR_URL"
 
       - name: 'Analyze Claude Code workflow'
         id: analyze_claude_code_workflow
+        if: always()
         run: |
-          claude --model sonnet -p "analyze rewrite assist session ${{steps.run_claude_code_workflow.outputs.scratchpad_dir}}"
+          eval/analyze-workflow.sh "${{steps.run_claude_code_workflow.outputs.scratchpad_file}}"
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: 'Upload Run results'
         uses: actions/upload-artifact@v4
@@ -74,14 +78,5 @@ jobs:
         with:
           name: run-metadata-${{ github.run_number }}
           path: ${{steps.run_claude_code_workflow.outputs.scratchpad_dir}}
-          if-no-files-found: ignore
-          include-hidden-files: true
-
-      - name: 'Upload scratchpad artifacts'
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: scratchpad-${{ github.run_number }}
-          path: ${{ github.workspace }}/.scratchpad/**
           if-no-files-found: ignore
           include-hidden-files: true

@@ -184,6 +184,7 @@ log "Execution completed with status: $EXECUTION_STATUS (duration: ${DURATION}s)
 
 SCRATCHPAD_DIR=$(ls -d -1 $PWD/.scratchpad/*)
 echo "scratchpad_file=$SCRATCHPAD_DIR/rewrite-assist-scratchpad.md" >> $GITHUB_OUTPUT
+echo "scratchpad_dir=$SCRATCHPAD_DIR" >> $GITHUB_OUTPUT
 
 # Create final metadata
 METADATA_FILE="$SCRATCHPAD_DIR/workflow-metadata.json"
