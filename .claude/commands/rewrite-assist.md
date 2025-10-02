@@ -28,7 +28,7 @@ Test each recipe produced on the previous phase and make the final decision on w
 
 ### Phase 5: Final decision
 Based on the results, choose the final recommended recipe. Final result must reside in the subdirectory of 
-where scratchpad file is written called `result`. Following files are expected:
+where scratchpad file is written called `result`. Following files are expected in this directory and NOTHING ELSE:
 * `pr.diff` - original PR diff
 * `recommended-recipe.yaml` - recipe file
 * `recommended-recipe.diff` - diff of this recipe from main
