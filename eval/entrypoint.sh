@@ -24,7 +24,7 @@ start_workflow_monitor() {
 
         while true; do
             sleep 30
-            tail -n 4 "$jsonl_file" | -model haiku -p "Summarize last few messages from a Claude Code session as one short sentence of 10-20 words in the form of 'this is finished', 'doing something else now', 'accessing something'. Be specific." 2>/dev/null || true
+            tail -n 4 "$jsonl_file" | claude --model haiku -p "Summarize last few messages from a Claude Code session as one short sentence of 10-20 words in the form of 'this is finished', 'doing something else now', 'accessing something'. Be specific." 2>/dev/null || true
         done
     ) &
     
@@ -99,37 +99,8 @@ chmod 600 /root/.ssh/id_rsa
 ssh-keyscan github.com >> /root/.ssh/known_hosts
 log "SSH key configured successfully"
 
-# Parse settings file and generate Claude tool flags
-parse_settings_file() {
-    local settings_file="$1"
-    local allowed_tools=""
-    local disallowed_tools=""
-
-    if [[ ! -f "$settings_file" ]]; then
-        log "Warning: Settings file not found at $settings_file, skipping tool restrictions"
-        return 0
-    fi
-
-    if ! command -v jq &> /dev/null; then
-        log "Warning: jq not available, skipping tool restrictions"
-        return 0
-    fi
-
-    # Extract allowed tools and convert to space-separated string
-    if allowed_array=$(jq -r '.permissions.allow[]?' "$settings_file" 2>/dev/null); then
-        allowed_tools=$(echo "$allowed_array" | tr '\n' ' ' | sed 's/[[:space:]]*$//')
-    fi
-
-    # Extract disallowed tools and convert to space-separated string  
-    if disallowed_array=$(jq -r '.permissions.deny[]?' "$settings_file" 2>/dev/null); then
-        disallowed_tools=$(echo "$disallowed_array" | tr '\n' ' ' | sed 's/[[:space:]]*$//')
-    fi
-
-    # Export for use in command building
-    export CLAUDE_ALLOWED_TOOLS="$allowed_tools"
-    export CLAUDE_DISALLOWED_TOOLS="$disallowed_tools"
-}
-
+# Source shared settings parser
+source "$(dirname "$0")/parse-settings.sh"
 
 # Parse settings file to get tool restrictions
 log "Parsing settings file: $SETTINGS_FILE"

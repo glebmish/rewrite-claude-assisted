@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     vim  \
     gh \
     tree \
+    bc \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Java 11 and 17

@@ -1,10 +1,19 @@
 #!/bin/bash
-set -euo pipefail
+set -euox pipefail
 
 # Logging function
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"
 }
+
+# Source shared settings parser
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/parse-settings.sh"
+
+# Parse settings file for tool restrictions
+SETTINGS_FILE="${SETTINGS_FILE:-$SCRIPT_DIR/settings.json}"
+log "Parsing settings file: $SETTINGS_FILE"
+parse_settings_file "$SETTINGS_FILE"
 
 # Input validation
 SCRATCHPAD_FILE="$1"
@@ -27,32 +36,33 @@ log "Phase 1: Fetching Claude session log..."
 
 # Fetch session using existing script
 if ! scripts/fetch-session.sh -f "$SCRATCHPAD_FILE"; then
-    log "Warning: Failed to fetch session log, skipping quantitative analysis"
-    SESSION_FETCH_FAILED=true
-else
-    SESSION_LOG="$SCRATCHPAD_DIR/claude-log.jsonl"
-    log "Session log saved to: $SESSION_LOG"
-    SESSION_FETCH_FAILED=false
-
-    # Phase 2: Quantitative analysis (separate files)
-    log "Phase 2: Running quantitative analysis..."
-
-    log "  Running usage stats analysis..."
-    if scripts/analysis/claude-usage-stats.sh "$SESSION_LOG"; then
-        log "  Usage stats saved to: $SCRATCHPAD_DIR/claude-usage-stats.json"
-    else
-        log "  Warning: Usage stats analysis failed"
-    fi
-
-    log "  Running cost stats analysis..."
-    if scripts/analysis/claude-cost-stats.sh "$SESSION_LOG"; then
-        log "  Cost stats saved to: $SCRATCHPAD_DIR/claude-cost-stats.json"
-    else
-        log "  Warning: Cost stats analysis failed"
-    fi
-
-    log "Quantitative analysis complete"
+    log "Error: Failed to fetch session log"
+    exit 1
 fi
+
+SESSION_LOG="$SCRATCHPAD_DIR/claude-log.jsonl"
+log "Session log saved to: $SESSION_LOG"
+SESSION_FETCH_FAILED=false
+
+# Phase 2: Quantitative analysis (separate files)
+log "Phase 2: Running quantitative analysis..."
+
+log "  Running usage stats analysis..."
+if scripts/analysis/claude-usage-stats.sh "$SESSION_LOG"; then
+    log "  Usage stats saved to: $SCRATCHPAD_DIR/claude-usage-stats.json"
+else
+    log "  Warning: Usage stats analysis failed"
+fi
+
+log "  Running cost stats analysis..."
+if scripts/analysis/claude-cost-stats.sh "$SESSION_LOG"; then
+    log "  Cost stats saved to: $SCRATCHPAD_DIR/claude-cost-stats.json"
+else
+    log "  Warning: Cost stats analysis failed"
+fi
+
+log "Quantitative analysis complete"
+
 
 # Phase 2b: Recipe Precision Analysis (using diff artifacts)
 log "Phase 2b: Analyzing recipe precision..."
@@ -88,7 +98,14 @@ fi
 
 # Phase 3: Qualitative analysis (exact prompt from workflow)
 log "Phase 3: Running qualitative analysis with Claude..."
-if timeout 10m claude --model sonnet -p "/analyze-session $SCRATCHPAD_FILE $SESSION_LOG"; then
+
+# Build Claude command with tool restrictions
+CLAUDE_FLAGS=$(build_claude_flags)
+CLAUDE_CMD="claude --model sonnet $CLAUDE_FLAGS -p \"/analyze-session $SCRATCHPAD_FILE $SESSION_LOG\""
+
+log "  Running: $CLAUDE_CMD"
+
+if timeout 10m bash -c "$CLAUDE_CMD"; then
     log "Qualitative analysis complete"
 else
     EXIT_CODE=$?
