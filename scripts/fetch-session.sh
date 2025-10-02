@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -euxo pipefail
 
 # Initialize variables
 SCRATCHPAD_FILE=""
