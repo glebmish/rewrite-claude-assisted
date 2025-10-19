@@ -13,6 +13,7 @@ log() {
 start_workflow_monitor() {
     log "Starting background workflow monitor"
     GITHUB_OUTPUT=${GITHUB_OUTPUT:-/dev/null}
+    CLAUDE_LOG_CMD="claude --model claude-haiku-4-5"
     # Start background monitoring process
     (
         while [[ -z ${jsonl_file:-} ]]; do
@@ -24,7 +25,7 @@ start_workflow_monitor() {
 
         while true; do
             sleep 30
-            tail -n 4 "$jsonl_file" | claude --model haiku -p "Summarize last few messages from a Claude Code session as one short sentence of 10-20 words in the form of 'this is finished', 'doing something else now', 'accessing something'. Be specific." 2>/dev/null || true
+            tail -n 4 "$jsonl_file" | $CLAUDE_LOG_CMD -p "Summarize last few messages from a Claude Code session as one short sentence of 10-20 words in the form of 'this is finished', 'doing something else now', 'accessing something'. Be specific." 2>/dev/null || true
         done
     ) &
     
@@ -114,7 +115,7 @@ log "Executing rewrite-assist command"
 START_TIME=$(date +%s)
 
 # Build the claude command
-CLAUDE_CMD="claude --model sonnet"
+CLAUDE_CMD="claude --model claude-haiku-4-5"
 
 # Add debug flag if enabled
 if [[ "$DEBUG_MODE" == "true" ]]; then
