@@ -1,4 +1,4 @@
-name: 'Simple Suite Eval'
+name: 'Java Upgrades Eval'
 
 on:
   workflow_dispatch:
@@ -30,9 +30,9 @@ jobs:
           # Each PR will be tested the specified number of times
           
           PR_CONFIGS=(
-            "https://github.com/glebmish/vintage-api/pull/4|3"
-            # "https://github.com/glebmish/vintage-api/pull/5|3"
-            # "https://github.com/glebmish/vintage-api/pull/6|2"
+            "https://github.com/openrewrite-assist-testing-dataset/analytics-dashboard/pull/1|1"
+            "https://github.com/openrewrite-assist-testing-dataset/notification-service/pull/1|1"
+            "https://github.com/openrewrite-assist-testing-dataset/payment-processing-service/pull/1|1"
           )
           
           # ==========================================
@@ -43,7 +43,7 @@ jobs:
 
   rewrite-assist-runs:
     needs: generate-matrix
-    name: 'PR ${{ matrix.pr_url }} Run ${{ matrix.run }}/${{ matrix.total_runs }}'
+    name: 'PR ${{ matrix.pr_num }} Run ${{ matrix.run }}/${{ matrix.total_runs }}'
     strategy:
       matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
       fail-fast: false
@@ -51,7 +51,6 @@ jobs:
     with:
       pr_url: ${{ matrix.pr_url }}
       strict_mode: false
-      artifact_prefix: ${{ matrix.pr_index }}-run${{ matrix.run }}
     secrets: inherit
 
   analyze-results:
@@ -68,7 +67,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: artifacts/
-          pattern: '*-run*-run-metadata'
+          pattern: 'run-metadata-*'
 
       - name: 'Analyze and generate suite summary'
         run: |
@@ -78,6 +77,6 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: simple-suite-eval-final-results
+          name: java-upgrades-eval-final-results
           path: suite-results/
           if-no-files-found: ignore
