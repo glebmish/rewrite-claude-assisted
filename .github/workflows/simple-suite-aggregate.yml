@@ -1,0 +1,48 @@
+name: 'simple-suite - Aggregate Results'
+
+on:
+  workflow_dispatch:
+    inputs:
+      workflow_runs:
+        description: 'Comma-separated workflow run IDs to aggregate (leave empty to auto-discover latest batch runs)'
+        required: false
+        type: string
+      hours_lookback:
+        description: 'Hours to look back for auto-discovery (default: 24)'
+        required: false
+        default: '24'
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  aggregate:
+    runs-on: ubuntu-latest
+    name: 'Download and Aggregate Results'
+
+    steps:
+      - name: 'Checkout repository'
+        uses: actions/checkout@v4
+
+      - name: 'Download artifacts from batch runs'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          eval/download-suite-artifacts.sh \
+            "simple-suite" \
+            "${{ inputs.hours_lookback }}" \
+            "${{ inputs.workflow_runs }}"
+
+      - name: 'Analyze and generate suite summary'
+        run: |
+          eval/analyze-suite-results.sh "artifacts/"
+
+      - name: 'Upload aggregated results'
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: simple-suite-aggregated-results
+          path: suite-results/
+          if-no-files-found: ignore
