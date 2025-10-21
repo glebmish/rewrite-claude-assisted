@@ -1,0 +1,5 @@
+suite_name: "simple-suite"
+batch_size: 2
+prs:
+  - url: "https://github.com/glebmish/vintage-api/pull/4"
+    runs: 3

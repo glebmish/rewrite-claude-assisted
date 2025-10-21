@@ -160,7 +160,7 @@ echo "scratchpad_dir=$SCRATCHPAD_DIR" >> $GITHUB_OUTPUT
 
 # Create final metadata
 METADATA_FILE="$SCRATCHPAD_DIR/workflow-metadata.json"
-cat > $METADATA_FILE << EOF
+cat > "$METADATA_FILE" << EOF
 {
   "pr_url": "$PR_URL",
   "status": "$EXECUTION_STATUS",

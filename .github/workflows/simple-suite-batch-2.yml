@@ -1,0 +1,27 @@
+name: 'simple-suite - Batch 2'
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  run-batch:
+    name: 'PR ${{ matrix.pr_num }} Run ${{ matrix.run }}/${{ matrix.total_runs }}'
+    strategy:
+      matrix:
+        include:
+          - pr_url: "https://github.com/glebmish/vintage-api/pull/4"
+            pr_num: "4"
+            pr_index: 0
+            run: 3
+            total_runs: 3
+      fail-fast: false
+    uses: ./.github/workflows/rewrite-assist.yml
+    with:
+      pr_url: ${{ matrix.pr_url }}
+      strict_mode: false
+      artifact_prefix: ${{ matrix.pr_index }}-run${{ matrix.run }}
+    secrets: inherit
