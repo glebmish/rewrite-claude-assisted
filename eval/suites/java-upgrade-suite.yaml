@@ -1,0 +1,9 @@
+suite_name: "java-upgrade-suite"
+batch_size: 2
+prs:
+  - url: "https://github.com/openrewrite-assist-testing-dataset/analytics-dashboard/pull/1"
+    runs: 1
+  - url: "https://github.com/openrewrite-assist-testing-dataset/notification-service/pull/1"
+    runs: 1
+  - url: "https://github.com/openrewrite-assist-testing-dataset/payment-processing-service/pull/1"
+    runs: 1
