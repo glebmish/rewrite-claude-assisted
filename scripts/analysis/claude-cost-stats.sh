@@ -32,56 +32,70 @@ OUTPUT_FILE="$OUTPUT_DIR/claude-cost-stats.json"
 
 echo "Calculating usage costs for: $LOG_FILE"
 
-# Claude Sonnet 4 pricing constants (per million tokens)
-PRICE_INPUT_TOKENS=3.00              # Base input tokens: $3 per million
-PRICE_OUTPUT_TOKENS=15.00            # Output tokens: $15 per million
-PRICE_CACHE_CREATION_TOKENS=3.75     # Cache creation (5m): $3.75 per million
-PRICE_CACHE_READ_TOKENS=0.30         # Cache hits & refreshes: $0.30 per million
+# Use jq to extract usage data, group by model, apply model-specific pricing, and create the cost JSON
+cat "$LOG_FILE" | jq -s --arg log_file "$LOG_FILE" '
+  # Define pricing for each model (per million tokens)
+  {
+    "claude-sonnet-4-5-20250929": {
+      input: 3.00,
+      output: 15.00,
+      cache_creation: 3.75,
+      cache_read: 0.30
+    },
+    "claude-haiku-4-5-20250514": {
+      input: 1.00,
+      output: 5.00,
+      cache_creation: 1.25,
+      cache_read: 0.10
+    }
+  } as $pricing |
 
-# Use jq to extract usage data, sum up each field, calculate costs, and create the cost JSON
-cat "$LOG_FILE" | jq -s --arg price_input "$PRICE_INPUT_TOKENS" \
-                        --arg price_output "$PRICE_OUTPUT_TOKENS" \
-                        --arg price_cache_creation "$PRICE_CACHE_CREATION_TOKENS" \
-                        --arg price_cache_read "$PRICE_CACHE_READ_TOKENS" \
-                        --arg log_file "$LOG_FILE" '
+  # Group messages by model
+  (map(select(.message.usage != null and .message.model != null) | {model: .message.model, usage: .message.usage}) | group_by(.model)) as $by_model |
+
+  # Calculate per-model usage and costs
+  ($by_model | map({
+    model: .[0].model,
+    usage: {
+      input_tokens: map(.usage.input_tokens // 0) | add,
+      cache_creation_input_tokens: map(.usage.cache_creation_input_tokens // 0) | add,
+      cache_read_input_tokens: map(.usage.cache_read_input_tokens // 0) | add,
+      output_tokens: map(.usage.output_tokens // 0) | add
+    }
+  } | . + {
+    costs: (
+      ($pricing[.model] // {input: 3.00, output: 15.00, cache_creation: 3.75, cache_read: 0.30}) as $p |
+      {
+        input_tokens_cost: (.usage.input_tokens * $p.input / 1000000),
+        cache_creation_input_tokens_cost: (.usage.cache_creation_input_tokens * $p.cache_creation / 1000000),
+        cache_read_input_tokens_cost: (.usage.cache_read_input_tokens * $p.cache_read / 1000000),
+        output_tokens_cost: (.usage.output_tokens * $p.output / 1000000)
+      } | . + {
+        total_cost: (.input_tokens_cost + .cache_creation_input_tokens_cost + .cache_read_input_tokens_cost + .output_tokens_cost)
+      }
+    )
+  })) as $model_stats |
+
   {
     log_file: $log_file,
     analysis_timestamp: (now | strftime("%Y-%m-%dT%H:%M:%SZ")),
-    usage: (
-      map(select(.message.usage != null) | .message.usage) |
-      {
-        input_tokens: map(.input_tokens // 0) | add,
-        cache_creation_input_tokens: map(.cache_creation_input_tokens // 0) | add,
-        cache_read_input_tokens: map(.cache_read_input_tokens // 0) | add,
-        output_tokens: map(.output_tokens // 0) | add,
-        service_tier: (map(.service_tier) | unique | join(", "))
+    by_model: $model_stats,
+    totals: {
+      usage: {
+        input_tokens: ($model_stats | map(.usage.input_tokens) | add),
+        cache_creation_input_tokens: ($model_stats | map(.usage.cache_creation_input_tokens) | add),
+        cache_read_input_tokens: ($model_stats | map(.usage.cache_read_input_tokens) | add),
+        output_tokens: ($model_stats | map(.usage.output_tokens) | add)
+      },
+      costs: {
+        input_tokens_cost: ($model_stats | map(.costs.input_tokens_cost) | add),
+        cache_creation_input_tokens_cost: ($model_stats | map(.costs.cache_creation_input_tokens_cost) | add),
+        cache_read_input_tokens_cost: ($model_stats | map(.costs.cache_read_input_tokens_cost) | add),
+        output_tokens_cost: ($model_stats | map(.costs.output_tokens_cost) | add),
+        total_cost: ($model_stats | map(.costs.total_cost) | add)
       }
-    ),
-    costs: (
-      map(select(.message.usage != null) | .message.usage) |
-      {
-        input_tokens: map(.input_tokens // 0) | add,
-        cache_creation_input_tokens: map(.cache_creation_input_tokens // 0) | add,
-        cache_read_input_tokens: map(.cache_read_input_tokens // 0) | add,
-        output_tokens: map(.output_tokens // 0) | add
-      } |
-      {
-        input_tokens_cost: (.input_tokens * ($price_input | tonumber) / 1000000),
-        cache_creation_input_tokens_cost: (.cache_creation_input_tokens * ($price_cache_creation | tonumber) / 1000000),
-        cache_read_input_tokens_cost: (.cache_read_input_tokens * ($price_cache_read | tonumber) / 1000000),
-        output_tokens_cost: (.output_tokens * ($price_output | tonumber) / 1000000)
-      } |
-      . + {
-        total_cost: (.input_tokens_cost + .cache_creation_input_tokens_cost + .cache_read_input_tokens_cost + .output_tokens_cost)
-      }
-    ),
-    pricing: {
-      input_tokens_per_million: ($price_input | tonumber),
-      output_tokens_per_million: ($price_output | tonumber),
-      cache_creation_tokens_per_million: ($price_cache_creation | tonumber),
-      cache_read_tokens_per_million: ($price_cache_read | tonumber),
-      currency: "USD"
-    }
+    },
+    pricing: $pricing
   }
 ' > "$OUTPUT_FILE"
 
@@ -90,14 +104,19 @@ echo "Cost statistics saved to: $OUTPUT_FILE"
 # Output summary to stdout
 echo ""
 echo "Cost Statistics Summary:"
+echo ""
 
-# Extract and display key metrics
-TOTAL_COST=$(jq -r '.costs.total_cost' "$OUTPUT_FILE")
-INPUT_TOKENS=$(jq -r '.usage.input_tokens' "$OUTPUT_FILE")
-OUTPUT_TOKENS=$(jq -r '.usage.output_tokens' "$OUTPUT_FILE")
-CACHE_CREATION_TOKENS=$(jq -r '.usage.cache_creation_input_tokens' "$OUTPUT_FILE")
-CACHE_READ_TOKENS=$(jq -r '.usage.cache_read_input_tokens' "$OUTPUT_FILE")
+# Display per-model costs
+jq -r '.by_model[] | "Model: \(.model)\n  Input tokens: \(.usage.input_tokens)\n  Cache creation tokens: \(.usage.cache_creation_input_tokens)\n  Cache read tokens: \(.usage.cache_read_input_tokens)\n  Output tokens: \(.usage.output_tokens)\n  Cost: $" + (.costs.total_cost | tostring) + "\n"' "$OUTPUT_FILE"
 
+# Extract and display totals
+TOTAL_COST=$(jq -r '.totals.costs.total_cost' "$OUTPUT_FILE")
+INPUT_TOKENS=$(jq -r '.totals.usage.input_tokens' "$OUTPUT_FILE")
+OUTPUT_TOKENS=$(jq -r '.totals.usage.output_tokens' "$OUTPUT_FILE")
+CACHE_CREATION_TOKENS=$(jq -r '.totals.usage.cache_creation_input_tokens' "$OUTPUT_FILE")
+CACHE_READ_TOKENS=$(jq -r '.totals.usage.cache_read_input_tokens' "$OUTPUT_FILE")
+
+echo "Total across all models:"
 echo "  Total cost: \$$(printf "%.4f" "$TOTAL_COST")"
 echo "  Input tokens: $INPUT_TOKENS"
 echo "  Output tokens: $OUTPUT_TOKENS"
