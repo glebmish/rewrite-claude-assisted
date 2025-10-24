@@ -167,7 +167,7 @@ cat > "$METADATA_FILE" << EOF
   "exit_code": $EXIT_CODE,
   "duration_seconds": $DURATION,
   "start_time": "$(date -d @$START_TIME -u +"%Y-%m-%dT%H:%M:%SZ")",
-  "end_time": "$(date -d @$END_TIME -u +"%Y-%m-%dT%H:%M:%SZ")",
+  "end_time": "$(date -d @$END_TIME -u +"%Y-%m-%dT%H:%M:%SZ")"
 }
 EOF
 
