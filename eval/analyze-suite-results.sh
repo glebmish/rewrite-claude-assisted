@@ -39,14 +39,14 @@ extract_json_value() {
 safe_add() {
     local a="${1:-0}"
     local b="${2:-0}"
-    
-    # Remove any non-numeric characters except dot and minus
-    a=$(echo "$a" | grep -oE '[0-9.]+' || echo "0")
-    b=$(echo "$b" | grep -oE '[0-9.]+' || echo "0")
-    
+
+    # Remove any non-numeric characters except dot and minus, take only first match
+    a=$(echo "$a" | grep -oE '[0-9.]+' | head -1 || echo "0")
+    b=$(echo "$b" | grep -oE '[0-9.]+' | head -1 || echo "0")
+
     if [ -z "$a" ] || [ "$a" = "" ]; then a=0; fi
     if [ -z "$b" ] || [ "$b" = "" ]; then b=0; fi
-    
+
     echo "$a + $b" | bc -l 2>/dev/null || echo "0"
 }
 
@@ -55,14 +55,14 @@ safe_divide() {
     local a="${1:-0}"
     local b="${2:-1}"
     local scale="${3:-2}"
-    
-    # Remove any non-numeric characters except dot and minus
-    a=$(echo "$a" | grep -oE '[0-9.]+' || echo "0")
-    b=$(echo "$b" | grep -oE '[0-9.]+' || echo "1")
-    
+
+    # Remove any non-numeric characters except dot and minus, take only first match
+    a=$(echo "$a" | grep -oE '[0-9.]+' | head -1 || echo "0")
+    b=$(echo "$b" | grep -oE '[0-9.]+' | head -1 || echo "1")
+
     if [ -z "$a" ] || [ "$a" = "" ]; then a=0; fi
     if [ -z "$b" ] || [ "$b" = "" ] || [ "$b" = "0" ]; then b=1; fi
-    
+
     echo "scale=$scale; $a / $b" | bc -l 2>/dev/null || echo "0"
 }
 
@@ -171,7 +171,8 @@ done
 # Calculate suite-level metrics
 success_rate=0
 if [ $total_runs -gt 0 ]; then
-    success_rate=$(safe_divide "$successful_runs * 100" "$total_runs" "2")
+    success_numerator=$((successful_runs * 100))
+    success_rate=$(safe_divide "$success_numerator" "$total_runs" "2")
 fi
 total_duration_min=$(safe_divide "$total_duration" "60" "1")
 avg_duration_per_run=$(safe_divide "$total_duration_min" "$total_runs" "1")
