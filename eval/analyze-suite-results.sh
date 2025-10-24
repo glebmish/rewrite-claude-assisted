@@ -144,6 +144,23 @@ for run_dir in $run_dirs; do
         score_valid=$(extract_json_value "$eval_data" "validationCorrectness" "N/A")
         score_overall=$(extract_json_value "$eval_data" "overall" "N/A")
     fi
+
+    # Parse recipe-precision-stats.json
+    precision_unnecessary="N/A"
+    precision_missing="N/A"
+    precision_divergence="N/A"
+    precision_accuracy="N/A"
+    precision_f1="N/A"
+    precision_perfect="N/A"
+    if [ -f "$run_dir/recipe-precision-stats.json" ]; then
+        precision_data=$(cat "$run_dir/recipe-precision-stats.json")
+        precision_unnecessary=$(extract_json_value "$precision_data" "unnecessary_changes" "N/A")
+        precision_missing=$(extract_json_value "$precision_data" "missing_changes" "N/A")
+        precision_divergence=$(extract_json_value "$precision_data" "total_divergence" "N/A")
+        precision_accuracy=$(extract_json_value "$precision_data" "accuracy" "N/A")
+        precision_f1=$(extract_json_value "$precision_data" "f1_score" "N/A")
+        precision_perfect=$(extract_json_value "$precision_data" "is_perfect_match" "N/A")
+    fi
     
     total_runs=$((total_runs + 1))
     total_cost=$(safe_add "$total_cost" "$cost")
@@ -163,9 +180,9 @@ for run_dir in $run_dirs; do
     
     # Calculate duration in minutes
     duration_min=$(safe_divide "$duration" "60" "1")
-    
-    # Store run data (including pr_url)
-    all_runs+=("$pr_num|$pr_url|$run_number|$status|$duration|$duration_min|$cost|$score_truth|$score_extract|$score_mapping|$score_valid|$score_overall|$total_messages|$tool_calls|$successful_tools|$tool_success_rate")
+
+    # Store run data (including pr_url and precision metrics)
+    all_runs+=("$pr_num|$pr_url|$run_number|$status|$duration|$duration_min|$cost|$score_truth|$score_extract|$score_mapping|$score_valid|$score_overall|$total_messages|$tool_calls|$successful_tools|$tool_success_rate|$precision_unnecessary|$precision_missing|$precision_divergence|$precision_accuracy|$precision_f1|$precision_perfect")
 done
 
 # Calculate suite-level metrics
@@ -223,7 +240,7 @@ summary_file="$OUTPUT_DIR/summary.md"
             pr_score_count=0
 
             for run_data in "${all_runs[@]}"; do
-                IFS='|' read -r run_pr run_pr_url run_num run_status run_dur run_dur_min run_cost run_truth run_extract run_mapping run_valid run_overall run_msg run_tools run_succ_tools run_tool_rate <<< "$run_data"
+                IFS='|' read -r run_pr run_pr_url run_num run_status run_dur run_dur_min run_cost run_truth run_extract run_mapping run_valid run_overall run_msg run_tools run_succ_tools run_tool_rate prec_unnecessary prec_missing prec_divergence prec_accuracy prec_f1 prec_perfect <<< "$run_data"
 
                 if [ "$run_pr" = "$pr" ]; then
                     [ "$run_status" = "success" ] && pr_success=$((pr_success + 1))
@@ -263,11 +280,11 @@ summary_file="$OUTPUT_DIR/summary.md"
     
     echo "## Detailed Results"
     echo ""
-    echo "| PR | Run | Status | Duration | Cost | Truth | Extract | Mapping | Valid | Overall |"
-    echo "|----|-----|--------|----------|------|-------|---------|---------|-------|---------|"
-    
+    echo "| PR | Run | Status | Duration | Cost | Truth | Extract | Mapping | Valid | Overall | Accuracy | F1 | Perfect |"
+    echo "|----|-----|--------|----------|------|-------|---------|---------|-------|---------|----------|-------|---------|"
+
     for run_data in "${all_runs[@]}"; do
-        IFS='|' read -r run_pr run_pr_url run_num run_status run_dur run_dur_min run_cost run_truth run_extract run_mapping run_valid run_overall run_msg run_tools run_succ_tools run_tool_rate <<< "$run_data"
+        IFS='|' read -r run_pr run_pr_url run_num run_status run_dur run_dur_min run_cost run_truth run_extract run_mapping run_valid run_overall run_msg run_tools run_succ_tools run_tool_rate prec_unnecessary prec_missing prec_divergence prec_accuracy prec_f1 prec_perfect <<< "$run_data"
         
         status_icon=$GREEN
         [ "$run_status" != "success" ] && status_icon=$RED
@@ -283,8 +300,26 @@ summary_file="$OUTPUT_DIR/summary.md"
         else
             pr_link="#$run_pr"
         fi
-        
-        echo "| $pr_link | $run_num/$total_pr_runs | $status_icon | ${run_dur_min}m | \$$(printf '%.2f' $run_cost 2>/dev/null || echo "$run_cost") | $run_truth | $run_extract | $run_mapping | $run_valid | $run_overall |"
+
+        # Format precision metrics
+        formatted_accuracy="$prec_accuracy"
+        if [ "$prec_accuracy" != "N/A" ]; then
+            formatted_accuracy=$(printf '%.2f' $prec_accuracy 2>/dev/null || echo "$prec_accuracy")
+        fi
+
+        formatted_f1="$prec_f1"
+        if [ "$prec_f1" != "N/A" ]; then
+            formatted_f1=$(printf '%.2f' $prec_f1 2>/dev/null || echo "$prec_f1")
+        fi
+
+        perfect_icon="$prec_perfect"
+        if [ "$prec_perfect" = "true" ]; then
+            perfect_icon="$GREEN"
+        elif [ "$prec_perfect" = "false" ]; then
+            perfect_icon="$RED"
+        fi
+
+        echo "| $pr_link | $run_num/$total_pr_runs | $status_icon | ${run_dur_min}m | \$$(printf '%.2f' $run_cost 2>/dev/null || echo "$run_cost") | $run_truth | $run_extract | $run_mapping | $run_valid | $run_overall | $formatted_accuracy | $formatted_f1 | $perfect_icon |"
     done
     
 } > "$summary_file"
@@ -313,11 +348,11 @@ json_file="$OUTPUT_DIR/suite-results.json"
     
     first=true
     for run_data in "${all_runs[@]}"; do
-        IFS='|' read -r run_pr run_pr_url run_num run_status run_dur run_dur_min run_cost run_truth run_extract run_mapping run_valid run_overall run_msg run_tools run_succ_tools run_tool_rate <<< "$run_data"
-        
+        IFS='|' read -r run_pr run_pr_url run_num run_status run_dur run_dur_min run_cost run_truth run_extract run_mapping run_valid run_overall run_msg run_tools run_succ_tools run_tool_rate prec_unnecessary prec_missing prec_divergence prec_accuracy prec_f1 prec_perfect <<< "$run_data"
+
         [ "$first" = false ] && echo "    ,"
         first=false
-        
+
         echo "    {"
         echo "      \"pr_number\": \"$run_pr\","
         echo "      \"pr_url\": \"$run_pr_url\","
@@ -338,6 +373,14 @@ json_file="$OUTPUT_DIR/suite-results.json"
         echo "        \"tool_calls\": $run_tools,"
         echo "        \"successful_tool_calls\": $run_succ_tools,"
         echo "        \"tool_success_rate\": $run_tool_rate"
+        echo "      },"
+        echo "      \"precision_metrics\": {"
+        echo "        \"unnecessary_changes\": \"$prec_unnecessary\","
+        echo "        \"missing_changes\": \"$prec_missing\","
+        echo "        \"total_divergence\": \"$prec_divergence\","
+        echo "        \"accuracy\": \"$prec_accuracy\","
+        echo "        \"f1_score\": \"$prec_f1\","
+        echo "        \"is_perfect_match\": \"$prec_perfect\""
         echo "      }"
         echo -n "    }"
     done
