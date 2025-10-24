@@ -25,14 +25,20 @@ failed_runs=0
 total_cost=0
 total_duration=0
 
-# Helper function to safely extract JSON values
+# Helper function to safely extract JSON values using jq
 extract_json_value() {
-    local json="$1"
-    local key="$2"
+    local file="$1"
+    local path="$2"
     local default="${3:-}"
-    
-    local value=$(echo "$json" | grep -o "\"$key\":[^,}]*" | cut -d':' -f2- | tr -d '"' | tr -d ' ' || echo "$default")
-    echo "${value:-$default}"
+
+    if [ ! -f "$file" ]; then
+        echo "$default"
+        return
+    fi
+
+    # Extract value; if null or doesn't exist, use default
+    local value=$(jq -r "if ($path) == null then \"$default\" else ($path) end" "$file" 2>/dev/null || echo "$default")
+    echo "${value}"
 }
 
 # Helper function to safely add numbers
@@ -92,17 +98,16 @@ for run_dir in $run_dirs; do
     
     # Parse workflow-metadata.json
     if [ -f "$run_dir/workflow-metadata.json" ]; then
-        metadata=$(cat "$run_dir/workflow-metadata.json")
-        pr_url=$(extract_json_value "$metadata" "pr_url" "")
-        
+        pr_url=$(extract_json_value "$run_dir/workflow-metadata.json" ".pr_url" "")
+
         if [ -n "$pr_url" ]; then
             pr_num=$(echo "$pr_url" | grep -oE '[0-9]+$' || echo "unknown")
         fi
-        
-        status=$(extract_json_value "$metadata" "status" "unknown")
-        exit_code=$(extract_json_value "$metadata" "exit_code" "1")
-        duration=$(extract_json_value "$metadata" "duration_seconds" "0")
-        
+
+        status=$(extract_json_value "$run_dir/workflow-metadata.json" ".status" "unknown")
+        exit_code=$(extract_json_value "$run_dir/workflow-metadata.json" ".exit_code" "1")
+        duration=$(extract_json_value "$run_dir/workflow-metadata.json" ".duration_seconds" "0")
+
         if [ "$exit_code" = "0" ]; then
             successful_runs=$((successful_runs + 1))
         else
@@ -113,8 +118,11 @@ for run_dir in $run_dirs; do
     
     # Parse claude-cost-stats.json
     if [ -f "$run_dir/claude-cost-stats.json" ]; then
-        cost_data=$(cat "$run_dir/claude-cost-stats.json")
-        cost=$(extract_json_value "$cost_data" "total_cost" "0")
+        cost=$(extract_json_value "$run_dir/claude-cost-stats.json" ".totals.costs.total_cost" "")
+        # Fallback to non-totals path if totals not found
+        if [ -z "$cost" ] || [ "$cost" = "null" ] || [ "$cost" = "" ]; then
+            cost=$(extract_json_value "$run_dir/claude-cost-stats.json" ".costs.total_cost" "0")
+        fi
     fi
     
     # Parse claude-usage-stats.json
@@ -123,11 +131,10 @@ for run_dir in $run_dirs; do
     successful_tools="0"
     tool_success_rate="0"
     if [ -f "$run_dir/claude-usage-stats.json" ]; then
-        usage_data=$(cat "$run_dir/claude-usage-stats.json")
-        total_messages=$(extract_json_value "$usage_data" "total_messages" "0")
-        tool_calls=$(extract_json_value "$usage_data" "tool_calls" "0")
-        successful_tools=$(extract_json_value "$usage_data" "successful_tool_calls" "0")
-        tool_success_rate=$(extract_json_value "$usage_data" "tool_success_rate" "0")
+        total_messages=$(extract_json_value "$run_dir/claude-usage-stats.json" ".metrics.total_messages" "0")
+        tool_calls=$(extract_json_value "$run_dir/claude-usage-stats.json" ".metrics.tool_calls" "0")
+        successful_tools=$(extract_json_value "$run_dir/claude-usage-stats.json" ".metrics.successful_tool_calls" "0")
+        tool_success_rate=$(extract_json_value "$run_dir/claude-usage-stats.json" ".metrics.tool_success_rate" "0")
     fi
     
     # Parse subjective-evaluation.json
@@ -137,12 +144,11 @@ for run_dir in $run_dirs; do
     score_valid="N/A"
     score_overall="N/A"
     if [ -f "$run_dir/subjective-evaluation.json" ]; then
-        eval_data=$(cat "$run_dir/subjective-evaluation.json")
-        score_truth=$(extract_json_value "$eval_data" "truthfulness" "N/A")
-        score_extract=$(extract_json_value "$eval_data" "extractionQuality" "N/A")
-        score_mapping=$(extract_json_value "$eval_data" "mappingEffectiveness" "N/A")
-        score_valid=$(extract_json_value "$eval_data" "validationCorrectness" "N/A")
-        score_overall=$(extract_json_value "$eval_data" "overall" "N/A")
+        score_truth=$(extract_json_value "$run_dir/subjective-evaluation.json" ".detailed_metrics.truthfulness" "N/A")
+        score_extract=$(extract_json_value "$run_dir/subjective-evaluation.json" ".detailed_metrics.intent_extraction_quality" "N/A")
+        score_mapping=$(extract_json_value "$run_dir/subjective-evaluation.json" ".detailed_metrics.recipe_mapping_effectiveness" "N/A")
+        score_valid=$(extract_json_value "$run_dir/subjective-evaluation.json" ".detailed_metrics.validation_correctness" "N/A")
+        score_overall=$(extract_json_value "$run_dir/subjective-evaluation.json" ".scores.overall_session_effectiveness" "N/A")
     fi
 
     # Parse recipe-precision-stats.json
@@ -153,13 +159,12 @@ for run_dir in $run_dirs; do
     precision_f1="N/A"
     precision_perfect="N/A"
     if [ -f "$run_dir/recipe-precision-stats.json" ]; then
-        precision_data=$(cat "$run_dir/recipe-precision-stats.json")
-        precision_unnecessary=$(extract_json_value "$precision_data" "unnecessary_changes" "N/A")
-        precision_missing=$(extract_json_value "$precision_data" "missing_changes" "N/A")
-        precision_divergence=$(extract_json_value "$precision_data" "total_divergence" "N/A")
-        precision_accuracy=$(extract_json_value "$precision_data" "accuracy" "N/A")
-        precision_f1=$(extract_json_value "$precision_data" "f1_score" "N/A")
-        precision_perfect=$(extract_json_value "$precision_data" "is_perfect_match" "N/A")
+        precision_unnecessary=$(extract_json_value "$run_dir/recipe-precision-stats.json" ".metrics.unnecessary_changes" "N/A")
+        precision_missing=$(extract_json_value "$run_dir/recipe-precision-stats.json" ".metrics.missing_changes" "N/A")
+        precision_divergence=$(extract_json_value "$run_dir/recipe-precision-stats.json" ".metrics.total_divergence" "N/A")
+        precision_accuracy=$(extract_json_value "$run_dir/recipe-precision-stats.json" ".metrics.accuracy" "N/A")
+        precision_f1=$(extract_json_value "$run_dir/recipe-precision-stats.json" ".metrics.f1_score" "N/A")
+        precision_perfect=$(extract_json_value "$run_dir/recipe-precision-stats.json" ".metrics.is_perfect_match" "N/A")
     fi
     
     total_runs=$((total_runs + 1))
@@ -197,7 +202,7 @@ avg_cost_per_run=$(safe_divide "$total_cost" "$total_runs" "2")
 
 # Count unique PRs
 unique_prs=0
-if [ ${#pr_runs[@]} -gt 0 ]; then
+if [ -n "${!pr_runs[*]}" ]; then
     unique_prs=${#pr_runs[@]}
 fi
 
