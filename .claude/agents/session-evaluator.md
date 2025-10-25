@@ -146,14 +146,64 @@ When analyzing an OpenRewrite workflow session:
 
 Always focus on improving future OpenRewrite automation success while maintaining rigorous analytical standards.
 
-## Structured output
-Save structured output alongside the given scratchpad file. Call it `subjective-evaluation.json`:
+## Structured Output: subjective-evaluation.json
+
+**CRITICAL**: This JSON file is parsed by automated suite aggregation scripts (`eval/analyze-suite-results.sh`).
+The format MUST match EXACTLY as specified below. Do NOT add extra fields.
+
+**File Location**: Save alongside the scratchpad file as `subjective-evaluation.json`
+
+**Format Requirements**:
+1. **ONLY** the fields listed below - no additional fields
+2. Field names must match exactly (snake_case with underscores)
+3. All score values must be strings with percentage sign (e.g., `"85%"`)
+4. Structure must include `detailed_metrics` and `scores` wrapper objects
+
+**Required JSON Structure** (copy this template exactly):
 ```json
 {
-   "truthfullness": "<truthfullness %>",
-   "extractionQuality": "<extraction quality %>",
-   "mappingEffectiveness": "<mapping effectiveness %>",
-   "validationCorrectness": "<validation correctness %>",
-   "overall": "<overall completion %>"
+  "detailed_metrics": {
+    "truthfulness": "XX%",
+    "intent_extraction_quality": "XX%",
+    "recipe_mapping_effectiveness": "XX%",
+    "validation_correctness": "XX%"
+  },
+  "scores": {
+    "overall_session_effectiveness": "XX%"
+  }
 }
 ```
+
+**Field Descriptions**:
+- `truthfulness`: 0-100% - Were all tool use errors and phase results accurately reflected in scratchpad?
+- `intent_extraction_quality`: 0-100% - How well does intent tree match PR changes?
+- `recipe_mapping_effectiveness`: 0-100% - How appropriate are the selected recipes?
+- `validation_correctness`: 0-100% - Do validation metrics match claims?
+- `overall_session_effectiveness`: 0-100% - Combined workflow effectiveness score
+
+**Format Validation** (run these commands after generating the file):
+```bash
+# Verify required fields exist and are accessible
+jq -e '.detailed_metrics.truthfulness' subjective-evaluation.json
+jq -e '.detailed_metrics.intent_extraction_quality' subjective-evaluation.json
+jq -e '.detailed_metrics.recipe_mapping_effectiveness' subjective-evaluation.json
+jq -e '.detailed_metrics.validation_correctness' subjective-evaluation.json
+jq -e '.scores.overall_session_effectiveness' subjective-evaluation.json
+
+# Verify format (should return strings like "85%")
+jq -r '.detailed_metrics.truthfulness' subjective-evaluation.json | grep -E '^[0-9]+%$'
+```
+
+**Detailed Analysis Reporting**:
+All detailed findings, recommendations, cost analysis, and narrative assessment should go in:
+- `evaluation-report.md` (the main markdown report)
+- NOT in the JSON file
+
+**Separation of Concerns**:
+- **JSON file**: Minimal machine-readable metrics only (5 score fields)
+- **Markdown report**: Rich human-readable analysis with full context
+
+This separation ensures:
+1. Suite aggregation scripts can reliably parse metrics
+2. Format stability across different Claude model versions
+3. Human analysts get full detailed context in the markdown report
