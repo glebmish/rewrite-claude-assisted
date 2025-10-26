@@ -6,26 +6,32 @@ set -euxo pipefail
 SCRATCHPAD_FILE=""
 SESSION_ID=""
 UUID=""
+OUTPUT_FILE=""
 
 # Function to show usage
 usage() {
-    echo "Usage: $0 [-f <filepath-to-scratchpad>] [-s <session-id>]"
+    echo "Usage: $0 [-f <filepath-to-scratchpad>] [-s <session-id>] [-o <output-file>]"
     echo "  -f: Extract session ID from scratchpad file"
     echo "  -s: Use provided session ID directly"
+    echo "  -o: Specify output file path for the session log"
     echo "Examples:"
     echo "  $0 -f /path/to/scratchpad.md"
     echo "  $0 -s 0ab55372-1fc8-4700-975c-c1c770076a0f"
+    echo "  $0 -s 0ab55372-1fc8-4700-975c-c1c770076a0f -o /path/to/output.jsonl"
     exit 1
 }
 
 # Parse command line arguments
-while getopts "f:s:h" opt; do
+while getopts "f:s:o:h" opt; do
     case $opt in
         f)
             SCRATCHPAD_FILE="$OPTARG"
             ;;
         s)
             SESSION_ID="$OPTARG"
+            ;;
+        o)
+            OUTPUT_FILE="$OPTARG"
             ;;
         h)
             usage
@@ -104,14 +110,21 @@ fi
 
 echo "Session file validated for project: $CURRENT_PROJECT_DIR"
 
-SESSION_DEST_DIR="./.sessions"
-if [ -n "$SCRATCHPAD_FILE" ]; then
-  SESSION_DEST_DIR=$(dirname "$SCRATCHPAD_FILE")
+# Determine output file path
+if [ -n "$OUTPUT_FILE" ]; then
+  DEST_FILE="$OUTPUT_FILE"
+else
+  SESSION_DEST_DIR="./.sessions"
+  if [ -n "$SCRATCHPAD_FILE" ]; then
+    SESSION_DEST_DIR=$(dirname "$SCRATCHPAD_FILE")
+  fi
+  DEST_FILE="$SESSION_DEST_DIR/claude-log.jsonl"
 fi
-mkdir -p "${SESSION_DEST_DIR}"
 
-# Copy session file with determined name + .jsonl extension
-DEST_FILE="$SESSION_DEST_DIR/claude-log.jsonl"
+# Create output directory if needed
+mkdir -p "$(dirname "$DEST_FILE")"
+
+# Copy session file
 cp "$SESSION_FILE" "$DEST_FILE"
 
 echo "Session file copied to: $DEST_FILE"
