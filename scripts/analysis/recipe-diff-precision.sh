@@ -35,12 +35,14 @@ echo "Analyzing recipe precision from: $DIFF_FILE"
 # Count actual code changes (exclude file headers '---' and '+++')
 # Unnecessary: lines starting with '-' but not '---'
 unnecessary=$(grep -c '^-[^-]' "$DIFF_FILE" 2>/dev/null || echo "0")
+unnecessary=${unnecessary:-0}
 
 # Missing: lines starting with '+' but not '+++'
 missing=$(grep -c '^\+[^+]' "$DIFF_FILE" 2>/dev/null || echo "0")
+missing=${missing:-0}
 
-# Total divergence
-total_divergence=$((unnecessary + missing))
+# Total divergence (ensure numeric values)
+total_divergence=$(( ${unnecessary} + ${missing} ))
 
 echo "  Unnecessary changes (false positives): $unnecessary"
 echo "  Missing changes (false negatives): $missing"
