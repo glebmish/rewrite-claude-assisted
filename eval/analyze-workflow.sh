@@ -105,11 +105,20 @@ CLAUDE_CMD="claude --model claude-haiku-4-5 $CLAUDE_FLAGS -p \"/analyze-session 
 
 log "  Running: $CLAUDE_CMD"
 
-if timeout 10m bash -c "$CLAUDE_CMD"; then
-    log "Qualitative analysis complete"
+ANALYSIS_OUTPUT_LOG="$SCRATCHPAD_DIR/analysis-output.log"
+if timeout 10m bash -c "$CLAUDE_CMD" 2>&1 | tee "$ANALYSIS_OUTPUT_LOG"; then
+    # Check for session limit
+    if grep -qi "session limit reached" "$ANALYSIS_OUTPUT_LOG"; then
+        log "Warning: Session limit reached during qualitative analysis"
+    else
+        log "Qualitative analysis complete"
+    fi
 else
     EXIT_CODE=$?
-    if [ $EXIT_CODE -eq 124 ]; then
+    # Check for session limit
+    if grep -qi "session limit reached" "$ANALYSIS_OUTPUT_LOG"; then
+        log "Warning: Session limit reached during qualitative analysis"
+    elif [ $EXIT_CODE -eq 124 ]; then
         log "Warning: Qualitative analysis timed out after 10 minutes"
     else
         log "Warning: Qualitative analysis failed with exit code $EXIT_CODE"
