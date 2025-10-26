@@ -285,8 +285,8 @@ summary_file="$OUTPUT_DIR/summary.md"
     
     echo "## Detailed Results"
     echo ""
-    echo "| PR | Run | Status | Duration | Cost | Truth | Extract | Mapping | Valid | Overall | Accuracy | F1 | Perfect |"
-    echo "|----|-----|--------|----------|------|-------|---------|---------|-------|---------|----------|-------|---------|"
+    echo "| PR | Run | Status | Duration | Cost | Truth | Extract | Mapping | Valid | Overall | Msgs | Tools | Tool Success | Unnecessary | Missing | Divergence | Accuracy | F1 | Perfect |"
+    echo "|----|-----|--------|----------|------|-------|---------|---------|-------|---------|------|-------|--------------|-------------|---------|------------|----------|-------|---------|"
 
     for run_data in "${all_runs[@]}"; do
         IFS='|' read -r run_pr run_pr_url run_num run_status run_dur run_dur_min run_cost run_truth run_extract run_mapping run_valid run_overall run_msg run_tools run_succ_tools run_tool_rate prec_unnecessary prec_missing prec_divergence prec_accuracy prec_f1 prec_perfect <<< "$run_data"
@@ -324,7 +324,13 @@ summary_file="$OUTPUT_DIR/summary.md"
             perfect_icon="$RED"
         fi
 
-        echo "| $pr_link | $run_num/$total_pr_runs | $status_icon | ${run_dur_min}m | \$$(printf '%.2f' $run_cost 2>/dev/null || echo "$run_cost") | $run_truth | $run_extract | $run_mapping | $run_valid | $run_overall | $formatted_accuracy | $formatted_f1 | $perfect_icon |"
+        # Format tool success rate
+        formatted_tool_rate="$run_tool_rate"
+        if [ "$run_tool_rate" != "0" ] && [ "$run_tool_rate" != "N/A" ]; then
+            formatted_tool_rate=$(printf '%.2f' $run_tool_rate 2>/dev/null || echo "$run_tool_rate")
+        fi
+
+        echo "| $pr_link | $run_num/$total_pr_runs | $status_icon | ${run_dur_min}m | \$$(printf '%.2f' $run_cost 2>/dev/null || echo "$run_cost") | $run_truth | $run_extract | $run_mapping | $run_valid | $run_overall | $run_msg | $run_tools | ${run_succ_tools}/${run_tools} (${formatted_tool_rate}) | $prec_unnecessary | $prec_missing | $prec_divergence | $formatted_accuracy | $formatted_f1 | $perfect_icon |"
     done
     
 } > "$summary_file"
