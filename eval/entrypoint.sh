@@ -136,17 +136,25 @@ if [[ "$STRICT_MODE" == "true" ]]; then
 fi
 CLAUDE_CMD="$CLAUDE_CMD -p \"$CLAUDE_PROMPT\""
 
-# Execute with timeout
-if timeout "${TIMEOUT_MINUTES}m" bash -c "$CLAUDE_CMD"; then
-    EXECUTION_STATUS="success"
+# Execute with timeout and capture output
+CLAUDE_OUTPUT_LOG="/tmp/claude-output-$$.log"
+if timeout "${TIMEOUT_MINUTES}m" bash -c "$CLAUDE_CMD" 2>&1 | tee "$CLAUDE_OUTPUT_LOG"; then
     EXIT_CODE=0
 else
     EXIT_CODE=$?
-    if [ $EXIT_CODE -eq 124 ]; then
-        EXECUTION_STATUS="timeout"
-    else
-        EXECUTION_STATUS="failed"
-    fi
+fi
+
+# Check for session limit in output
+if grep -qi "session limit reached" "$CLAUDE_OUTPUT_LOG"; then
+    log "Session limit detected in Claude output"
+    EXECUTION_STATUS="session_limit_reached"
+    EXIT_CODE=1
+elif [ $EXIT_CODE -eq 124 ]; then
+    EXECUTION_STATUS="timeout"
+elif [ $EXIT_CODE -eq 0 ]; then
+    EXECUTION_STATUS="success"
+else
+    EXECUTION_STATUS="failed"
 fi
 
 END_TIME=$(date +%s)
@@ -157,6 +165,12 @@ log "Execution completed with status: $EXECUTION_STATUS (duration: ${DURATION}s)
 SCRATCHPAD_DIR=$(ls -d -1 $PWD/.scratchpad/*)
 echo "scratchpad_file=$SCRATCHPAD_DIR/rewrite-assist-scratchpad.md" >> $GITHUB_OUTPUT
 echo "scratchpad_dir=$SCRATCHPAD_DIR" >> $GITHUB_OUTPUT
+
+# Move claude output log to scratchpad for debugging
+if [ -f "$CLAUDE_OUTPUT_LOG" ]; then
+    mv "$CLAUDE_OUTPUT_LOG" "$SCRATCHPAD_DIR/claude-output.log"
+    log "Claude output saved to: $SCRATCHPAD_DIR/claude-output.log"
+fi
 
 # Create final metadata
 METADATA_FILE="$SCRATCHPAD_DIR/workflow-metadata.json"
