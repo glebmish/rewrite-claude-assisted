@@ -75,7 +75,9 @@ jobs:
         id: analyze_claude_code_workflow
         if: always()
         run: |
-          eval/analyze-workflow.sh "${{steps.run_claude_code_workflow.outputs.scratchpad_file}}"
+          SCRATCHPAD_DIR="${{steps.run_claude_code_workflow.outputs.scratchpad_dir}}"
+          SESSION_ID=$(cat "$SCRATCHPAD_DIR/session-id.txt")
+          eval/analyze-workflow.sh -f "${{steps.run_claude_code_workflow.outputs.scratchpad_file}}" -s "$SESSION_ID"
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}

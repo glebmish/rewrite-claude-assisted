@@ -15,32 +15,68 @@ SETTINGS_FILE="${SETTINGS_FILE:-$SCRIPT_DIR/settings.json}"
 log "Parsing settings file: $SETTINGS_FILE"
 parse_settings_file "$SETTINGS_FILE"
 
-# Input validation
-SCRATCHPAD_FILE="$1"
-if [[ -z "$SCRATCHPAD_FILE" ]]; then
-    echo "Error: scratchpad file required"
-    echo "Usage: $0 <scratchpad-file>"
+# Initialize variables
+SCRATCHPAD_FILE=""
+SESSION_ID=""
+
+# Function to show usage
+usage() {
+    echo "Usage: $0 -f <filepath-to-scratchpad> -s <session-id>"
+    echo "  -f: Path to scratchpad file"
+    echo "  -s: Session ID (UUID format)"
     exit 1
+}
+
+# Parse command line arguments
+while getopts "f:s:h" opt; do
+    case $opt in
+        f)
+            SCRATCHPAD_FILE="$OPTARG"
+            ;;
+        s)
+            SESSION_ID="$OPTARG"
+            ;;
+        h)
+            usage
+            ;;
+        \?)
+            echo "Invalid option: -$OPTARG" >&2
+            usage
+            ;;
+    esac
+done
+
+# Validate required arguments
+if [[ -z "$SCRATCHPAD_FILE" ]]; then
+    echo "Error: scratchpad file required (-f)"
+    usage
 fi
 
+if [[ -z "$SESSION_ID" ]]; then
+    echo "Error: session ID required (-s)"
+    usage
+fi
+
+# Validate scratchpad file exists
 if [[ ! -f "$SCRATCHPAD_FILE" ]]; then
     echo "Error: scratchpad file not found: $SCRATCHPAD_FILE"
     exit 1
 fi
 
 log "Starting analysis for: $SCRATCHPAD_FILE"
+log "Session ID: $SESSION_ID"
 SCRATCHPAD_DIR="$(dirname $SCRATCHPAD_FILE)"
 
 # Phase 1: Fetch session log
 log "Phase 1: Fetching Claude session log..."
 
+SESSION_LOG="$SCRATCHPAD_DIR/claude-log.jsonl"
+
 # Fetch session using existing script
-if ! scripts/fetch-session.sh -f "$SCRATCHPAD_FILE"; then
+if ! scripts/fetch-session.sh -s "$SESSION_ID" -o "$SESSION_LOG"; then
     log "Error: Failed to fetch session log"
     exit 1
 fi
-
-SESSION_LOG="$SCRATCHPAD_DIR/claude-log.jsonl"
 log "Session log saved to: $SESSION_LOG"
 SESSION_FETCH_FAILED=false
 
