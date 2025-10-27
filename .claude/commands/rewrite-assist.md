@@ -66,9 +66,24 @@ git diff main > <scratchpad-dir>/result/recommended-recipe.diff
 **CRITICAL FORMAT REQUIREMENT**: This file MUST be in unified diff format for automated precision analysis.
 
 **IF empirical validation was performed**:
+Use the `scripts/create-diff.sh` script to generate the diff:
 ```bash
-cd .workspace/<recipe-test-worktree>
-git diff <pr-branch> > <scratchpad-dir>/result/recommended-recipe-to-pr.diff
+scripts/create-diff.sh \
+  .workspace/<repo-name> \
+  <recommended-recipe-branch> \
+  <pr-branch> \
+  <scratchpad-dir>/result/recommended-recipe-to-pr.diff
+```
+
+The script will:
+- Validate the repository path and branches exist
+- Generate a diff from recommended-recipe-branch to pr-branch
+- Save the output to the specified file
+- Report success with file size and line counts
+
+**Validation**: After running the script, verify the output file was created:
+```bash
+ls -lh <scratchpad-dir>/result/recommended-recipe-to-pr.diff
 ```
 
 **IF only analytical validation** (no empirical dry-run):
