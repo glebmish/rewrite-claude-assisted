@@ -94,8 +94,7 @@ cat "$LOG_FILE" | jq -s --arg log_file "$LOG_FILE" '
         output_tokens_cost: ($model_stats | map(.costs.output_tokens_cost) | add),
         total_cost: ($model_stats | map(.costs.total_cost) | add)
       }
-    },
-    pricing: $pricing
+    }
   }
 ' > "$OUTPUT_FILE"
 
