@@ -41,7 +41,7 @@ is transferred to the main scratchpad and intermediate files are deleted.
 All scratchpad, context and analysis files for the given session and subagent sessions must be saved to this directory.
 * Pass the context on what the current directory is to each subagent. They must use this existing directory.
 * !!IMPORTANT!! At the beginning of main session retrieve session ID using `scripts/get-session-id.sh`
-and save it to `<scratchpad-dir>/session-id.txt` with Write tool
+and save it to `./<path-to-scratchpad-dir>/session-id.txt` with Write tool
 
 ALWAYS keep the following types of scratchpads
 * Slash command execution log:
