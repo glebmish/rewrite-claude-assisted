@@ -1,118 +1,142 @@
 #!/bin/bash
 # Recipe Diff Precision Analysis
-# Analyzes recommended-recipe-to-pr.diff to calculate recipe effectiveness
-#
-# The diff is from recipe-applied-branch TO original-PR-branch, meaning:
-# - '-' lines: Recipe made changes that PR didn't have (UNNECESSARY/false positives)
-# - '+' lines: PR has changes that recipe didn't make (MISSING/false negatives)
-# - Empty diff: Perfect match!
+# Analyzes recipe effectiveness by comparing its output against an original PR diff.
 
 set -euo pipefail
 
 # Function to show usage
 usage() {
-    echo "Usage: $0 <diff-file> <output-json-file>"
-    echo "  diff-file: Path to recommended-recipe-to-pr.diff"
-    echo "  output-json-file: Path where JSON results will be saved"
+    echo "Usage: $0 <pr-diff> <recipe-vs-pr-diff> <output-json-file>"
+    echo "  pr-diff:              Diff of the original PR against main"
+    echo "  recipe-vs-pr-diff:    Diff from the recipe output to the PR (shows recipe errors)"
+    echo "  output-json-file:     Path where JSON results will be saved"
     exit 1
 }
 
 # Check arguments
-if [[ $# -ne 2 ]]; then
+if [[ $# -ne 3 ]]; then
     usage
 fi
 
-DIFF_FILE="$1"
-OUTPUT_FILE="$2"
+pr_DIFF="$1"
+RECIPE_VS_PR_DIFF="$2"
+OUTPUT_FILE="$3"
 
-if [[ ! -f "$DIFF_FILE" ]]; then
-    echo "Error: Diff file not found: $DIFF_FILE"
+if [[ ! -f "$pr_DIFF" ]]; then
+    echo "Error: PR diff file not found: $pr_DIFF"
     exit 1
 fi
 
-echo "Analyzing recipe precision from: $DIFF_FILE"
+if [[ ! -f "$RECIPE_VS_PR_DIFF" ]]; then
+    echo "Error: Recipe vs PR diff file not found: $RECIPE_VS_PR_DIFF"
+    exit 1
+fi
 
-# Count actual code changes (exclude file headers '---' and '+++')
-# Unnecessary: lines starting with '-' but not '---'
-unnecessary=$(grep -c '^-[^-]' "$DIFF_FILE" 2>/dev/null || echo "0")
-unnecessary=${unnecessary:-0}
+echo "Analyzing recipe precision..."
 
-# Missing: lines starting with '+' but not '+++'
-missing=$(grep -c '^\+[^+]' "$DIFF_FILE" 2>/dev/null || echo "0")
-missing=${missing:-0}
+# 1. Calculate |G|, the total number of changes in the PR diff
+additions_g=$(grep -c '^\+[^+]' "$pr_DIFF" 2>/dev/null || true)
+removals_g=$(grep -c '^-[^-]' "$pr_DIFF" 2>/dev/null || true)
+total_expected_changes=$((additions_g + removals_g))
 
-# Total divergence (ensure numeric values)
-total_divergence=$(( ${unnecessary} + ${missing} ))
+# 2. Calculate FP and FN from the diff between the recipe and the PR
+# The diff is FROM recipe TO pr, so:
+# - Lines to add (+) are changes the recipe MISSED (FN)
+# - Lines to remove (-) are changes the recipe made UNNECESSARILY (FP)
+fp=$(grep -c '^-[^-]' "$RECIPE_VS_PR_DIFF" 2>/dev/null || true)
+fn=$(grep -c '^\+[^+]' "$RECIPE_VS_PR_DIFF" 2>/dev/null || true)
 
-echo "  Unnecessary changes (false positives): $unnecessary"
-echo "  Missing changes (false negatives): $missing"
-echo "  Total divergence: $total_divergence"
+# 3. Calculate TP = |G| - FN
+tp=$((total_expected_changes - fn))
 
-# Calculate metrics
-if [[ $total_divergence -eq 0 ]]; then
-    # Perfect match!
+if [[ $tp -lt 0 ]]; then
+    echo "Error: Calculated True Positives ($tp) is negative. Check your diff files."
+    exit 1
+fi
+
+echo "  Total original PR changes: $total_expected_changes"
+echo "  True positives (correctly made by recipe): $tp"
+echo "  False positives (unnecessary changes by recipe): $fp"
+echo "  False negatives (changes missed by recipe): $fn"
+
+# 4. Calculate standard metrics
+is_perfect_match=false
+if [[ $fp -eq 0 && $fn -eq 0 ]]; then
+    is_perfect_match=true
     precision="1.0"
     recall="1.0"
     f1_score="1.0"
-    accuracy="1.0"
-    echo "  Result: Perfect match! Recipe output matches PR exactly."
 else
-    # Calculate precision, recall, and F1 score
-    # Precision = changes_correct / (changes_correct + changes_unnecessary)
-    # We approximate: if we have N missing and M unnecessary, then:
-    # - Total attempted by recipe: (total_pr_changes - missing) + unnecessary
-    # - Correct: (total_pr_changes - missing)
-    # But we don't know total_pr_changes, so we use relative metrics:
-
-    # Simplified approach: measure match rate
-    # Precision: what fraction of recipe changes were correct (not unnecessary)
-    # Recall: what fraction of PR changes were captured (not missing)
-
-    if [[ $unnecessary -gt 0 ]]; then
-        precision=$(echo "scale=4; 1 / (1 + $unnecessary / 10.0)" | bc -l)
-    else
+    # Precision = TP / (TP + FP)
+    precision_denominator=$((tp + fp))
+    if [[ $precision_denominator -eq 0 ]]; then
+        # If TP=0 and FP=0, the recipe correctly did nothing. Precision is perfect.
         precision="1.0"
-    fi
-
-    if [[ $missing -gt 0 ]]; then
-        recall=$(echo "scale=4; 1 / (1 + $missing / 10.0)" | bc -l)
     else
-        recall="1.0"
+        precision=$(echo "scale=4; $tp / $precision_denominator" | bc -l)
     fi
 
-    # F1 Score: harmonic mean of precision and recall
-    f1_score=$(echo "scale=4; 2 * $precision * $recall / ($precision + $recall)" | bc -l)
+    # Recall = TP / (TP + FN) = TP / |G|
+    recall_denominator=$total_expected_changes
+    if [[ $recall_denominator -eq 0 ]]; then
+        # If |G|=0, no changes were required. Recall is perfect.
+        recall="1.0"
+    else
+        recall=$(echo "scale=4; $tp / $recall_denominator" | bc -l)
+    fi
 
-    # Accuracy: overall match quality (inverse of divergence rate)
-    accuracy=$(echo "scale=4; 1 / (1 + $total_divergence / 20.0)" | bc -l)
-
-    echo "  Precision: $precision"
-    echo "  Recall: $recall"
-    echo "  F1 Score: $f1_score"
-    echo "  Accuracy: $accuracy"
+    # F1 Score = 2 * (Precision * Recall) / (Precision + Recall)
+    f1_denominator=$(echo "$precision + $recall" | bc -l)
+    if (( $(echo "$f1_denominator == 0" | bc -l) )); then
+        f1_score="0.0"
+    else
+        f1_score=$(echo "scale=4; 2 * $precision * $recall / $f1_denominator" | bc -l)
+    fi
 fi
 
-# Create output JSON
-cat > "$OUTPUT_FILE" << EOF
-{
-  "diff_file": "$DIFF_FILE",
-  "analysis_timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+# For clarity, total_divergence is still useful
+total_divergence=$((fp + fn))
+
+echo "  Precision: $precision"
+echo "  Recall: $recall"
+echo "  F1 Score: $f1_score"
+
+# Create output JSON using jq
+jq -n \
+  --arg pr_diff "$pr_DIFF" \
+  --arg recipe_vs_pr_diff "$RECIPE_VS_PR_DIFF" \
+  --arg analysis_timestamp "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+  --argjson total_expected_changes "$total_expected_changes" \
+  --argjson true_positives "$tp" \
+  --argjson false_positives "$fp" \
+  --argjson false_negatives "$fn" \
+  --argjson total_divergence "$total_divergence" \
+  --argjson precision "$precision" \
+  --argjson recall "$recall" \
+  --argjson f1_score "$f1_score" \
+  --argjson is_perfect_match "$is_perfect_match" \
+'{
+  "diff_files": {
+    "pr": $pr_diff,
+    "recipe_vs_pr": $recipe_vs_pr_diff
+  },
+  "analysis_timestamp": $analysis_timestamp,
   "metrics": {
-    "unnecessary_changes": $unnecessary,
-    "missing_changes": $missing,
+    "total_expected_changes": $total_expected_changes,
+    "true_positives": $true_positives,
+    "false_positives_unnecessary": $false_positives,
+    "false_negatives_missing": $false_negatives,
     "total_divergence": $total_divergence,
     "precision": $precision,
     "recall": $recall,
     "f1_score": $f1_score,
-    "accuracy": $accuracy,
-    "is_perfect_match": $([ $total_divergence -eq 0 ] && echo "true" || echo "false")
+    "is_perfect_match": $is_perfect_match
   },
   "interpretation": {
-    "unnecessary_changes_meaning": "Recipe made changes that the original PR did not have (false positives)",
-    "missing_changes_meaning": "PR has changes that the recipe failed to implement (false negatives)",
-    "perfect_match": $([ $total_divergence -eq 0 ] && echo "true" || echo "false")
+    "false_positives_unnecessary_meaning": "Recipe made changes that the original PR did not have.",
+    "false_negatives_missing_meaning": "PR has changes that the recipe failed to implement.",
+    "perfect_match": $is_perfect_match
   }
-}
-EOF
+}' > "$OUTPUT_FILE"
 
 echo "Recipe precision analysis saved to: $OUTPUT_FILE"

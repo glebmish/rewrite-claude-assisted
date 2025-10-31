@@ -108,36 +108,41 @@ done
 # Sort the tools for consistent output
 IFS=$'\n' tools_used_sorted=($(printf '%s\n' "${tools_used_array[@]}" | sort))
 
-# Create JSON output manually to avoid complex jq issues
-cat > "$OUTPUT_FILE" << EOF
+# Create JSON output using jq for robustness
+tools_used_json=$(printf '%s\n' "${tools_used_sorted[@]}" | jq -R . | jq -s .)
+
+breakdown_json="{}"
+for tool in "${tools_used_sorted[@]}"; do
+    count=${tool_usage[$tool]}
+    breakdown_json=$(echo "$breakdown_json" | jq --arg key "$tool" --argjson value "$count" '. + {($key): $value}')
+done
+
+jq -n \
+  --arg log_file "$LOG_FILE" \
+  --arg analysis_timestamp "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+  --argjson total_messages "$total_messages" \
+  --argjson tool_calls "$tool_calls" \
+  --argjson successful_tools "$successful_tools" \
+  --argjson failed_tools "$failed_tools" \
+  --argjson tool_success_rate "$tool_success_rate" \
+  --argjson tools_used "$tools_used_json" \
+  --argjson tool_usage_breakdown "$breakdown_json" \
+'
 {
-  "log_file": "$LOG_FILE",
-  "analysis_timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+  "log_file": $log_file,
+  "analysis_timestamp": $analysis_timestamp,
   "metrics": {
     "total_messages": $total_messages,
     "tool_calls": $tool_calls,
     "successful_tool_calls": $successful_tools,
     "failed_tool_calls": $failed_tools,
     "tool_success_rate": $tool_success_rate,
-    "tools_used": [$(printf '"%s"' "${tools_used_sorted[0]}"
-      for ((i=1; i<${#tools_used_sorted[@]}; i++)); do
-        printf ', "%s"' "${tools_used_sorted[i]}"
-      done
-    )],
-    "tool_usage_breakdown": {$(
-      first=true
-      for tool in "${tools_used_sorted[@]}"; do
-        if [[ "$first" == "true" ]]; then
-          printf '"%s": %d' "$tool" "${tool_usage[$tool]}"
-          first=false
-        else
-          printf ', "%s": %d' "$tool" "${tool_usage[$tool]}"
-        fi
-      done
-    )}
+    "tools_used": $tools_used,
+    "tool_usage_breakdown": $tool_usage_breakdown
   }
 }
-EOF
+' > "$OUTPUT_FILE"
+
 
 echo "Usage statistics saved to: $OUTPUT_FILE"
 
