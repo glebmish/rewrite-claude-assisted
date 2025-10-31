@@ -104,32 +104,33 @@ log "Quantitative analysis complete"
 log "Phase 2b: Analyzing recipe precision..."
 
 RESULT_DIR="$SCRATCHPAD_DIR/result"
+PR_DIFF="$RESULT_DIR/pr.diff"
 RECIPE_TO_PR_DIFF="$RESULT_DIR/recommended-recipe-to-pr.diff"
 
-if [[ -f "$RECIPE_TO_PR_DIFF" ]]; then
-    log "  Found recipe-to-PR diff, calculating precision..."
+if [[ -f "$PR_DIFF" && -f "$RECIPE_TO_PR_DIFF" ]]; then
+    log "  Found PR diff and recipe-to-PR diffs, calculating precision..."
 
-    PRECISION_OUTPUT="$SCRATCHPAD_DIR/recipe-precision-stats.json"
+    PRECISION_OUTPUT="$SCRATCHPAD_DIR/recipe-precision-analysis.json"
 
-    if scripts/analysis/recipe-diff-precision.sh "$RECIPE_TO_PR_DIFF" "$PRECISION_OUTPUT"; then
+    if scripts/analysis/recipe-diff-precision.sh "$PR_DIFF" "$RECIPE_TO_PR_DIFF" "$PRECISION_OUTPUT"; then
         log "  Recipe precision stats saved to: $PRECISION_OUTPUT"
 
-        # Display key metrics
-        unnecessary=$(jq -r '.metrics.unnecessary_changes' "$PRECISION_OUTPUT")
-        missing=$(jq -r '.metrics.missing_changes' "$PRECISION_OUTPUT")
-        accuracy=$(jq -r '.metrics.accuracy' "$PRECISION_OUTPUT")
+        # Display key metrics from the new script output
+        precision=$(jq -r '.metrics.precision' "$PRECISION_OUTPUT")
+        recall=$(jq -r '.metrics.recall' "$PRECISION_OUTPUT")
+        f1_score=$(jq -r '.metrics.f1_score' "$PRECISION_OUTPUT")
         is_perfect=$(jq -r '.metrics.is_perfect_match' "$PRECISION_OUTPUT")
 
-        log "    Unnecessary changes: $unnecessary"
-        log "    Missing changes: $missing"
-        log "    Accuracy: $accuracy"
+        log "    Precision: $precision"
+        log "    Recall: $recall"
+        log "    F1 Score: $f1_score"
         log "    Perfect match: $is_perfect"
     else
         log "  Warning: Recipe precision analysis failed"
     fi
 else
-    log "  No recipe-to-PR diff found at: $RECIPE_TO_PR_DIFF"
-    log "  Skipping precision analysis (workflow may not have completed Phase 5)"
+    log "  Diff files for precision analysis not found in: $RESULT_DIR"
+    log "  Skipping precision analysis."
 fi
 
 # Phase 3: Qualitative analysis (exact prompt from workflow)
