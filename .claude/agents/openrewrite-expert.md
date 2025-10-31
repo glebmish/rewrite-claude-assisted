@@ -1,7 +1,7 @@
 ---
 name: openrewrite-expert
 description: 'Use this agent PROACTIVELY when you need to find and compose OpenRewrite recipes for refactoring intentions. MUST BE USED for: (1) Mapping code changes to existing recipes (2) Composing multiple recipes for complete coverage (3) Analyzing gaps in recipe coverage (4) Choosing between broad migration recipes vs targeted transformations (5) Framework migrations, Java upgrades, security fixes, code modernization. Examples: "find recipes for Spring Boot 3 migration", "compose recipes for JUnit 4→5 with custom assertions", "identify recipe gaps for our Java 8→17 upgrade", "choose between full framework recipe vs specific API changes". ALWAYS pass a filepath of the current scratchpad for this agent to append to it.'
-model: sonnet
+model: claude-haiku-4-5
 color: yellow
 ---
 
