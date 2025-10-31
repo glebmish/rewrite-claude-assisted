@@ -1,4 +1,4 @@
-name: 'java-upgrade-suite - Batch 2'
+name: 'java-upgrade-suite - Batch 6'
 
 on:
   workflow_dispatch:
@@ -13,9 +13,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - pr_url: "https://github.com/openrewrite-assist-testing-dataset/analytics-dashboard/pull/1"
-            pr_num: "1"
-            pr_index: 1
+          - pr_url: "https://github.com/openrewrite-assist-testing-dataset/task-management-api/pull/2"
+            pr_num: "2"
+            pr_index: 5
             run: 1
             total_runs: 1
       fail-fast: false
