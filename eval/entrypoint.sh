@@ -9,6 +9,8 @@ log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"
 }
 
+GITHUB_STEP_SUMMARY="${GITHUB_STEP_SUMMARY:-/dev/null}"
+
 # Background workflow monitoring
 start_workflow_monitor() {
     log "Starting background workflow monitor"
@@ -184,6 +186,10 @@ cat > "$METADATA_FILE" << EOF
   "end_time": "$(date -d @$END_TIME -u +"%Y-%m-%dT%H:%M:%SZ")"
 }
 EOF
+
+if [[ -f "$CLAUDE_OUTPUT_LOG" ]]; then
+  cat "$CLAUDE_OUTPUT_LOG" >> $GITHUB_STEP_SUMMARY
+fi
 
 log "Evaluation complete"
 exit $EXIT_CODE
