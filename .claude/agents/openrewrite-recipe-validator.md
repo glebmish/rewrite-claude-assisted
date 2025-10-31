@@ -1,7 +1,7 @@
 ---
 name: openrewrite-recipe-validator
 description: Use this agent PROACTIVELY to validate OpenRewrite recipes against PR changes. MUST BE USED when: (1) Testing recipe effectiveness against actual PR diffs (2) Comparing recipe coverage (3) Validating recipe accuracy and precision (4) Analyzing gaps between recipe output and intended changes. Examples: 'validate Spring Boot migration recipe against PR #123', 'test if this recipe covers all changes in the security fix PR', 'compare coverage of broad vs targeted recipes for our refactoring. ALWAYS pass a filepath of the current scratchpad for this agent to append to it.'
-model: sonnet
+model: claude-haiku-4-5
 color: orange
 ---
 
