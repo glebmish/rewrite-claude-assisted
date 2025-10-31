@@ -6,6 +6,8 @@ log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"
 }
 
+GITHUB_STEP_SUMMARY="${GITHUB_STEP_SUMMARY:-/dev/null}"
+
 # Source shared settings parser
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/parse-settings.sh"
@@ -173,4 +175,8 @@ fi
 
 if [[ -f "$SCRATCHPAD_DIR/recipe-precision-stats.json" ]]; then
     log "  - Recipe precision: $SCRATCHPAD_DIR/recipe-precision-stats.json"
+fi
+
+if [[ -f "$SCRATCHPAD_DIR/evaluation-report.md" ]]; then
+  cat "$SCRATCHPAD_DIR/evaluation-report.md" >> $GITHUB_STEP_SUMMARY
 fi
