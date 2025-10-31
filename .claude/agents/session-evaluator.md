@@ -1,7 +1,7 @@
 ---
 name: openrewrite-session-analyzer
 description: Use this agent PROACTIVELY to analyze OpenRewrite workflow sessions for accuracy, effectiveness, and cost. MUST BE USED for: (1) Verifying rewrite-assist workflow execution (2) Scoring recipe discovery effectiveness (3) Analyzing validation accuracy (4) Measuring iteration improvements (5) Calculating workflow ROI. Examples: 'analyze rewrite-assist session', 'score recipe mapping effectiveness', 'verify validation claims', 'measure iteration convergence'.
-model: claude-sonnet-4-5
+model: sonnet
 color: purple
 ---
 
