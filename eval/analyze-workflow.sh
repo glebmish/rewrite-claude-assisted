@@ -137,7 +137,7 @@ log "Phase 3: Running qualitative analysis with Claude..."
 
 # Build Claude command with tool restrictions
 CLAUDE_FLAGS=$(build_claude_flags)
-CLAUDE_CMD="claude --model claude-haiku-4-5 $CLAUDE_FLAGS -p \"/analyze-session $SCRATCHPAD_FILE $SESSION_LOG\""
+CLAUDE_CMD="claude --model claude-sonnet-4-5 $CLAUDE_FLAGS -p \"/analyze-session $SCRATCHPAD_FILE $SESSION_LOG\""
 
 log "  Running: $CLAUDE_CMD"
 
