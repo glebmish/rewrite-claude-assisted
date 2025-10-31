@@ -25,7 +25,7 @@ Your systematic approach validates recipes by:
 ```bash
 # Save original PR diff for comparison
 cd <repo-directory>
-git diff main...pr-<PR_NUMBER> > pr-<PR_NUMBER>.diff
+git diff main...pr-<PR_NUMBER> --output=pr-<PR_NUMBER>.diff
 ```
 
 ### Worktree Setup Strategy

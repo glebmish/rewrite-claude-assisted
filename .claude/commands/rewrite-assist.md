@@ -35,33 +35,34 @@ Based on the results, choose the final recommended recipe and generate result ar
 **CRITICAL**: The following 4 files MUST be generated in EXACTLY the specified formats. These files are parsed by automated analysis scripts.
 
 #### Required Files
+Assuming you've already created scratchpad directory `.scratchpad/<yyyy-mm-dd-hh-MM>/` at the start of the workflow
 
-**1. `result/pr.diff`** - Original PR diff
+**1. `.scratchpad/<yyyy-mm-dd-hh-MM>/result/pr.diff`** - Original PR diff
 ```bash
 cd .workspace/<repo-name>
-git diff main...<pr-branch> > <scratchpad-dir>/result/pr.diff
+git diff main...<pr-branch> --output=.scratchpad/<yyyy-mm-dd-hh-MM>/result/pr.diff
 ```
 - Format: Unified diff format (output of `git diff`)
 - Purpose: Ground truth for comparison
 
-**2. `result/recommended-recipe.yaml`** - Final recipe YAML
+**2. `.scratchpad/<yyyy-mm-dd-hh-MM>/result/recommended-recipe.yaml`** - Final recipe YAML
 - Format: Valid OpenRewrite recipe YAML
 - Content: The recommended recipe composition
 - Must be syntactically valid and executable
 
-**3. `result/recommended-recipe.diff`** - Recipe output from main branch
+**3. `.scratchpad/<yyyy-mm-dd-hh-MM>/result/recommended-recipe.diff`** - Recipe output from main branch
 
 **IF empirical validation was performed** (recipe tested with worktree):
 ```bash
 cd .workspace/<recipe-test-worktree>
-git diff main > <scratchpad-dir>/result/recommended-recipe.diff
+git diff main --output=<scratchpad-dir>/result/recommended-recipe.diff
 ```
 
 **IF only analytical validation** (no empirical testing):
 - Generate a theoretical diff showing expected recipe output
 - OR: Create descriptive text explaining expected changes
 
-**4. `result/recommended-recipe-to-pr.diff`** - Recipe compared to PR
+**4. `.scratchpad/<yyyy-mm-dd-hh-MM>/result/recommended-recipe-to-pr.diff`** - Recipe compared to PR
 
 **CRITICAL FORMAT REQUIREMENT**: This file MUST be in unified diff format for automated precision analysis.
 
