@@ -151,20 +151,20 @@ for run_dir in $run_dirs; do
         score_overall=$(extract_json_value "$run_dir/subjective-evaluation.json" ".scores.overall_session_effectiveness" "N/A")
     fi
 
-    # Parse recipe-precision-stats.json
-    precision_unnecessary="N/A"
-    precision_missing="N/A"
-    precision_divergence="N/A"
-    precision_accuracy="N/A"
-    precision_f1="N/A"
-    precision_perfect="N/A"
-    if [ -f "$run_dir/recipe-precision-stats.json" ]; then
-        precision_unnecessary=$(extract_json_value "$run_dir/recipe-precision-stats.json" ".metrics.unnecessary_changes" "N/A")
-        precision_missing=$(extract_json_value "$run_dir/recipe-precision-stats.json" ".metrics.missing_changes" "N/A")
-        precision_divergence=$(extract_json_value "$run_dir/recipe-precision-stats.json" ".metrics.total_divergence" "N/A")
-        precision_accuracy=$(extract_json_value "$run_dir/recipe-precision-stats.json" ".metrics.accuracy" "N/A")
-        precision_f1=$(extract_json_value "$run_dir/recipe-precision-stats.json" ".metrics.f1_score" "N/A")
-        precision_perfect=$(extract_json_value "$run_dir/recipe-precision-stats.json" ".metrics.is_perfect_match" "N/A")
+    # Parse recipe-precision-analysis.json
+    precision="N/A"
+    recall="N/A"
+    f1_score="N/A"
+    is_perfect_match="N/A"
+    unnecessary_changes="N/A"
+    missing_changes="N/A"
+    if [ -f "$run_dir/recipe-precision-analysis.json" ]; then
+        precision=$(extract_json_value "$run_dir/recipe-precision-analysis.json" ".metrics.precision" "N/A")
+        recall=$(extract_json_value "$run_dir/recipe-precision-analysis.json" ".metrics.recall" "N/A")
+        f1_score=$(extract_json_value "$run_dir/recipe-precision-analysis.json" ".metrics.f1_score" "N/A")
+        is_perfect_match=$(extract_json_value "$run_dir/recipe-precision-analysis.json" ".metrics.is_perfect_match" "N/A")
+        unnecessary_changes=$(extract_json_value "$run_dir/recipe-precision-analysis.json" ".metrics.false_positives_unnecessary" "N/A")
+        missing_changes=$(extract_json_value "$run_dir/recipe-precision-analysis.json" ".metrics.false_negatives_missing" "N/A")
     fi
     
     total_runs=$((total_runs + 1))
@@ -186,8 +186,8 @@ for run_dir in $run_dirs; do
     # Calculate duration in minutes
     duration_min=$(safe_divide "$duration" "60" "1")
 
-    # Store run data (including pr_url and precision metrics)
-    all_runs+=("$pr_num|$pr_url|$run_number|$status|$duration|$duration_min|$cost|$score_truth|$score_extract|$score_mapping|$score_valid|$score_overall|$total_messages|$tool_calls|$successful_tools|$tool_success_rate|$precision_unnecessary|$precision_missing|$precision_divergence|$precision_accuracy|$precision_f1|$precision_perfect")
+    # Store run data
+    all_runs+=("$pr_num|$pr_url|$run_number|$status|$duration|$duration_min|$cost|$score_truth|$score_extract|$score_mapping|$score_valid|$score_overall|$total_messages|$tool_calls|$successful_tools|$tool_success_rate|$unnecessary_changes|$missing_changes|$precision|$recall|$f1_score|$is_perfect_match")
 done
 
 # Calculate suite-level metrics
@@ -285,11 +285,11 @@ summary_file="$OUTPUT_DIR/summary.md"
     
     echo "## Detailed Results"
     echo ""
-    echo "| PR | Run | Status | Duration | Cost | Truth | Extract | Mapping | Valid | Overall | Msgs | Tools | Tool Success | Unnecessary | Missing | Divergence | Accuracy | F1 | Perfect |"
-    echo "|----|-----|--------|----------|------|-------|---------|---------|-------|---------|------|-------|--------------|-------------|---------|------------|----------|-------|---------|"
+    echo "| PR | Run | Status | Duration | Cost | Truth | Extract | Mapping | Valid | Overall | Msgs | Tools | Tool Success | Unnecessary | Missing | Precision | Recall | F1 | Perfect |"
+    echo "|----|-----|--------|----------|------|-------|---------|---------|-------|---------|------|-------|--------------|-------------|---------|-----------|--------|----|---------|"
 
     for run_data in "${all_runs[@]}"; do
-        IFS='|' read -r run_pr run_pr_url run_num run_status run_dur run_dur_min run_cost run_truth run_extract run_mapping run_valid run_overall run_msg run_tools run_succ_tools run_tool_rate prec_unnecessary prec_missing prec_divergence prec_accuracy prec_f1 prec_perfect <<< "$run_data"
+        IFS='|' read -r run_pr run_pr_url run_num run_status run_dur run_dur_min run_cost run_truth run_extract run_mapping run_valid run_overall run_msg run_tools run_succ_tools run_tool_rate prec_unnecessary prec_missing prec_precision prec_recall prec_f1 prec_perfect <<< "$run_data"
         
         status_icon=$GREEN
         [ "$run_status" != "success" ] && status_icon=$RED
@@ -307,9 +307,14 @@ summary_file="$OUTPUT_DIR/summary.md"
         fi
 
         # Format precision metrics
-        formatted_accuracy="$prec_accuracy"
-        if [ "$prec_accuracy" != "N/A" ]; then
-            formatted_accuracy=$(printf '%.2f' $prec_accuracy 2>/dev/null || echo "$prec_accuracy")
+        formatted_precision="$prec_precision"
+        if [ "$prec_precision" != "N/A" ]; then
+            formatted_precision=$(printf '%.2f' $prec_precision 2>/dev/null || echo "$prec_precision")
+        fi
+
+        formatted_recall="$prec_recall"
+        if [ "$prec_recall" != "N/A" ]; then
+            formatted_recall=$(printf '%.2f' $prec_recall 2>/dev/null || echo "$prec_recall")
         fi
 
         formatted_f1="$prec_f1"
@@ -330,7 +335,7 @@ summary_file="$OUTPUT_DIR/summary.md"
             formatted_tool_rate=$(printf '%.2f' $run_tool_rate 2>/dev/null || echo "$run_tool_rate")
         fi
 
-        echo "| $pr_link | $run_num/$total_pr_runs | $status_icon | ${run_dur_min}m | \$$(printf '%.2f' $run_cost 2>/dev/null || echo "$run_cost") | $run_truth | $run_extract | $run_mapping | $run_valid | $run_overall | $run_msg | $run_tools | ${run_succ_tools}/${run_tools} (${formatted_tool_rate}) | $prec_unnecessary | $prec_missing | $prec_divergence | $formatted_accuracy | $formatted_f1 | $perfect_icon |"
+        echo "| $pr_link | $run_num/$total_pr_runs | $status_icon | ${run_dur_min}m | \$$(printf '%.2f' $run_cost 2>/dev/null || echo "$run_cost") | $run_truth | $run_extract | $run_mapping | $run_valid | $run_overall | $run_msg | $run_tools | ${run_succ_tools}/${run_tools} (${formatted_tool_rate}) | $prec_unnecessary | $prec_missing | $formatted_precision | $formatted_recall | $formatted_f1 | $perfect_icon |"
     done
     
 } > "$summary_file"
@@ -359,7 +364,7 @@ json_file="$OUTPUT_DIR/suite-results.json"
     
     first=true
     for run_data in "${all_runs[@]}"; do
-        IFS='|' read -r run_pr run_pr_url run_num run_status run_dur run_dur_min run_cost run_truth run_extract run_mapping run_valid run_overall run_msg run_tools run_succ_tools run_tool_rate prec_unnecessary prec_missing prec_divergence prec_accuracy prec_f1 prec_perfect <<< "$run_data"
+        IFS='|' read -r run_pr run_pr_url run_num run_status run_dur run_dur_min run_cost run_truth run_extract run_mapping run_valid run_overall run_msg run_tools run_succ_tools run_tool_rate unnecessary_changes missing_changes precision recall f1_score is_perfect_match <<< "$run_data"
 
         [ "$first" = false ] && echo "    ,"
         first=false
@@ -386,12 +391,12 @@ json_file="$OUTPUT_DIR/suite-results.json"
         echo "        \"tool_success_rate\": $run_tool_rate"
         echo "      },"
         echo "      \"precision_metrics\": {"
-        echo "        \"unnecessary_changes\": \"$prec_unnecessary\","
-        echo "        \"missing_changes\": \"$prec_missing\","
-        echo "        \"total_divergence\": \"$prec_divergence\","
-        echo "        \"accuracy\": \"$prec_accuracy\","
-        echo "        \"f1_score\": \"$prec_f1\","
-        echo "        \"is_perfect_match\": \"$prec_perfect\""
+        echo "        \"false_positives_unnecessary\": \"$unnecessary_changes\","
+        echo "        \"false_negatives_missing\": \"$missing_changes\","
+        echo "        \"precision\": \"$precision\","
+        echo "        \"recall\": \"$recall\","
+        echo "        \"f1_score\": \"$f1_score\","
+        echo "        \"is_perfect_match\": \"$is_perfect_match\""
         echo "      }"
         echo -n "    }"
     done
