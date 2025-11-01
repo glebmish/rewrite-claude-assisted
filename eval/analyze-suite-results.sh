@@ -138,18 +138,18 @@ for run_dir in $run_dirs; do
     fi
     
     # Parse subjective-evaluation.json
-    score_truth="N/A"
-    score_extract="N/A"
-    score_mapping="N/A"
-    score_valid="N/A"
-    score_overall="N/A"
-    if [ -f "$run_dir/subjective-evaluation.json" ]; then
-        score_truth=$(extract_json_value "$run_dir/subjective-evaluation.json" ".detailed_metrics.truthfulness" "N/A")
-        score_extract=$(extract_json_value "$run_dir/subjective-evaluation.json" ".detailed_metrics.intent_extraction_quality" "N/A")
-        score_mapping=$(extract_json_value "$run_dir/subjective-evaluation.json" ".detailed_metrics.recipe_mapping_effectiveness" "N/A")
-        score_valid=$(extract_json_value "$run_dir/subjective-evaluation.json" ".detailed_metrics.validation_correctness" "N/A")
-        score_overall=$(extract_json_value "$run_dir/subjective-evaluation.json" ".scores.overall_session_effectiveness" "N/A")
-    fi
+#    score_truth="N/A"
+#    score_extract="N/A"
+#    score_mapping="N/A"
+#    score_valid="N/A"
+#    score_overall="N/A"
+#    if [ -f "$run_dir/subjective-evaluation.json" ]; then
+#        score_truth=$(extract_json_value "$run_dir/subjective-evaluation.json" ".detailed_metrics.truthfulness" "N/A")
+#        score_extract=$(extract_json_value "$run_dir/subjective-evaluation.json" ".detailed_metrics.intent_extraction_quality" "N/A")
+#        score_mapping=$(extract_json_value "$run_dir/subjective-evaluation.json" ".detailed_metrics.recipe_mapping_effectiveness" "N/A")
+#        score_valid=$(extract_json_value "$run_dir/subjective-evaluation.json" ".detailed_metrics.validation_correctness" "N/A")
+#        score_overall=$(extract_json_value "$run_dir/subjective-evaluation.json" ".scores.overall_session_effectiveness" "N/A")
+#    fi
 
     # Parse recipe-precision-analysis.json
     precision="N/A"
@@ -187,7 +187,8 @@ for run_dir in $run_dirs; do
     duration_min=$(safe_divide "$duration" "60" "1")
 
     # Store run data
-    all_runs+=("$pr_num|$pr_url|$run_number|$status|$duration|$duration_min|$cost|$score_truth|$score_extract|$score_mapping|$score_valid|$score_overall|$total_messages|$tool_calls|$successful_tools|$tool_success_rate|$unnecessary_changes|$missing_changes|$precision|$recall|$f1_score|$is_perfect_match")
+#    all_runs+=("$pr_num|$pr_url|$run_number|$status|$duration|$duration_min|$cost|$score_truth|$score_extract|$score_mapping|$score_valid|$score_overall|$total_messages|$tool_calls|$successful_tools|$tool_success_rate|$unnecessary_changes|$missing_changes|$precision|$recall|$f1_score|$is_perfect_match")
+    all_runs+=("$pr_num|$pr_url|$run_number|$status|$duration|$duration_min|$cost|$total_messages|$tool_calls|$successful_tools|$tool_success_rate|$unnecessary_changes|$missing_changes|$precision|$recall|$f1_score|$is_perfect_match")
 done
 
 # Calculate suite-level metrics
@@ -228,68 +229,17 @@ summary_file="$OUTPUT_DIR/summary.md"
     echo "| Avg Cost/Run | \$${avg_cost_per_run} |"
     echo ""
     
-    # PR Summary Table (only if we have valid PRs)
-    if [ $unique_prs -gt 0 ]; then
-        echo "## PR Summary"
-        echo ""
-        echo "| PR | Runs | Success | Avg Duration | Avg Cost | Avg Overall Score |"
-        echo "|----|------|---------|--------------|----------|-------------------|"
-        
-        for pr in $(printf '%s\n' "${!pr_runs[@]}" | sort -n); do
-            pr_total=${pr_runs[$pr]}
-            pr_url=${pr_urls[$pr]:-""}
-            pr_success=0
-            pr_duration_sum=0
-            pr_cost_sum=0
-            pr_score_sum=0
-            pr_score_count=0
-
-            for run_data in "${all_runs[@]}"; do
-                IFS='|' read -r run_pr run_pr_url run_num run_status run_dur run_dur_min run_cost run_truth run_extract run_mapping run_valid run_overall run_msg run_tools run_succ_tools run_tool_rate prec_unnecessary prec_missing prec_divergence prec_accuracy prec_f1 prec_perfect <<< "$run_data"
-
-                if [ "$run_pr" = "$pr" ]; then
-                    [ "$run_status" = "success" ] && pr_success=$((pr_success + 1))
-                    pr_duration_sum=$(safe_add "$pr_duration_sum" "$run_dur_min")
-                    pr_cost_sum=$(safe_add "$pr_cost_sum" "$run_cost")
-                    
-                    if [ "$run_overall" != "N/A" ]; then
-                        score_num=$(echo "$run_overall" | grep -oE '[0-9]+' || echo "0")
-                        if [ -n "$score_num" ] && [ "$score_num" != "0" ]; then
-                            pr_score_sum=$(safe_add "$pr_score_sum" "$score_num")
-                            pr_score_count=$((pr_score_count + 1))
-                        fi
-                    fi
-                fi
-            done
-            
-            avg_duration=$(safe_divide "$pr_duration_sum" "$pr_total" "1")
-            avg_cost=$(safe_divide "$pr_cost_sum" "$pr_total" "2")
-            avg_score="N/A"
-            if [ $pr_score_count -gt 0 ]; then
-                avg_score_val=$(safe_divide "$pr_score_sum" "$pr_score_count" "0")
-                avg_score="${avg_score_val}%"
-            fi
-            
-            status_icon=$GREEN
-            [ $pr_success -lt $pr_total ] && status_icon=$YELLOW
-            [ $pr_success -eq 0 ] && status_icon=$RED
-            
-            # Format PR link
-            pr_link="[#$pr]($pr_url)"
-            
-            echo "| $pr_link | $pr_total | $pr_success/$pr_total $status_icon | ${avg_duration}m | \$${avg_cost} | $avg_score |"
-        done
-        
-        echo ""
-    fi
-    
     echo "## Detailed Results"
     echo ""
-    echo "| PR | Run | Status | Duration | Cost | Truth | Extract | Mapping | Valid | Overall | Msgs | Tools | Tool Success | Unnecessary | Missing | Precision | Recall | F1 | Perfect |"
-    echo "|----|-----|--------|----------|------|-------|---------|---------|-------|---------|------|-------|--------------|-------------|---------|-----------|--------|----|---------|"
+#    echo "| PR | Run | Status | Duration | Cost | Truth | Extract | Mapping | Valid | Overall | Msgs | Tools | Tool Success | Unnecessary | Missing | Precision | Recall | F1 | Perfect |"
+#    echo "|----|-----|--------|----------|------|-------|---------|---------|-------|---------|------|-------|--------------|-------------|---------|-----------|--------|----|---------|"
+    echo "| PR | Run | Status | Duration | Cost | Msgs | Tools | Tool Success | Unnecessary | Missing | Precision | Recall | F1 | Perfect |"
+    echo "|----|-----|--------|----------|------|------|-------|--------------|-------------|---------|-----------|--------|----|---------|"
 
     for run_data in "${all_runs[@]}"; do
-        IFS='|' read -r run_pr run_pr_url run_num run_status run_dur run_dur_min run_cost run_truth run_extract run_mapping run_valid run_overall run_msg run_tools run_succ_tools run_tool_rate prec_unnecessary prec_missing prec_precision prec_recall prec_f1 prec_perfect <<< "$run_data"
+#        IFS='|' read -r run_pr run_pr_url run_num run_status run_dur run_dur_min run_cost run_truth run_extract run_mapping run_valid run_overall run_msg run_tools run_succ_tools run_tool_rate prec_unnecessary prec_missing prec_precision prec_recall prec_f1 prec_perfect <<< "$run_data"
+        IFS='|' read -r run_pr run_pr_url run_num run_status run_dur run_dur_min run_cost run_msg run_tools run_succ_tools run_tool_rate prec_unnecessary prec_missing prec_precision prec_recall prec_f1 prec_perfect <<< "$run_data"
+
         
         status_icon=$GREEN
         [ "$run_status" != "success" ] && status_icon=$RED
@@ -335,7 +285,8 @@ summary_file="$OUTPUT_DIR/summary.md"
             formatted_tool_rate=$(printf '%.2f' $run_tool_rate 2>/dev/null || echo "$run_tool_rate")
         fi
 
-        echo "| $pr_link | $run_num/$total_pr_runs | $status_icon | ${run_dur_min}m | \$$(printf '%.2f' $run_cost 2>/dev/null || echo "$run_cost") | $run_truth | $run_extract | $run_mapping | $run_valid | $run_overall | $run_msg | $run_tools | ${run_succ_tools}/${run_tools} (${formatted_tool_rate}) | $prec_unnecessary | $prec_missing | $formatted_precision | $formatted_recall | $formatted_f1 | $perfect_icon |"
+#        echo "| $pr_link | $run_num/$total_pr_runs | $status_icon | ${run_dur_min}m | \$$(printf '%.2f' $run_cost 2>/dev/null || echo "$run_cost") | $run_truth | $run_extract | $run_mapping | $run_valid | $run_overall | $run_msg | $run_tools | ${run_succ_tools}/${run_tools} (${formatted_tool_rate}) | $prec_unnecessary | $prec_missing | $formatted_precision | $formatted_recall | $formatted_f1 | $perfect_icon |"
+        echo "| $pr_link | $run_num/$total_pr_runs | $status_icon | ${run_dur_min}m | \$$(printf '%.2f' $run_cost 2>/dev/null || echo "$run_cost") | $run_msg | $run_tools | ${run_succ_tools}/${run_tools} (${formatted_tool_rate}) | $prec_unnecessary | $prec_missing | $formatted_precision | $formatted_recall | $formatted_f1 | $perfect_icon |"
     done
     
 } > "$summary_file"
@@ -364,7 +315,8 @@ json_file="$OUTPUT_DIR/suite-results.json"
     
     first=true
     for run_data in "${all_runs[@]}"; do
-        IFS='|' read -r run_pr run_pr_url run_num run_status run_dur run_dur_min run_cost run_truth run_extract run_mapping run_valid run_overall run_msg run_tools run_succ_tools run_tool_rate unnecessary_changes missing_changes precision recall f1_score is_perfect_match <<< "$run_data"
+#        IFS='|' read -r run_pr run_pr_url run_num run_status run_dur run_dur_min run_cost run_truth run_extract run_mapping run_valid run_overall run_msg run_tools run_succ_tools run_tool_rate unnecessary_changes missing_changes precision recall f1_score is_perfect_match <<< "$run_data"
+        IFS='|' read -r run_pr run_pr_url run_num run_status run_dur run_dur_min run_cost run_msg run_tools run_succ_tools run_tool_rate unnecessary_changes missing_changes precision recall f1_score is_perfect_match <<< "$run_data"
 
         [ "$first" = false ] && echo "    ,"
         first=false
@@ -377,13 +329,13 @@ json_file="$OUTPUT_DIR/suite-results.json"
         echo "      \"duration_seconds\": $run_dur,"
         echo "      \"duration_minutes\": $run_dur_min,"
         echo "      \"cost\": $run_cost,"
-        echo "      \"scores\": {"
-        echo "        \"truthfulness\": \"$run_truth\","
-        echo "        \"extraction_quality\": \"$run_extract\","
-        echo "        \"mapping_effectiveness\": \"$run_mapping\","
-        echo "        \"validation_correctness\": \"$run_valid\","
-        echo "        \"overall\": \"$run_overall\""
-        echo "      },"
+#        echo "      \"scores\": {"
+#        echo "        \"truthfulness\": \"$run_truth\","
+#        echo "        \"extraction_quality\": \"$run_extract\","
+#        echo "        \"mapping_effectiveness\": \"$run_mapping\","
+#        echo "        \"validation_correctness\": \"$run_valid\","
+#        echo "        \"overall\": \"$run_overall\""
+#        echo "      },"
         echo "      \"tool_metrics\": {"
         echo "        \"total_messages\": $run_msg,"
         echo "        \"tool_calls\": $run_tools,"
