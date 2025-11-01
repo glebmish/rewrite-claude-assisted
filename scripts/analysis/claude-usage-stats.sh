@@ -38,6 +38,7 @@ failed_tools=0
 
 # Tool usage tracking (use associative array to get unique tools)
 declare -A tool_usage
+declare -a failed_tool_names
 
 echo "Analyzing Claude log: $LOG_FILE"
 
@@ -83,14 +84,31 @@ while IFS= read -r line; do
         has_tool_result=$(echo "$line" | jq -r '.message.content[]? | select(.type == "tool_result") | .type // empty' 2>/dev/null || echo "")
         if [[ "$has_tool_result" == "tool_result" ]]; then
             is_error=$(echo "$line" | jq -r '.message.content[] | select(.type == "tool_result") | .is_error // false' 2>/dev/null || echo "false")
+            tool_use_id=$(echo "$line" | jq -r '.message.content[] | select(.type == "tool_result") | .tool_use_id // empty' 2>/dev/null || echo "")
             if [[ "$is_error" == "true" ]]; then
                 failed_tools=$((failed_tools + 1))
+                # Store the tool_use_id to match with tool name later
+                if [[ -n "$tool_use_id" ]]; then
+                    failed_tool_names+=("$tool_use_id")
+                fi
             else
                 successful_tools=$((successful_tools + 1))
             fi
         fi
     fi
 done < "$LOG_FILE"
+
+# Map tool_use_ids to tool names for failed tools
+declare -a failed_tools_list
+if [[ ${#failed_tool_names[@]} -gt 0 ]]; then
+    for tool_id in "${failed_tool_names[@]}"; do
+        # Find the tool name by searching for tool_use with matching id
+        tool_name=$(cat "$LOG_FILE" | jq -r --arg id "$tool_id" '.message.content[]? | select(.type == "tool_use" and .id == $id) | .name // empty' 2>/dev/null | grep -v '^$' | head -1)
+        if [[ -n "$tool_name" ]]; then
+            failed_tools_list+=("$tool_name")
+        fi
+    done
+fi
 
 # Calculate tool success rate
 if [[ $tool_calls -gt 0 ]]; then
@@ -117,6 +135,12 @@ for tool in "${tools_used_sorted[@]}"; do
     breakdown_json=$(echo "$breakdown_json" | jq --arg key "$tool" --argjson value "$count" '. + {($key): $value}')
 done
 
+# Create failed tools JSON array
+failed_tools_json="[]"
+if [[ ${#failed_tools_list[@]} -gt 0 ]]; then
+    failed_tools_json=$(printf '%s\n' "${failed_tools_list[@]}" | jq -R . | jq -s .)
+fi
+
 jq -n \
   --arg log_file "$LOG_FILE" \
   --arg analysis_timestamp "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
@@ -127,6 +151,7 @@ jq -n \
   --argjson tool_success_rate "$tool_success_rate" \
   --argjson tools_used "$tools_used_json" \
   --argjson tool_usage_breakdown "$breakdown_json" \
+  --argjson failed_tool_names "$failed_tools_json" \
 '
 {
   "log_file": $log_file,
@@ -138,7 +163,8 @@ jq -n \
     "failed_tool_calls": $failed_tools,
     "tool_success_rate": $tool_success_rate,
     "tools_used": $tools_used,
-    "tool_usage_breakdown": $tool_usage_breakdown
+    "tool_usage_breakdown": $tool_usage_breakdown,
+    "failed_tool_names": $failed_tool_names
   }
 }
 ' > "$OUTPUT_FILE"
