@@ -170,8 +170,8 @@ for run_dir in $run_dirs; do
         recall=$(extract_json_value "$run_dir/recipe-precision-analysis.json" ".metrics.recall" "N/A")
         f1_score=$(extract_json_value "$run_dir/recipe-precision-analysis.json" ".metrics.f1_score" "N/A")
         is_perfect_match=$(extract_json_value "$run_dir/recipe-precision-analysis.json" ".metrics.is_perfect_match" "N/A")
-        unnecessary_changes=$(extract_json_value "$run_dir/recipe-precision-analysis.json" ".metrics.false_positives_unnecessary" "N/A")
-        missing_changes=$(extract_json_value "$run_dir/recipe-precision-analysis.json" ".metrics.false_negatives_missing" "N/A")
+        unnecessary_changes=$(extract_json_value "$run_dir/recipe-precision-analysis.json" ".metrics.false_positives" "N/A")
+        missing_changes=$(extract_json_value "$run_dir/recipe-precision-analysis.json" ".metrics.false_negatives" "N/A")
 
         # Track perfect matches
         if [ "$is_perfect_match" = "true" ]; then
@@ -370,8 +370,8 @@ json_file="$OUTPUT_DIR/suite-results.json"
         echo "        \"tool_success_rate\": $run_tool_rate"
         echo "      },"
         echo "      \"precision_metrics\": {"
-        echo "        \"false_positives_unnecessary\": \"$unnecessary_changes\","
-        echo "        \"false_negatives_missing\": \"$missing_changes\","
+        echo "        \"false_positives\": \"$unnecessary_changes\","
+        echo "        \"false_negatives\": \"$missing_changes\","
         echo "        \"precision\": \"$precision\","
         echo "        \"recall\": \"$recall\","
         echo "        \"f1_score\": \"$f1_score\","
