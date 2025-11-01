@@ -36,17 +36,23 @@ echo "Calculating usage costs for: $LOG_FILE"
 cat "$LOG_FILE" | jq -s --arg log_file "$LOG_FILE" '
   # Define pricing for each model (per million tokens)
   {
-    "claude-sonnet-4-5-20250929": {
+    "claude-sonnet-4-5": {
       input: 3.00,
       output: 15.00,
       cache_creation: 3.75,
       cache_read: 0.30
     },
-    "claude-haiku-4-5-20250514": {
+    "claude-haiku-4-5": {
       input: 1.00,
       output: 5.00,
       cache_creation: 1.25,
       cache_read: 0.10
+    },
+    "claude-3-5-haiku": {
+      input: 0.80,
+      output: 4.00,
+      cache_creation: 1.00,
+      cache_read: 0.08
     }
   } as $pricing |
 
@@ -54,8 +60,8 @@ cat "$LOG_FILE" | jq -s --arg log_file "$LOG_FILE" '
   (map(select(.message.usage != null and .message.model != null) | {model: .message.model, usage: .message.usage}) | group_by(.model)) as $by_model |
 
   # Calculate per-model usage and costs
-  ($by_model | map({
-    model: .[0].model,
+  ($by_model | map((.[0].model) as $model | {
+    model: $model,
     usage: {
       input_tokens: map(.usage.input_tokens // 0) | add,
       cache_creation_input_tokens: map(.usage.cache_creation_input_tokens // 0) | add,
@@ -64,7 +70,7 @@ cat "$LOG_FILE" | jq -s --arg log_file "$LOG_FILE" '
     }
   } | . + {
     costs: (
-      ($pricing[.model] // {input: 3.00, output: 15.00, cache_creation: 3.75, cache_read: 0.30}) as $p |
+        ([$pricing | to_entries[] | (.key) as $kk | select($model | startswith($kk))] | .[0].value // {input:3.00, output: 15.00, cache_creation: 3.75, cache_read: 0.30}) as $p |
       {
         input_tokens_cost: (.usage.input_tokens * $p.input / 1000000),
         cache_creation_input_tokens_cost: (.usage.cache_creation_input_tokens * $p.cache_creation / 1000000),
