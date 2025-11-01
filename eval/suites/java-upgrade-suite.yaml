@@ -1,5 +1,5 @@
 suite_name: "java-upgrade-suite"
-batch_size: 1
+batch_size: 3
 prs:
   - name: gradle-wrapper-version-and-plugin-version-upgrade
     url: "https://github.com/openrewrite-assist-testing-dataset/payment-processing-service/pull/1"
