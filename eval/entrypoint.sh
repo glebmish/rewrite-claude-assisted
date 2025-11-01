@@ -117,7 +117,7 @@ log "Executing rewrite-assist command"
 START_TIME=$(date +%s)
 
 # Build the claude command
-CLAUDE_CMD="claude --model claude-haiku-4-5"
+CLAUDE_CMD="claude --model claude-sonnet-4-5"
 
 # Add debug flag if enabled
 if [[ "$DEBUG_MODE" == "true" ]]; then
