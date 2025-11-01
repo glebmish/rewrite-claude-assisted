@@ -118,16 +118,40 @@ for run_id in "${RUN_IDS[@]}"; do
         continue
     fi
 
-    artifact_count=0
+    # Deduplicate artifacts by name, keeping only the latest (based on created_at timestamp)
+    # Clear the array from any previous iteration
+    unset latest_artifacts
+    declare -A latest_artifacts
 
-    # Download each artifact
     while IFS= read -r artifact; do
         artifact_name=$(echo "$artifact" | jq -r '.name')
         artifact_id=$(echo "$artifact" | jq -r '.id')
+        artifact_created_at=$(echo "$artifact" | jq -r '.created_at')
 
+        # Check if we've seen this artifact name before
+        if [ -z "${latest_artifacts[$artifact_name]:-}" ]; then
+            # First time seeing this artifact name
+            latest_artifacts[$artifact_name]="$artifact_id|$artifact_created_at"
+        else
+            # Compare timestamps to keep the latest
+            IFS='|' read -r existing_id existing_time <<< "${latest_artifacts[$artifact_name]}"
+
+            if [[ "$artifact_created_at" > "$existing_time" ]]; then
+                # This artifact is newer
+                latest_artifacts[$artifact_name]="$artifact_id|$artifact_created_at"
+            fi
+        fi
+    done <<< "$(echo "$artifacts" | jq -c '.')"
+
+    artifact_count=0
+
+    # Download only the latest version of each artifact
+    for artifact_name in "${!latest_artifacts[@]}"; do
         # Only download run-metadata artifacts
         if [[ "$artifact_name" == *"run-metadata"* ]]; then
-            echo "  📥 Downloading: $artifact_name"
+            IFS='|' read -r artifact_id artifact_created_at <<< "${latest_artifacts[$artifact_name]}"
+
+            echo "  📥 Downloading: $artifact_name (created: $artifact_created_at)"
 
             # Download and extract
             gh api "/repos/$REPO/actions/artifacts/$artifact_id/zip" > "artifacts/${artifact_name}.zip"
@@ -136,7 +160,7 @@ for run_id in "${RUN_IDS[@]}"; do
 
             artifact_count=$((artifact_count + 1))
         fi
-    done <<< "$(echo "$artifacts" | jq -c '.')"
+    done
 
     echo "  ✅ Downloaded $artifact_count artifact(s)"
     echo ""
