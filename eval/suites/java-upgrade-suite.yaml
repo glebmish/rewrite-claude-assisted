@@ -4,7 +4,7 @@ prs:
   - name: gradle-wrapper-version-and-plugin-version-upgrade
     url: "https://github.com/openrewrite-assist-testing-dataset/payment-processing-service/pull/1"
     runs: 1
-  - name: gradle-wrapper-uograde
+  - name: gradle-wrapper-upgrade
     url: "https://github.com/openrewrite-assist-testing-dataset/analytics-dashboard/pull/1"
     runs: 1
   - name: dockerfile-and-github-actions-java-bump
