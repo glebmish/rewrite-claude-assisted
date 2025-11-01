@@ -47,7 +47,7 @@ git diff main...<pr-branch> --output=.scratchpad/<yyyy-mm-dd-hh-MM>/result/pr.di
 
 **2. `.scratchpad/<yyyy-mm-dd-hh-MM>/result/recommended-recipe.yaml`** - Final recipe YAML
 - Format: Valid OpenRewrite recipe YAML
-- Content: The recommended recipe composition
+- Content: The SINGLE recommended recipe composition
 - Must be syntactically valid and executable
 
 **3. `.scratchpad/<yyyy-mm-dd-hh-MM>/result/recommended-recipe.diff`** - Recipe output from main branch
