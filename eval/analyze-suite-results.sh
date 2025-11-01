@@ -22,6 +22,7 @@ declare -A pr_data
 total_runs=0
 successful_runs=0
 failed_runs=0
+perfect_runs=0
 total_cost=0
 total_duration=0
 
@@ -92,16 +93,22 @@ for run_dir in $run_dirs; do
     # Initialize run data with defaults
     pr_num="unknown"
     pr_url=""
+    pr_key="unknown"
+    repo_name="unknown"
     status="unknown"
     duration="0"
     cost="0"
-    
+
     # Parse workflow-metadata.json
     if [ -f "$run_dir/workflow-metadata.json" ]; then
         pr_url=$(extract_json_value "$run_dir/workflow-metadata.json" ".pr_url" "")
 
         if [ -n "$pr_url" ]; then
             pr_num=$(echo "$pr_url" | grep -oE '[0-9]+$' || echo "unknown")
+            # Extract repo name (e.g., "payment-processing-service" from full URL)
+            repo_name=$(echo "$pr_url" | grep -oE '[^/]+/pull/[0-9]+$' | sed 's|/pull/.*||' || echo "unknown")
+            # Create unique key: repo/pr_num
+            pr_key="${repo_name}/${pr_num}"
         fi
 
         status=$(extract_json_value "$run_dir/workflow-metadata.json" ".status" "unknown")
@@ -165,20 +172,25 @@ for run_dir in $run_dirs; do
         is_perfect_match=$(extract_json_value "$run_dir/recipe-precision-analysis.json" ".metrics.is_perfect_match" "N/A")
         unnecessary_changes=$(extract_json_value "$run_dir/recipe-precision-analysis.json" ".metrics.false_positives_unnecessary" "N/A")
         missing_changes=$(extract_json_value "$run_dir/recipe-precision-analysis.json" ".metrics.false_negatives_missing" "N/A")
+
+        # Track perfect matches
+        if [ "$is_perfect_match" = "true" ]; then
+            perfect_runs=$((perfect_runs + 1))
+        fi
     fi
     
     total_runs=$((total_runs + 1))
     total_cost=$(safe_add "$total_cost" "$cost")
     total_duration=$(safe_add "$total_duration" "$duration")
-    
-    # Track runs per PR (only if pr_num is valid)
-    if [ "$pr_num" != "unknown" ] && [ -n "$pr_num" ]; then
-        if [ -z "${pr_runs[$pr_num]:-}" ]; then
-            pr_runs[$pr_num]=0
-            pr_urls[$pr_num]="$pr_url"
+
+    # Track runs per PR (only if pr_key is valid)
+    if [ "$pr_key" != "unknown" ] && [ -n "$pr_key" ]; then
+        if [ -z "${pr_runs[$pr_key]:-}" ]; then
+            pr_runs[$pr_key]=0
+            pr_urls[$pr_key]="$pr_url"
         fi
-        pr_runs[$pr_num]=$((pr_runs[$pr_num] + 1))
-        run_number=${pr_runs[$pr_num]}
+        pr_runs[$pr_key]=$((pr_runs[$pr_key] + 1))
+        run_number=${pr_runs[$pr_key]}
     else
         run_number=$total_runs
     fi
@@ -188,14 +200,17 @@ for run_dir in $run_dirs; do
 
     # Store run data
 #    all_runs+=("$pr_num|$pr_url|$run_number|$status|$duration|$duration_min|$cost|$score_truth|$score_extract|$score_mapping|$score_valid|$score_overall|$total_messages|$tool_calls|$successful_tools|$tool_success_rate|$unnecessary_changes|$missing_changes|$precision|$recall|$f1_score|$is_perfect_match")
-    all_runs+=("$pr_num|$pr_url|$run_number|$status|$duration|$duration_min|$cost|$total_messages|$tool_calls|$successful_tools|$tool_success_rate|$unnecessary_changes|$missing_changes|$precision|$recall|$f1_score|$is_perfect_match")
+    all_runs+=("$pr_key|$pr_num|$pr_url|$repo_name|$run_number|$status|$duration|$duration_min|$cost|$total_messages|$tool_calls|$successful_tools|$tool_success_rate|$unnecessary_changes|$missing_changes|$precision|$recall|$f1_score|$is_perfect_match")
 done
 
 # Calculate suite-level metrics
 success_rate=0
+perfect_rate=0
 if [ $total_runs -gt 0 ]; then
     success_numerator=$((successful_runs * 100))
     success_rate=$(safe_divide "$success_numerator" "$total_runs" "2")
+    perfect_numerator=$((perfect_runs * 100))
+    perfect_rate=$(safe_divide "$perfect_numerator" "$total_runs" "2")
 fi
 total_duration_min=$(safe_divide "$total_duration" "60" "1")
 avg_duration_per_run=$(safe_divide "$total_duration_min" "$total_runs" "1")
@@ -220,9 +235,11 @@ summary_file="$OUTPUT_DIR/summary.md"
     echo "|--------|-------|"
     echo "| Total PRs | $unique_prs |"
     echo "| Total Runs | $total_runs |"
-    echo "| Successful | $successful_runs $GREEN |"
-    echo "| Failed | $failed_runs $([ $failed_runs -gt 0 ] && echo "$RED" || echo "") |"
-    echo "| Success Rate | ${success_rate}% |"
+    echo "| Workflow Success | $successful_runs $GREEN |"
+    echo "| Workflow Failed | $failed_runs $([ $failed_runs -gt 0 ] && echo "$RED" || echo "") |"
+    echo "| Workflow Success Rate | ${success_rate}% |"
+    echo "| Perfect Matches | $perfect_runs $GREEN |"
+    echo "| Perfect Match Rate | ${perfect_rate}% |"
     echo "| Total Cost | \$$(printf '%.2f' $total_cost) |"
     echo "| Total Duration | ${total_duration_min} minutes |"
     echo "| Avg Duration/Run | ${avg_duration_per_run} minutes |"
@@ -233,27 +250,33 @@ summary_file="$OUTPUT_DIR/summary.md"
     echo ""
 #    echo "| PR | Run | Status | Duration | Cost | Truth | Extract | Mapping | Valid | Overall | Msgs | Tools | Tool Success | Unnecessary | Missing | Precision | Recall | F1 | Perfect |"
 #    echo "|----|-----|--------|----------|------|-------|---------|---------|-------|---------|------|-------|--------------|-------------|---------|-----------|--------|----|---------|"
-    echo "| PR | Run | Status | Duration | Cost | Msgs | Tools | Tool Success | Unnecessary | Missing | Precision | Recall | F1 | Perfect |"
-    echo "|----|-----|--------|----------|------|------|-------|--------------|-------------|---------|-----------|--------|----|---------|"
+    echo "| Repo | PR | Run | Status | Duration | Cost | Msgs | Tools | Tool Success | Unnecessary | Missing | Precision | Recall | F1 | Perfect |"
+    echo "|------|-----|-----|--------|----------|------|------|-------|--------------|-------------|---------|-----------|--------|----|---------|"
 
     for run_data in "${all_runs[@]}"; do
 #        IFS='|' read -r run_pr run_pr_url run_num run_status run_dur run_dur_min run_cost run_truth run_extract run_mapping run_valid run_overall run_msg run_tools run_succ_tools run_tool_rate prec_unnecessary prec_missing prec_precision prec_recall prec_f1 prec_perfect <<< "$run_data"
-        IFS='|' read -r run_pr run_pr_url run_num run_status run_dur run_dur_min run_cost run_msg run_tools run_succ_tools run_tool_rate prec_unnecessary prec_missing prec_precision prec_recall prec_f1 prec_perfect <<< "$run_data"
+        IFS='|' read -r run_pr_key run_pr run_pr_url run_repo run_num run_status run_dur run_dur_min run_cost run_msg run_tools run_succ_tools run_tool_rate prec_unnecessary prec_missing prec_precision prec_recall prec_f1 prec_perfect <<< "$run_data"
 
         
         status_icon=$GREEN
         [ "$run_status" != "success" ] && status_icon=$RED
-        
+
         total_pr_runs=1
-        if [ "$run_pr" != "unknown" ] && [ -n "${pr_runs[$run_pr]:-}" ]; then
-            total_pr_runs=${pr_runs[$run_pr]}
+        if [ "$run_pr_key" != "unknown" ] && [ -n "${pr_runs[$run_pr_key]:-}" ]; then
+            total_pr_runs=${pr_runs[$run_pr_key]}
         fi
-        
+
         # Format PR link
         if [ -n "$run_pr_url" ]; then
             pr_link="[#$run_pr]($run_pr_url)"
         else
             pr_link="#$run_pr"
+        fi
+
+        # Format repo name (shorten if too long)
+        repo_display="$run_repo"
+        if [ ${#run_repo} -gt 30 ]; then
+            repo_display="${run_repo:0:27}..."
         fi
 
         # Format precision metrics
@@ -286,7 +309,7 @@ summary_file="$OUTPUT_DIR/summary.md"
         fi
 
 #        echo "| $pr_link | $run_num/$total_pr_runs | $status_icon | ${run_dur_min}m | \$$(printf '%.2f' $run_cost 2>/dev/null || echo "$run_cost") | $run_truth | $run_extract | $run_mapping | $run_valid | $run_overall | $run_msg | $run_tools | ${run_succ_tools}/${run_tools} (${formatted_tool_rate}) | $prec_unnecessary | $prec_missing | $formatted_precision | $formatted_recall | $formatted_f1 | $perfect_icon |"
-        echo "| $pr_link | $run_num/$total_pr_runs | $status_icon | ${run_dur_min}m | \$$(printf '%.2f' $run_cost 2>/dev/null || echo "$run_cost") | $run_msg | $run_tools | ${run_succ_tools}/${run_tools} (${formatted_tool_rate}) | $prec_unnecessary | $prec_missing | $formatted_precision | $formatted_recall | $formatted_f1 | $perfect_icon |"
+        echo "| $repo_display | $pr_link | $run_num/$total_pr_runs | $status_icon | ${run_dur_min}m | \$$(printf '%.2f' $run_cost 2>/dev/null || echo "$run_cost") | $run_msg | $run_tools | ${run_succ_tools}/${run_tools} (${formatted_tool_rate}) | $prec_unnecessary | $prec_missing | $formatted_precision | $formatted_recall | $formatted_f1 | $perfect_icon |"
     done
     
 } > "$summary_file"
@@ -306,7 +329,9 @@ json_file="$OUTPUT_DIR/suite-results.json"
     echo "    \"total_runs\": $total_runs,"
     echo "    \"successful_runs\": $successful_runs,"
     echo "    \"failed_runs\": $failed_runs,"
-    echo "    \"success_rate\": $success_rate,"
+    echo "    \"workflow_success_rate\": $success_rate,"
+    echo "    \"perfect_runs\": $perfect_runs,"
+    echo "    \"perfect_match_rate\": $perfect_rate,"
     echo "    \"total_cost\": $total_cost,"
     echo "    \"total_duration_seconds\": $total_duration,"
     echo "    \"total_duration_minutes\": $total_duration_min"
@@ -316,14 +341,16 @@ json_file="$OUTPUT_DIR/suite-results.json"
     first=true
     for run_data in "${all_runs[@]}"; do
 #        IFS='|' read -r run_pr run_pr_url run_num run_status run_dur run_dur_min run_cost run_truth run_extract run_mapping run_valid run_overall run_msg run_tools run_succ_tools run_tool_rate unnecessary_changes missing_changes precision recall f1_score is_perfect_match <<< "$run_data"
-        IFS='|' read -r run_pr run_pr_url run_num run_status run_dur run_dur_min run_cost run_msg run_tools run_succ_tools run_tool_rate unnecessary_changes missing_changes precision recall f1_score is_perfect_match <<< "$run_data"
+        IFS='|' read -r run_pr_key run_pr run_pr_url run_repo run_num run_status run_dur run_dur_min run_cost run_msg run_tools run_succ_tools run_tool_rate unnecessary_changes missing_changes precision recall f1_score is_perfect_match <<< "$run_data"
 
         [ "$first" = false ] && echo "    ,"
         first=false
 
         echo "    {"
+        echo "      \"pr_key\": \"$run_pr_key\","
         echo "      \"pr_number\": \"$run_pr\","
         echo "      \"pr_url\": \"$run_pr_url\","
+        echo "      \"repo_name\": \"$run_repo\","
         echo "      \"run_number\": $run_num,"
         echo "      \"status\": \"$run_status\","
         echo "      \"duration_seconds\": $run_dur,"
@@ -364,7 +391,9 @@ echo "   📄 Summary: $summary_file"
 echo "   📊 JSON: $json_file"
 echo ""
 echo "Suite Results:"
+echo "  • Total PRs: $unique_prs"
 echo "  • Total Runs: $total_runs"
-echo "  • Success Rate: ${success_rate}%"
+echo "  • Workflow Success Rate: ${success_rate}%"
+echo "  • Perfect Match Rate: ${perfect_rate}%"
 echo "  • Total Cost: \$$(printf '%.2f' $total_cost)"
 echo "  • Total Duration: ${total_duration_min} minutes"
