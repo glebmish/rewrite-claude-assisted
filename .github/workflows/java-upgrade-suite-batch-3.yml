@@ -13,9 +13,19 @@ jobs:
     strategy:
       matrix:
         include:
-          - pr_url: "https://github.com/openrewrite-assist-testing-dataset/ecommerce-catalog/pull/1"
-            pr_num: "1"
-            pr_index: 2
+          - pr_url: "https://github.com/openrewrite-assist-testing-dataset/simple-blog-platform/pull/2"
+            pr_num: "2"
+            pr_index: 6
+            run: 1
+            total_runs: 1
+          - pr_url: "https://github.com/openrewrite-assist-testing-dataset/notification-service/pull/2"
+            pr_num: "2"
+            pr_index: 7
+            run: 1
+            total_runs: 1
+          - pr_url: "https://github.com/openrewrite-assist-testing-dataset/inventory-tracking-system/pull/2"
+            pr_num: "2"
+            pr_index: 8
             run: 1
             total_runs: 1
       fail-fast: false
