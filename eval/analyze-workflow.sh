@@ -136,36 +136,36 @@ else
 fi
 
 # Phase 3: Qualitative analysis (exact prompt from workflow)
-log "Phase 3: Running qualitative analysis with Claude..."
-
+#log "Phase 3: Running qualitative analysis with Claude..."
+#
 # Build Claude command with tool restrictions
-CLAUDE_FLAGS=$(build_claude_flags)
-CLAUDE_CMD="claude --model claude-sonnet-4-5 $CLAUDE_FLAGS -p \"/analyze-session $SCRATCHPAD_FILE $SESSION_LOG\""
-
-log "  Running: $CLAUDE_CMD"
-
-ANALYSIS_OUTPUT_LOG="$SCRATCHPAD_DIR/analysis-output.log"
-if timeout 10m bash -c "$CLAUDE_CMD" 2>&1 | tee "$ANALYSIS_OUTPUT_LOG"; then
-    # Check for session limit
-    if grep -qi "session limit reached" "$ANALYSIS_OUTPUT_LOG"; then
-        log "Warning: Session limit reached during qualitative analysis"
-    else
-        log "Qualitative analysis complete"
-    fi
-else
-    EXIT_CODE=$?
-    # Check for session limit
-    if grep -qi "session limit reached" "$ANALYSIS_OUTPUT_LOG"; then
-        log "Warning: Session limit reached during qualitative analysis"
-    elif [ $EXIT_CODE -eq 124 ]; then
-        log "Warning: Qualitative analysis timed out after 10 minutes"
-    else
-        log "Warning: Qualitative analysis failed with exit code $EXIT_CODE"
-    fi
-fi
-
-log "Analysis workflow complete"
-log "Results available in: $SCRATCHPAD_DIR"
+#CLAUDE_FLAGS=$(build_claude_flags)
+#CLAUDE_CMD="claude --model claude-sonnet-4-5 $CLAUDE_FLAGS -p \"/analyze-session $SCRATCHPAD_FILE $SESSION_LOG\""
+#
+#log "  Running: $CLAUDE_CMD"
+#
+#ANALYSIS_OUTPUT_LOG="$SCRATCHPAD_DIR/analysis-output.log"
+#if timeout 10m bash -c "$CLAUDE_CMD" 2>&1 | tee "$ANALYSIS_OUTPUT_LOG"; then
+#    # Check for session limit
+#    if grep -qi "session limit reached" "$ANALYSIS_OUTPUT_LOG"; then
+#        log "Warning: Session limit reached during qualitative analysis"
+#    else
+#        log "Qualitative analysis complete"
+#    fi
+#else
+#    EXIT_CODE=$?
+#    Check for session limit
+#    if grep -qi "session limit reached" "$ANALYSIS_OUTPUT_LOG"; then
+#        log "Warning: Session limit reached during qualitative analysis"
+#    elif [ $EXIT_CODE -eq 124 ]; then
+#        log "Warning: Qualitative analysis timed out after 10 minutes"
+#    else
+#        log "Warning: Qualitative analysis failed with exit code $EXIT_CODE"
+#    fi
+#fi
+#
+#log "Analysis workflow complete"
+#log "Results available in: $SCRATCHPAD_DIR"
 
 if [[ "$SESSION_FETCH_FAILED" == "false" ]]; then
     log "  - Session log: $SCRATCHPAD_DIR/claude-log.jsonl"
@@ -177,6 +177,6 @@ if [[ -f "$SCRATCHPAD_DIR/recipe-precision-stats.json" ]]; then
     log "  - Recipe precision: $SCRATCHPAD_DIR/recipe-precision-stats.json"
 fi
 
-if [[ -f "$SCRATCHPAD_DIR/evaluation-report.md" ]]; then
-  cat "$SCRATCHPAD_DIR/evaluation-report.md" >> $GITHUB_STEP_SUMMARY
-fi
+#if [[ -f "$SCRATCHPAD_DIR/evaluation-report.md" ]]; then
+#  cat "$SCRATCHPAD_DIR/evaluation-report.md" >> $GITHUB_STEP_SUMMARY
+#fi
