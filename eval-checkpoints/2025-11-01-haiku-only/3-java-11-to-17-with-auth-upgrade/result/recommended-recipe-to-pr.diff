@@ -1,0 +1,124 @@
+# Comparison: Recipe Output vs PR Changes
+# This diff shows what the recommended recipe handles vs what requires manual implementation
+
+diff --git a/weather-api/src/main/java/com/weather/api/WeatherApiApplication.java b/weather-api/src/main/java/com/weather/api/WeatherApiApplication.java
+index 963833e..1701ba9 100644
+--- a/weather-api/src/main/java/com/weather/api/WeatherApiApplication.java
++++ b/weather-api/src/main/java/com/weather/api/WeatherApiApplication.java
+@@ -3,20 +3,16 @@ package com.weather.api;
+ import com.weather.api.config.WeatherApiConfiguration;
+ import com.weather.api.health.DatabaseHealthCheck;
+ import com.weather.api.resources.WeatherResource;
+-import com.weather.api.auth.JwtAuthFilter;
+-import com.weather.api.auth.ApiKeyAuthFilter;
++import com.weather.api.auth.UserPrincipal;
+ import com.weather.api.db.WeatherDAO;
+ import io.dropwizard.Application;
+ import io.dropwizard.auth.AuthDynamicFeature;
+ import io.dropwizard.auth.AuthValueFactoryProvider;
+-import io.dropwizard.auth.chained.ChainedAuthFilter;
+ import io.dropwizard.jdbi3.JdbiFactory;
+ import io.dropwizard.setup.Bootstrap;
+ import io.dropwizard.setup.Environment;
+ import org.jdbi.v3.core.Jdbi;
+
+-import javax.ws.rs.container.ContainerRequestFilter;
+-import java.util.List;
+
+ public class WeatherApiApplication extends Application<WeatherApiConfiguration> {
+
+@@ -41,22 +37,14 @@ public class WeatherApiApplication extends Application<WeatherApiConfiguration>
+
+         final WeatherDAO weatherDAO = jdbi.onDemand(WeatherDAO.class);
+
+-        // Deprecated auth chaining pattern
+-        final ContainerRequestFilter jwtFilter = new JwtAuthFilter.Builder<String>()
+-            .setAuthenticator(new com.weather.api.auth.JwtAuthenticator(configuration.getJwtSecret()))
+-            .setPrefix("Bearer")
+-            .buildAuthFilter();
+-
+-        final ContainerRequestFilter apiKeyFilter = new ApiKeyAuthFilter.Builder<String>()
+-            .setAuthenticator(new com.weather.api.auth.ApiKeyAuthenticator(configuration.getApiKeys()))
+-            .setPrefix("ApiKey")
+-            .buildAuthFilter();
+-
+-        final ChainedAuthFilter<String> chainedAuthFilter = new ChainedAuthFilter<>(
+-            List.of(jwtFilter, apiKeyFilter));
+-
+-        environment.jersey().register(new AuthDynamicFeature(chainedAuthFilter));
+-        environment.jersey().register(new AuthValueFactoryProvider.Binder<>(String.class));
++        // Configure authentication using standard Dropwizard approach
++        environment.jersey().register(new AuthDynamicFeature(
++            new io.dropwizard.auth.basic.BasicCredentialAuthFilter.Builder<UserPrincipal>()
++                .setAuthenticator(new com.weather.api.auth.ApiKeyAuthenticator(configuration.getApiKeys()))
++                .setRealm("weather-api")
++                .buildAuthFilter()));
++
++        environment.jersey().register(new AuthValueFactoryProvider.Binder<>(UserPrincipal.class));
+
+         // Register resources
+         environment.jersey().register(new WeatherResource(weatherDAO));
+diff --git a/weather-api/src/main/java/com/weather/api/auth/ApiKeyAuthenticator.java b/weather-api/src/main/java/com/weather/api/auth/ApiKeyAuthenticator.java
+index d69abe2..a705700 100644
+--- a/weather-api/src/main/java/com/weather/api/auth/ApiKeyAuthenticator.java
++++ b/weather-api/src/main/java/com/weather/api/auth/ApiKeyAuthenticator.java
+@@ -1,11 +1,12 @@ package com.weather.api.auth;
+
+ import io.dropwizard.auth.Authenticator;
++import io.dropwizard.auth.basic.BasicCredentials;
+
+ import java.util.List;
+ import java.util.Optional;
+
+-public class ApiKeyAuthenticator implements Authenticator<String, String> {
++public class ApiKeyAuthenticator implements Authenticator<BasicCredentials, UserPrincipal> {
+     private final List<String> validApiKeys;
+
+     public ApiKeyAuthenticator(List<String> validApiKeys) {
+@@ -13,9 +14,11 @@ public class ApiKeyAuthenticator implements Authenticator<String, String> {
+     }
+
+     @Override
+-    public Optional<String> authenticate(String apiKey) {
+-        if (validApiKeys.contains(apiKey)) {
+-            return Optional.of("api-user");
++    public Optional<UserPrincipal> authenticate(BasicCredentials credentials) {
++        // Use username as the API key
++        String username = credentials.getUsername();
++        if (username != null && validApiKeys.contains(username)) {
++            return Optional.of(new UserPrincipal(username, "api-key"));
+         }
+         return Optional.empty();
+     }
+diff --git a/weather-api/src/main/java/com/weather/api/auth/AuthSecurityContext.java b/weather-api/src/main/java/com/weather/api/auth/AuthSecurityContext.java
+index 457bb74..e75bc6e 100644
+--- a/weather-api/src/main/java/com/weather/api/auth/AuthSecurityContext.java
++++ b/weather-api/src/main/java/com/weather/api/auth/AuthSecurityContext.java
+@@ -5,11 +5,11 @@ import javax.ws.rs.core.SecurityContext;
+ import java.security.Principal;
+
+ public class AuthSecurityContext implements SecurityContext {
+-    private final Object principal;
++    private final UserPrincipal principal;
+     private final String scheme;
+     private final ContainerRequestContext requestContext;
+
+-    public AuthSecurityContext(Object principal, String scheme, ContainerRequestContext requestContext) {
++    public AuthSecurityContext(UserPrincipal principal, String scheme, ContainerRequestContext requestContext) {
+         this.principal = principal;
+         this.scheme = scheme;
+         this.requestContext = requestContext;
+@@ -17,12 +17,7 @@ public class AuthSecurityContext implements SecurityContext {
+
+     @Override
+     public Principal getUserPrincipal() {
+-        return new Principal() {
+-            @Override
+-            public String getName() {
+-                return principal.toString();
+-            }
+-        };
++        return principal;
+     }
+
+     @Override

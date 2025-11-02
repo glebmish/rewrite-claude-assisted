@@ -1,0 +1,267 @@
+{
+  "suite_metadata": {
+    "execution_date": "2025-11-01T16:06:27Z",
+    "total_prs": 10,
+    "total_runs": 10,
+    "successful_runs": 10,
+    "failed_runs": 0,
+    "workflow_success_rate": 100.00,
+    "perfect_runs": 3,
+    "perfect_match_rate": 30.00,
+    "total_cost": 9.37055331,
+    "total_duration_seconds": 4201,
+    "total_duration_minutes": 70.0
+  },
+  "runs": [
+    {
+      "pr_key": "payment-processing-service/1",
+      "pr_number": "1",
+      "pr_url": "https://github.com/openrewrite-assist-testing-dataset/payment-processing-service/pull/1",
+      "repo_name": "payment-processing-service",
+      "run_number": 1,
+      "status": "success",
+      "duration_seconds": 259,
+      "duration_minutes": 4.3,
+      "cost": 0.44786526000000004,
+      "tool_metrics": {
+        "total_messages": 209,
+        "tool_calls": 68,
+        "successful_tool_calls": 49,
+        "tool_success_rate": 0.7205
+      },
+      "precision_metrics": {
+        "false_positives": "0",
+        "false_negatives": "0",
+        "precision": "1",
+        "recall": "1",
+        "f1_score": "1",
+        "is_perfect_match": "true"
+      }
+    }    ,
+    {
+      "pr_key": "analytics-dashboard/1",
+      "pr_number": "1",
+      "pr_url": "https://github.com/openrewrite-assist-testing-dataset/analytics-dashboard/pull/1",
+      "repo_name": "analytics-dashboard",
+      "run_number": 1,
+      "status": "success",
+      "duration_seconds": 225,
+      "duration_minutes": 3.7,
+      "cost": 0.52857505,
+      "tool_metrics": {
+        "total_messages": 202,
+        "tool_calls": 72,
+        "successful_tool_calls": 56,
+        "tool_success_rate": 0.7777
+      },
+      "precision_metrics": {
+        "false_positives": "0",
+        "false_negatives": "0",
+        "precision": "1",
+        "recall": "1",
+        "f1_score": "1",
+        "is_perfect_match": "true"
+      }
+    }    ,
+    {
+      "pr_key": "ecommerce-catalog/1",
+      "pr_number": "1",
+      "pr_url": "https://github.com/openrewrite-assist-testing-dataset/ecommerce-catalog/pull/1",
+      "repo_name": "ecommerce-catalog",
+      "run_number": 1,
+      "status": "success",
+      "duration_seconds": 907,
+      "duration_minutes": 15.1,
+      "cost": 2.6507364,
+      "tool_metrics": {
+        "total_messages": 319,
+        "tool_calls": 116,
+        "successful_tool_calls": 95,
+        "tool_success_rate": 0.8189
+      },
+      "precision_metrics": {
+        "false_positives": "2",
+        "false_negatives": "2",
+        "precision": "0.75",
+        "recall": "0.75",
+        "f1_score": "0.75",
+        "is_perfect_match": "false"
+      }
+    }    ,
+    {
+      "pr_key": "weather-monitoring-service/2",
+      "pr_number": "2",
+      "pr_url": "https://github.com/openrewrite-assist-testing-dataset/weather-monitoring-service/pull/2",
+      "repo_name": "weather-monitoring-service",
+      "run_number": 1,
+      "status": "success",
+      "duration_seconds": 284,
+      "duration_minutes": 4.7,
+      "cost": 0.53946965,
+      "tool_metrics": {
+        "total_messages": 221,
+        "tool_calls": 75,
+        "successful_tool_calls": 54,
+        "tool_success_rate": 0.72
+      },
+      "precision_metrics": {
+        "false_positives": "0",
+        "false_negatives": "229",
+        "precision": "1",
+        "recall": "0.03",
+        "f1_score": "0.06",
+        "is_perfect_match": "false"
+      }
+    }    ,
+    {
+      "pr_key": "user-management-service/2",
+      "pr_number": "2",
+      "pr_url": "https://github.com/openrewrite-assist-testing-dataset/user-management-service/pull/2",
+      "repo_name": "user-management-service",
+      "run_number": 1,
+      "status": "success",
+      "duration_seconds": 570,
+      "duration_minutes": 9.5,
+      "cost": 0.91448586,
+      "tool_metrics": {
+        "total_messages": 333,
+        "tool_calls": 117,
+        "successful_tool_calls": 77,
+        "tool_success_rate": 0.6581
+      },
+      "precision_metrics": {
+        "false_positives": "N/A",
+        "false_negatives": "N/A",
+        "precision": "N/A",
+        "recall": "N/A",
+        "f1_score": "N/A",
+        "is_perfect_match": "false"
+      }
+    }    ,
+    {
+      "pr_key": "task-management-api/2",
+      "pr_number": "2",
+      "pr_url": "https://github.com/openrewrite-assist-testing-dataset/task-management-api/pull/2",
+      "repo_name": "task-management-api",
+      "run_number": 1,
+      "status": "success",
+      "duration_seconds": 388,
+      "duration_minutes": 6.4,
+      "cost": 0.63236194,
+      "tool_metrics": {
+        "total_messages": 201,
+        "tool_calls": 68,
+        "successful_tool_calls": 52,
+        "tool_success_rate": 0.7647
+      },
+      "precision_metrics": {
+        "false_positives": "0",
+        "false_negatives": "0",
+        "precision": "1",
+        "recall": "1",
+        "f1_score": "1",
+        "is_perfect_match": "true"
+      }
+    }    ,
+    {
+      "pr_key": "simple-blog-platform/2",
+      "pr_number": "2",
+      "pr_url": "https://github.com/openrewrite-assist-testing-dataset/simple-blog-platform/pull/2",
+      "repo_name": "simple-blog-platform",
+      "run_number": 1,
+      "status": "success",
+      "duration_seconds": 358,
+      "duration_minutes": 5.9,
+      "cost": 0.54645378,
+      "tool_metrics": {
+        "total_messages": 240,
+        "tool_calls": 83,
+        "successful_tool_calls": 60,
+        "tool_success_rate": 0.7228
+      },
+      "precision_metrics": {
+        "false_positives": "0",
+        "false_negatives": "23",
+        "precision": "1",
+        "recall": "0",
+        "f1_score": "0",
+        "is_perfect_match": "false"
+      }
+    }    ,
+    {
+      "pr_key": "notification-service/2",
+      "pr_number": "2",
+      "pr_url": "https://github.com/openrewrite-assist-testing-dataset/notification-service/pull/2",
+      "repo_name": "notification-service",
+      "run_number": 1,
+      "status": "success",
+      "duration_seconds": 597,
+      "duration_minutes": 9.9,
+      "cost": 1.9300005,
+      "tool_metrics": {
+        "total_messages": 237,
+        "tool_calls": 83,
+        "successful_tool_calls": 60,
+        "tool_success_rate": 0.7228
+      },
+      "precision_metrics": {
+        "false_positives": "N/A",
+        "false_negatives": "N/A",
+        "precision": "N/A",
+        "recall": "N/A",
+        "f1_score": "N/A",
+        "is_perfect_match": "false"
+      }
+    }    ,
+    {
+      "pr_key": "inventory-tracking-system/2",
+      "pr_number": "2",
+      "pr_url": "https://github.com/openrewrite-assist-testing-dataset/inventory-tracking-system/pull/2",
+      "repo_name": "inventory-tracking-system",
+      "run_number": 1,
+      "status": "success",
+      "duration_seconds": 272,
+      "duration_minutes": 4.5,
+      "cost": 0.5551286000000001,
+      "tool_metrics": {
+        "total_messages": 186,
+        "tool_calls": 63,
+        "successful_tool_calls": 44,
+        "tool_success_rate": 0.6984
+      },
+      "precision_metrics": {
+        "false_positives": "0",
+        "false_negatives": "75",
+        "precision": "1",
+        "recall": "0",
+        "f1_score": "0",
+        "is_perfect_match": "false"
+      }
+    }    ,
+    {
+      "pr_key": "file-storage-service/2",
+      "pr_number": "2",
+      "pr_url": "https://github.com/openrewrite-assist-testing-dataset/file-storage-service/pull/2",
+      "repo_name": "file-storage-service",
+      "run_number": 1,
+      "status": "success",
+      "duration_seconds": 341,
+      "duration_minutes": 5.6,
+      "cost": 0.6254762700000001,
+      "tool_metrics": {
+        "total_messages": 230,
+        "tool_calls": 75,
+        "successful_tool_calls": 50,
+        "tool_success_rate": 0.6666
+      },
+      "precision_metrics": {
+        "false_positives": "N/A",
+        "false_negatives": "N/A",
+        "precision": "N/A",
+        "recall": "N/A",
+        "f1_score": "N/A",
+        "is_perfect_match": "false"
+      }
+    }
+  ]
+}

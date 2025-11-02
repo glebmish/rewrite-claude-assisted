@@ -1,0 +1,39 @@
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index f2eb61e..b52f6e2 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -29,10 +29,10 @@ jobs:
+     steps:
+     - uses: actions/checkout@v4
+
+-    - name: Set up JDK 17
++    - name: Set up JDK 21
+       uses: actions/setup-java@v4
+       with:
+-        java-version: '17'
++        java-version: '21'
+         distribution: 'temurin'
+
+     - name: Cache Gradle packages
+diff --git a/Dockerfile b/Dockerfile
+index 328c7cd..03046ff 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,7 +1,7 @@
+ # Build stage
+-FROM eclipse-temurin:17-jdk-alpine AS builder
++FROM eclipse-temurin:21-jdk-alpine AS builder
+
+ WORKDIR /app
+
+ # Copy gradle wrapper and build files
+ COPY gradlew .
+@@ -15,7 +15,7 @@ COPY src ./src
+ RUN ./gradlew build --no-daemon
+
+ # Runtime stage
+-FROM eclipse-temurin:17-jre-alpine
++FROM eclipse-temurin:21-jre-alpine
+
+ WORKDIR /app
+

@@ -1,0 +1,12 @@
+name: "Upgrade Gradle to 8.1 and modernize build configuration"
+displayName: "Gradle 8.1 upgrade and Shadow plugin modernization"
+description: "Updates Gradle wrapper to 8.1 and upgrades Shadow plugin with deprecation removal"
+recipeList:
+  - org.openrewrite.gradle.UpdateGradleWrapper:
+      version: "8.1"
+  - org.openrewrite.gradle.plugins.UpgradePluginVersion:
+      pluginId: "com.github.johnrengelman.shadow"
+      newVersion: "8.1.1"
+  - org.openrewrite.gradle.RemoveProperty:
+      propertyName: "mainClassName"
+      block: "shadowJar"

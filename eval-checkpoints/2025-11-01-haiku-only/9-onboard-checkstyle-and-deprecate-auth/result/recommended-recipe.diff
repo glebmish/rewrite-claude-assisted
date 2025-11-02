@@ -1,0 +1,31 @@
+diff --git a/recommended-recipe.yaml b/recommended-recipe.yaml
+index 3f0c8f9..58f7224 100644
+--- a/recommended-recipe.yaml
++++ b/recommended-recipe.yaml
+@@ -1,13 +1,25 @@
+ name: File Storage Service Migration Enhanced
+
+ recipeList:
++  # Java Version Comprehensive Migration
+   - org.openrewrite.java.migrate.UpgradeToJava17
+
++  # Gradle Wrapper Update
+   - org.openrewrite.gradle.UpdateGradleWrapper:
+       version: "8.5"
+
++  # Authentication Removal
++  - org.openrewrite.java.DeleteFile:
++      files:
++        - "src/main/java/com/filestorage/auth/ApiKeyAuthFilter.java"
++        - "src/main/java/com/filestorage/auth/ApiKeyAuthenticator.java"
++
++  # Configuration Cleanup
++  - org.openrewrite.yaml.DeleteProperty:
++      propertyPath: "apiKeys"
++
++  # GitHub Actions Update
+   - org.openrewrite.github.ChangeJavaVersionInWorkflows:
+       oldVersion: "11"
+       newVersion: "17"
+-
++

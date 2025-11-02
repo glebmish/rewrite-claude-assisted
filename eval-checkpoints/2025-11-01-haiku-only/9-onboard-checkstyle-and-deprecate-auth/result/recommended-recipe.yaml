@@ -1,0 +1,39 @@
+name: File Storage Service Java 17 Migration
+displayName: Migrate File Storage Service to Java 17 with Authentication Cleanup
+description: >
+  Comprehensive recipe for migrating the File Storage Service from Java 11 to Java 17,
+  removing API Key authentication mechanism, and adding code quality tooling.
+
+  This recipe addresses three main transformation goals:
+  1. Java version upgrade from 11 to 17 (GitHub Actions and Gradle configuration)
+  2. Authentication mechanism simplification (removal of API Key auth)
+  3. Build configuration modernization (Java toolchain and Checkstyle addition)
+
+recipeList:
+  # Phase 1: Java Version Upgrades
+  - org.openrewrite.java.migrate.UpgradeToJava17
+
+  # Phase 2: Gradle Configuration Migration
+  - org.openrewrite.gradle.UpdateGradleWrapper:
+      version: "8.5"
+
+  # Phase 3: Remove API Key Authentication Files
+  - org.openrewrite.java.DeleteFile:
+      files:
+        - "src/main/java/com/filestorage/auth/ApiKeyAuthFilter.java"
+        - "src/main/java/com/filestorage/auth/ApiKeyAuthenticator.java"
+
+  # Phase 4: Remove API Key Imports
+  - org.openrewrite.java.RemoveImport:
+      type: com.filestorage.auth.ApiKeyAuthFilter
+  - org.openrewrite.java.RemoveImport:
+      type: com.filestorage.auth.ApiKeyAuthenticator
+
+  # Phase 5: Update Java Configuration in GitHub Actions
+  - org.openrewrite.github.ChangeJavaVersionInWorkflows:
+      oldVersion: "11"
+      newVersion: "17"
+
+  # Phase 6: Clean up configuration files
+  - org.openrewrite.yaml.DeleteProperty:
+      propertyPath: "apiKeys"

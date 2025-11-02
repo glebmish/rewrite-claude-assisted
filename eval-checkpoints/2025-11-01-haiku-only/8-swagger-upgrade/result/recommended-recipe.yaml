@@ -1,0 +1,101 @@
+type: specs.openrewrite.org/v1beta/recipe
+name: com.example.SwaggerV1ToOpenAPI3Migration
+displayName: Migrate Swagger v1 to OpenAPI 3.0
+description: |
+  Comprehensive migration from Swagger 1.6.6 to OpenAPI 3.0 (Swagger Core v3).
+  Includes dependency updates, annotation migrations, and configuration changes.
+
+  This recipe handles:
+  - Gradle dependency updates (swagger-core, swagger-jersey2-jaxrs, swagger-annotations)
+  - Java annotation type migrations (@Api → @Tag, @ApiOperation → @Operation)
+  - Annotation parameter renames (value/notes → summary/description, code → responseCode)
+  - Configuration class modifications (SwaggerBundleConfiguration support)
+  - Application initialization updates (SwaggerBundle integration)
+  - YAML configuration updates
+
+  Note: Some transformations require custom recipe implementations for annotation
+  parameter remapping and configuration class modifications.
+
+tags:
+  - swagger
+  - openapi
+  - migration
+  - dropwizard
+
+estimatedEffortPerOccurrence: PT30M
+
+recipeList:
+  # ============================================================================
+  # PHASE 1: Gradle Dependency Updates
+  # ============================================================================
+  # Update swagger-annotations in api/build.gradle
+  - org.openrewrite.gradle.ChangeDependency:
+      oldGroupId: io.swagger
+      oldArtifactId: swagger-annotations
+      newGroupId: io.swagger.core.v3
+      newArtifactId: swagger-annotations
+      newVersion: 2.2.39
+
+  # Update main swagger dependencies in build.gradle
+  # swagger-core 1.6.6 → dropwizard-swagger 2.0.28-3
+  - org.openrewrite.gradle.ChangeDependency:
+      oldGroupId: io.swagger
+      oldArtifactId: swagger-core
+      newGroupId: in.vectorpro.dropwizard
+      newArtifactId: dropwizard-swagger
+      newVersion: 2.0.28-3
+
+  # swagger-jersey2-jaxrs 1.6.6 → dropwizard-swagger 2.0.28-3
+  - org.openrewrite.gradle.ChangeDependency:
+      oldGroupId: io.swagger
+      oldArtifactId: swagger-jersey2-jaxrs
+      newGroupId: in.vectorpro.dropwizard
+      newArtifactId: dropwizard-swagger
+      newVersion: 2.0.28-3
+
+  # ============================================================================
+  # PHASE 2: Java Annotation Type Migrations
+  # ============================================================================
+  # Migrate @Api → @Tag (class-level annotation)
+  - org.openrewrite.java.ChangeAnnotationType:
+      oldFullyQualifiedAnnotationType: io.swagger.annotations.Api
+      newFullyQualifiedAnnotationType: io.swagger.v3.oas.annotations.tags.Tag
+
+  # Migrate @ApiOperation → @Operation (method-level annotation)
+  - org.openrewrite.java.ChangeAnnotationType:
+      oldFullyQualifiedAnnotationType: io.swagger.annotations.ApiOperation
+      newFullyQualifiedAnnotationType: io.swagger.v3.oas.annotations.Operation
+
+  # ============================================================================
+  # PHASE 3: Import Cleanup
+  # ============================================================================
+  # Remove unused imports and organize remaining imports
+  - org.openrewrite.java.RemoveUnusedImports
+
+  - org.openrewrite.java.OrderImports
+
+  # ============================================================================
+  # PHASE 4: Custom Recipe Requirements (Not Implemented)
+  # ============================================================================
+  # The following transformations require custom recipe implementations:
+  #
+  # 1. Annotation Parameter Remapping (CUSTOM RECIPE NEEDED)
+  #    - @Api(value="...") → @Tag(name="...")
+  #    - @ApiOperation(value="...", notes="...") → @Operation(summary="...", description="...")
+  #    - @ApiResponse(code=200, message="...") → @ApiResponse(responseCode="200", description="...")
+  #
+  # 2. Configuration Class Enhancement (CUSTOM RECIPE NEEDED)
+  #    Add to InventoryConfiguration.java:
+  #    - SwaggerBundleConfiguration field with @JsonProperty
+  #    - Getter and setter methods
+  #
+  # 3. Application Bootstrap Update (CUSTOM RECIPE NEEDED)
+  #    In InventoryApplication.java:
+  #    - Add SwaggerBundle<InventoryConfiguration> to bootstrap
+  #    - Remove configureSwagger() method and BeanConfig setup
+  #
+  # 4. YAML Configuration (CUSTOM RECIPE NEEDED)
+  #    In src/main/resources/config.yml:
+  #    - Add swagger section with resourcePackage configuration
+  #
+  # See scratchpad analysis for detailed implementation guidance.

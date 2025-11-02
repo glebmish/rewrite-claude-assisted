@@ -1,0 +1,395 @@
+{
+  "metadata": {
+    "repository": ".workspace/ecommerce-catalog",
+    "pr_number": 1,
+    "pr_title": "Update Dockerfile and Github Actions to use Eclipse Temurin 21",
+    "pr_branch": "pr-1",
+    "base_branch": "master",
+    "author": "glebmish",
+    "analysis_timestamp": "2025-11-01T08:27:00Z",
+    "overall_confidence": 100,
+    "ambiguity_score": 0,
+    "automation_feasibility": 95
+  },
+  "strategic_intent": {
+    "level": 1,
+    "description": "Upgrade Java runtime infrastructure from version 17 to version 21 across all deployment and CI/CD environments",
+    "confidence": 100,
+    "scope": "organization-wide-infrastructure",
+    "automation_potential": "high"
+  },
+  "cross_cutting_concerns": [
+    {
+      "level": 2,
+      "id": "2.1",
+      "name": "Consistency Maintenance",
+      "description": "Maintain consistent Java runtime version across all environments (CI, build, production)",
+      "confidence": 100,
+      "scope": "multi-file-multi-system",
+      "affected_systems": [
+        "GitHub Actions CI pipeline",
+        "Docker build environment",
+        "Docker runtime environment"
+      ],
+      "automation_potential": "high"
+    },
+    {
+      "level": 2,
+      "id": "2.2",
+      "name": "Distribution Standardization",
+      "description": "Continue using Eclipse Temurin as the standard Java distribution",
+      "confidence": 100,
+      "scope": "all-java-runtime-configurations",
+      "automation_potential": "high"
+    }
+  ],
+  "technology_specific_goals": [
+    {
+      "level": 3,
+      "id": "3.1",
+      "name": "Docker Infrastructure Upgrade",
+      "description": "Update Docker base images to use Eclipse Temurin 21 for both build and runtime stages",
+      "confidence": 100,
+      "scope": "dockerfile-multi-stage-build",
+      "sub_intents": [
+        "3.1.1: Update builder stage JDK",
+        "3.1.2: Update runtime stage JRE"
+      ],
+      "automation_potential": "high"
+    },
+    {
+      "level": 3,
+      "id": "3.2",
+      "name": "CI/CD Pipeline Upgrade",
+      "description": "Update GitHub Actions workflow to use JDK 21 for all Java operations",
+      "confidence": 100,
+      "scope": "github-actions-workflow",
+      "sub_intents": [
+        "3.2.1: Update Java version parameter",
+        "3.2.2: Update step documentation"
+      ],
+      "automation_potential": "high"
+    }
+  ],
+  "detailed_transformation_goals": [
+    {
+      "level": 4,
+      "id": "4.1",
+      "name": "GitHub Actions Java Setup Step",
+      "description": "Configure actions/setup-java@v4 to provision JDK 21 with Temurin distribution",
+      "confidence": 100,
+      "file": ".github/workflows/ci.yml",
+      "lines": "32-36",
+      "atomic_changes": [
+        "4.1.1: Update step name descriptive text",
+        "4.1.2: Update java-version parameter value",
+        "4.1.3: Preserve distribution parameter (temurin)"
+      ],
+      "pattern": "YAML parameter value update in GitHub Actions workflow",
+      "automation_potential": "very-high"
+    },
+    {
+      "level": 4,
+      "id": "4.2",
+      "name": "Docker Builder Stage Base Image",
+      "description": "Update Docker builder stage to use JDK 21 Alpine image",
+      "confidence": 100,
+      "file": "Dockerfile",
+      "line": 2,
+      "atomic_changes": [
+        "4.2.1: Update FROM instruction image tag"
+      ],
+      "pattern": "Docker FROM instruction with versioned tag",
+      "automation_potential": "very-high"
+    },
+    {
+      "level": 4,
+      "id": "4.3",
+      "name": "Docker Runtime Stage Base Image",
+      "description": "Update Docker runtime stage to use JRE 21 Alpine image",
+      "confidence": 100,
+      "file": "Dockerfile",
+      "line": 18,
+      "atomic_changes": [
+        "4.3.1: Update FROM instruction image tag"
+      ],
+      "pattern": "Docker FROM instruction with versioned tag",
+      "automation_potential": "very-high"
+    }
+  ],
+  "atomic_changes": [
+    {
+      "level": 5,
+      "id": "5.1",
+      "name": "GitHub Actions Step Name",
+      "before": "Set up JDK 17",
+      "after": "Set up JDK 21",
+      "type": "string-literal-replacement",
+      "purpose": "documentation-readability",
+      "confidence": 100,
+      "automation": {
+        "method": "regex",
+        "pattern": "Set up JDK (\\d+)",
+        "replacement": "Set up JDK 21"
+      }
+    },
+    {
+      "level": 5,
+      "id": "5.2",
+      "name": "GitHub Actions Java Version Parameter",
+      "before": "java-version: '17'",
+      "after": "java-version: '21'",
+      "type": "yaml-value-replacement",
+      "purpose": "functional-controls-jdk-version",
+      "confidence": 100,
+      "automation": {
+        "method": "yaml-path",
+        "path": ".jobs.test.steps[*].with.java-version",
+        "condition": "uses: actions/setup-java@v4"
+      }
+    },
+    {
+      "level": 5,
+      "id": "5.3",
+      "name": "Docker Builder Image Tag",
+      "before": "FROM eclipse-temurin:17-jdk-alpine as builder",
+      "after": "FROM eclipse-temurin:21-jdk-alpine as builder",
+      "type": "docker-image-tag-replacement",
+      "purpose": "functional-controls-build-jdk",
+      "confidence": 100,
+      "automation": {
+        "method": "regex",
+        "pattern": "eclipse-temurin:(\\d+)-jdk-alpine",
+        "replacement": "eclipse-temurin:21-jdk-alpine"
+      }
+    },
+    {
+      "level": 5,
+      "id": "5.4",
+      "name": "Docker Runtime Image Tag",
+      "before": "FROM eclipse-temurin:17-jre-alpine",
+      "after": "FROM eclipse-temurin:21-jre-alpine",
+      "type": "docker-image-tag-replacement",
+      "purpose": "functional-controls-runtime-jre",
+      "confidence": 100,
+      "automation": {
+        "method": "regex",
+        "pattern": "eclipse-temurin:(\\d+)-jre-alpine",
+        "replacement": "eclipse-temurin:21-jre-alpine"
+      }
+    }
+  ],
+  "transformation_patterns": [
+    {
+      "id": "P1",
+      "name": "Version Number String Replacement",
+      "pattern": "17 → 21",
+      "context": "Java/JDK version references",
+      "locations": [
+        "GitHub Actions step names",
+        "GitHub Actions parameters",
+        "Docker image tags"
+      ],
+      "generalization_potential": "high",
+      "parameterization": "{OLD_VERSION} → {NEW_VERSION}"
+    },
+    {
+      "id": "P2",
+      "name": "Docker Image Tag Update (Structured)",
+      "pattern": "{registry}/{image}:{old_version}-{variant}-{os} → {registry}/{image}:{new_version}-{variant}-{os}",
+      "preserved_components": [
+        "registry",
+        "image_name",
+        "variant",
+        "os"
+      ],
+      "changed_components": [
+        "version"
+      ],
+      "generalization_potential": "very-high"
+    },
+    {
+      "id": "P3",
+      "name": "GitHub Actions Java Setup",
+      "pattern": "Update actions/setup-java@v* configuration",
+      "parameters": [
+        "java-version",
+        "distribution",
+        "step-name"
+      ],
+      "preserved": [
+        "action-version",
+        "distribution"
+      ],
+      "generalization_potential": "high"
+    },
+    {
+      "id": "P4",
+      "name": "Multi-stage Docker Consistency",
+      "pattern": "Synchronize version across builder and runtime stages",
+      "constraint": "Builder JDK version MUST match Runtime JRE version (major version)",
+      "stages": {
+        "builder": "-jdk- variant",
+        "runtime": "-jre- variant"
+      },
+      "generalization_potential": "medium-high"
+    }
+  ],
+  "scope_and_boundaries": {
+    "in_scope": [
+      "Runtime environment versions (JDK/JRE)",
+      "CI/CD pipeline Java versions",
+      "Docker base image versions",
+      "Step/stage documentation"
+    ],
+    "out_of_scope": [
+      "Java source/target compatibility (remains at 17)",
+      "Application code changes",
+      "Dependency version updates",
+      "Gradle version updates",
+      "Base OS changes (Alpine)",
+      "Java distribution changes (Temurin)"
+    ]
+  },
+  "challenges_for_automation": [
+    {
+      "id": "C1",
+      "name": "Semantic Understanding of Build vs Runtime",
+      "description": "Distinguishing between compilation target (build.gradle) and runtime version (Dockerfile/CI)",
+      "difficulty": "medium",
+      "mitigation": "Provide option to user: 'Update runtime only' vs 'Update runtime and compilation target'"
+    },
+    {
+      "id": "C2",
+      "name": "Multi-stage Docker Consistency",
+      "description": "Ensuring both builder and runtime stages use compatible versions",
+      "difficulty": "low-medium",
+      "mitigation": "Parse all FROM instructions and validate major versions match"
+    },
+    {
+      "id": "C3",
+      "name": "Distribution Lock-in Detection",
+      "description": "Identifying the intent to maintain a specific Java distribution",
+      "difficulty": "low",
+      "mitigation": "Extract distribution from original configuration and preserve"
+    },
+    {
+      "id": "C4",
+      "name": "Version Compatibility Validation",
+      "description": "Ensuring target Java version is compatible with dependencies",
+      "difficulty": "high",
+      "mitigation": "Check dependency compatibility matrices, warn if unknown"
+    },
+    {
+      "id": "C5",
+      "name": "Alpine vs Other Base OS",
+      "description": "Detecting and preserving base OS choice",
+      "difficulty": "low",
+      "mitigation": "Parse OS from image tag and preserve in transformation"
+    }
+  ],
+  "edge_cases": [
+    {
+      "id": "E1",
+      "name": "Partial File Updates",
+      "scenario": "Only update Dockerfile OR GitHub Actions, not both",
+      "handling": "Recipe should support partial application via parameters"
+    },
+    {
+      "id": "E2",
+      "name": "Multiple FROM Instructions",
+      "scenario": "Dockerfile with more than 2 stages or external base images",
+      "handling": "Recipe should handle N stages, updating only Java-related images"
+    },
+    {
+      "id": "E3",
+      "name": "Different Java Distributions",
+      "scenario": "Migration from one distribution to another",
+      "handling": "Separate recipe or additional parameter"
+    },
+    {
+      "id": "E4",
+      "name": "Custom Docker Tags",
+      "scenario": "Custom tags or non-standard versioning",
+      "handling": "Support flexible version patterns, warn on non-standard tags"
+    },
+    {
+      "id": "E5",
+      "name": "Matrix Builds",
+      "scenario": "GitHub Actions matrix strategy testing multiple Java versions",
+      "handling": "Recipe should update specific matrix entries or add new ones"
+    }
+  ],
+  "recommended_recipes": [
+    {
+      "name": "com.example.docker.UpgradeEclipseTemurinVersion",
+      "type": "Docker AST manipulation",
+      "parameters": {
+        "targetJavaVersion": "21",
+        "imageNamePattern": "eclipse-temurin",
+        "preserveOS": true,
+        "preserveVariant": true
+      },
+      "operations": [
+        "Parse Dockerfile",
+        "Find all FROM instructions matching pattern",
+        "Extract current version, variant, OS",
+        "Replace version component",
+        "Validate multi-stage consistency"
+      ]
+    },
+    {
+      "name": "com.example.github.UpgradeActionsSetupJava",
+      "type": "YAML Transformation",
+      "parameters": {
+        "targetJavaVersion": "21",
+        "distribution": "temurin",
+        "updateStepName": true
+      },
+      "operations": [
+        "Parse GitHub Actions workflow YAML",
+        "Find steps using actions/setup-java@*",
+        "Update java-version parameter",
+        "Update step name if contains version reference",
+        "Preserve distribution parameter"
+      ]
+    },
+    {
+      "name": "com.example.UpgradeJavaRuntimeInfrastructure",
+      "type": "Recipe Suite",
+      "parameters": {
+        "fromVersion": "17",
+        "toVersion": "21",
+        "distribution": "temurin",
+        "updateBuildGradle": false
+      },
+      "operations": [
+        "Execute Docker recipe",
+        "Execute GitHub Actions recipe",
+        "Optionally update build.gradle",
+        "Validate consistency across all changes"
+      ]
+    }
+  ],
+  "validation_checklist": {
+    "syntactic": [
+      "YAML syntax remains valid in ci.yml",
+      "Dockerfile syntax remains valid",
+      "Version numbers are valid Java versions",
+      "Docker image tags exist in registry"
+    ],
+    "semantic": [
+      "Builder stage JDK major version == Runtime stage JRE major version",
+      "Java distribution consistent across all files",
+      "Base OS consistent across multi-stage builds",
+      "CI Java version matches Docker runtime version"
+    ],
+    "compatibility": [
+      "Java 21 compatible with Dropwizard 3.0.7",
+      "Java 21 available in Eclipse Temurin Alpine images",
+      "Gradle 8.1 compatible with Java 21",
+      "GitHub Actions setup-java@v4 supports Java 21"
+    ],
+    "status": "all-pass"
+  }
+}
