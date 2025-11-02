@@ -117,6 +117,7 @@ EOF
     done
 
     cat >> "$workflow_file" << EOF
+      max-parallel: 1
       fail-fast: false
     uses: ./.github/workflows/rewrite-assist.yml
     with:

@@ -30,6 +30,7 @@ Thumbs.db
 
 # Logs
 *.log
+!**/claude-output.log
 
 # Assist workflow workspace
 .workspace
