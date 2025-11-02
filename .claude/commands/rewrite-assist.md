@@ -38,9 +38,10 @@ Based on the results, choose the final recommended recipe and generate result ar
 Assuming you've already created scratchpad directory `.scratchpad/<yyyy-mm-dd-hh-MM>/` at the start of the workflow
 
 **1. `.scratchpad/<yyyy-mm-dd-hh-MM>/result/pr.diff`** - Original PR diff
+MUST be a result of `git diff` command execution
 ```bash
 cd .workspace/<repo-name>
-git diff main...<pr-branch> --output=.scratchpad/<yyyy-mm-dd-hh-MM>/result/pr.diff
+git diff <default-branch>...<pr-branch> --output=.scratchpad/<yyyy-mm-dd-hh-MM>/result/pr.diff
 ```
 - Format: Unified diff format (output of `git diff`)
 - Purpose: Ground truth for comparison
@@ -51,70 +52,18 @@ git diff main...<pr-branch> --output=.scratchpad/<yyyy-mm-dd-hh-MM>/result/pr.di
 - Must be syntactically valid and executable
 
 **3. `.scratchpad/<yyyy-mm-dd-hh-MM>/result/recommended-recipe.diff`** - Recipe output from main branch
-
-**IF empirical validation was performed** (recipe tested with worktree):
+MUST be a result of `git diff` command execution
 ```bash
-cd .workspace/<recipe-test-worktree>
-git diff main --output=<scratchpad-dir>/result/recommended-recipe.diff
+cd .workspace/<repo-name>
+git diff <default-branch>..<recipe-branch> --output=.scratchpad/<yyyy-mm-dd-hh-MM>/result/recommended-recipe.diff
 ```
+- Format: Unified diff format (output of `git diff`)
+- Purpose: Result of OpenRewrite recipe execution for empirical validation
 
-**IF only analytical validation** (no empirical testing):
-- Generate a theoretical diff showing expected recipe output
-- OR: Create descriptive text explaining expected changes
-
-**4. `.scratchpad/<yyyy-mm-dd-hh-MM>/result/recommended-recipe-to-pr.diff`** - Recipe compared to PR
-
-**CRITICAL FORMAT REQUIREMENT**: This file MUST be in unified diff format for automated precision analysis.
-
-**IF empirical validation was performed**:
-Use the `scripts/create-diff.sh` script to generate the diff:
-```bash
-scripts/create-diff.sh \
-  .workspace/<repo-name> \
-  <recommended-recipe-branch> \
-  <pr-branch> \
-  <scratchpad-dir>/result/recommended-recipe-to-pr.diff
-```
-
-The script will:
-- Validate the repository path and branches exist
-- Generate a diff from recommended-recipe-branch to pr-branch
-- Save the output to the specified file
-- Report success with file size and line counts
-
-**Validation**: After running the script, verify the output file was created:
-```bash
-ls -lh <scratchpad-dir>/result/recommended-recipe-to-pr.diff
-```
-
-**IF only analytical validation** (no empirical dry-run):
-Create an EMPTY unified diff (indicating perfect theoretical match):
-```bash
-cat > result/recommended-recipe-to-pr.diff << 'EOF'
-# Empty diff - analytical validation only
-# Empirical validation not performed
-EOF
-```
-
-**IMPORTANT**: Do NOT create a text comparison report. The file must be parseable by `scripts/analysis/recipe-diff-precision.sh` which expects:
-- Lines starting with `+` (additions)
-- Lines starting with `-` (deletions)
-- Lines starting with `@@` (diff headers)
-- OR: Empty file (indicating perfect match)
-
-**Format Validation**: After generating the diff, verify it's in the correct format:
-```bash
-# This should show diff lines OR be empty (both acceptable)
-grep -E '^[+\-@]' result/recommended-recipe-to-pr.diff || echo "Empty diff (perfect match)"
-
-# This should NOT match (text reports are invalid)
-grep -i "comparison\|analysis\|assessment" result/recommended-recipe-to-pr.diff && echo "ERROR: Text report format detected"
-```
-
+**4. other output files**
 **Human-Readable Analysis**: Any comparison summaries, assessments, or detailed analysis should go in:
 - The main scratchpad file (rewrite-assist-scratchpad.md)
 - OR: A separate `result/analysis.md` file
-- NOT in the `recommended-recipe-to-pr.diff` file
 
 ## Input Handling
 

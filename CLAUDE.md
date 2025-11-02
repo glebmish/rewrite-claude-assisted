@@ -14,7 +14,6 @@ ALWAYS use full path whenever you use `cd` command
 Always clone repositories to the .workspace directory and use repository name as directory name
 Always use `git@` links for cloning. Assume correct ssh keys are set up for you.
 Always use shallow clone: `git clone --depth 1 {repo-url} {directory}`
-When you want to create worktrees use: `git worktree add ../{repository-name-}-{branch-name} {branch}`
 Fetch PRs using: `git fetch origin pull/{pr-number}/head:pr-{pr-number}`
 When you need to access repository files, clone it first and work with the cloned version. Avoid fetching files from web.
 

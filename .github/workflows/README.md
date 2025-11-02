@@ -50,7 +50,6 @@ Located in `result/` subdirectory (per `.claude/commands/rewrite-assist.md:30-35
 | `pr.diff` | Original PR diff (ground truth) |
 | `recommended-recipe.yaml` | Final recommended OpenRewrite recipe |
 | `recommended-recipe.diff` | Diff of recipe applied to main branch |
-| `recommended-recipe-to-pr.diff` | Diff comparing recipe output to original PR (used for precision analysis) |
 
 ## Success Criteria
 
@@ -62,7 +61,6 @@ A successful workflow run produces:
 - ✅ `result/pr.diff`
 - ✅ `result/recommended-recipe.yaml`
 - ✅ `result/recommended-recipe.diff`
-- ✅ `result/recommended-recipe-to-pr.diff`
 
 ### Analysis Files (post-execution)
 - ✅ `claude-log.jsonl`

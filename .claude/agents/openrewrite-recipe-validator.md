@@ -14,35 +14,27 @@ IF SCRATCHPAD IS PROVIDED, APPEND EVERYTHING THERE, DO NOT CREATE NEW FILES
 ## Validation Workflow Overview
 Your systematic approach validates recipes by:
 1. Capturing original PR diffs as ground truth
-2. Creating isolated test environments using git worktrees
-3. Executing recipes in dry-run mode
-4. Comparing recipe output against PR diffs
-5. Identifying gaps and over-applications
+2. Executing recipes in dry-run mode
+3. Capturing recipe diff from dry-run execution
+4. Identifying gaps and over-applications
 
 ## Phase 1: Environment Preparation
 
 ### PR Diff Capture
+In this section and below <default-branch> means the branch that is used in the repository by default.
+It is usually named `main` or `master`.
+
 ```bash
 # Save original PR diff for comparison
 cd <repo-directory>
-git diff main...pr-<PR_NUMBER> --output=pr-<PR_NUMBER>.diff
-```
-
-### Worktree Setup Strategy
-For each recipe variant to test:
-```bash
-# Create test branches from main
-git checkout main
-git branch <test-branch-name>
-# Create isolated worktree
-git worktree add <full-path>/.workspace/<test-worktree> <test-branch-name>
+git diff <default-branch>...pr-<PR_NUMBER> --output=pr-<PR_NUMBER>.diff
+git checkout <default-branch>
 ```
 
 ## Phase 2: Recipe Configuration
+Must be repeated for EVERY recipe under test
 
 ### Recipe YAML Generation
-Create `<full-path>/.workspace/<test-worktree>/rewrite.yml` for each test:
-
 **Recipe Example**:
 ```yaml
 ---
@@ -55,15 +47,17 @@ recipeList:
 ```
 
 ### Gradle Init Script Setup
+Must be repeated for EVERY recipe under test
+
 Copy `rewrite.gradle` with proper dependencies and recipe name. Script is located in `scripts/rewrite.gradle`:
 
 ## Phase 3: Dry Run Execution
 
 ### Execution Protocol
 ```bash
-cd <full-path>/.workspace/<test-worktree>
+cd <repo-directory>
 # Execute OpenRewrite dry run
-JAVA_HOME=<applicable-java-home> ./gradlew rewrite --init-script rewrite.gradle > rewrite-output.log 2>&1
+JAVA_HOME=<applicable-java-home> ./gradlew rewriteDryRun --init-script rewrite.gradle
 ```
 
 ### Error Handling Checklist
@@ -76,12 +70,11 @@ JAVA_HOME=<applicable-java-home> ./gradlew rewrite --init-script rewrite.gradle 
 - If the above checks didn't help, NEVER attempt to resolve the issue by changing something in the project
 
 ## Phase 4: Diff Analysis & Metrics
+Must be repeated for EVERY recipe under test
 
-Extract the diff for analysis. Since rewrite command is doing actual changes `git diff` should show diff with the main branch.
-Additionally, diff with PR branch must be extracted (`git diff <pr> HEAD`).
+Extract the diff for analysis. Path of the recipe diff will be in the `gradlew` output.
 For each validated recipe, save both diffs to the scratchpad directory. Also save recipe yaml file.
-DO NOT ADD ANYTHING TO EITHER DIFF FILES OR YAML FILES. Keep your analysis in scratchpad file.
-
+DO NOT ADD ANYTHING TO EITHER DIFF FILES OR YAML FILES. Keep your analysis in the scratchpad file.
 
 ### Over-application troubleshooting
 
@@ -104,7 +97,6 @@ Include:
 * Setup Summary
   * Repositories and PRs tested
   * Recipe variant configured
-  * Worktree structure created
 * Execution Results
   * Dry run success/failure
   * Any errors encountered
@@ -126,7 +118,7 @@ Keep it high level. Separate agent will transform it to a precise recipe.
 * Always create isolated environments for testing
 * Never modify main branch or PR branch directly
 * Document every command and its output
-* Prefer empirical testing over theoretical analysis 
+* Prefer empirical testing to theoretical analysis 
 * Provide specific examples for all findings
 * Never try to modify recipe that you were task to validate. Test it, analyze, log results and recommendations. NOTHING else.
 
