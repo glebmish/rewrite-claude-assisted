@@ -28,7 +28,6 @@ All required files are in `.scratchpad/2025-11-01-08-25/result/`:
 1. **pr.diff** - Original PR changes
 2. **recommended-recipe.yaml** - Final recipe (syntactically valid)
 3. **recommended-recipe.diff** - Recipe output
-4. **recommended-recipe-to-pr.diff** - Comparison (empty = perfect match)
 5. **analysis.md** - Detailed analysis report
 
 ### Complete Documentation

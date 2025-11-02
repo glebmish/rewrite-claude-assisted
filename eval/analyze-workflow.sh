@@ -107,14 +107,14 @@ log "Phase 2b: Analyzing recipe precision..."
 
 RESULT_DIR="$SCRATCHPAD_DIR/result"
 PR_DIFF="$RESULT_DIR/pr.diff"
-RECIPE_TO_PR_DIFF="$RESULT_DIR/recommended-recipe-to-pr.diff"
+RECIPE_DIFF="$RESULT_DIR/recommended-recipe.diff"
 
-if [[ -f "$PR_DIFF" && -f "$RECIPE_TO_PR_DIFF" ]]; then
-    log "  Found PR diff and recipe-to-PR diffs, calculating precision..."
+if [[ -f "$PR_DIFF" && -f "$RECIPE_DIFF" ]]; then
+    log "  Found PR diff and recipe diff, calculating precision..."
 
     PRECISION_OUTPUT="$SCRATCHPAD_DIR/recipe-precision-analysis.json"
 
-    if scripts/analysis/recipe-diff-precision.sh "$PR_DIFF" "$RECIPE_TO_PR_DIFF" "$PRECISION_OUTPUT"; then
+    if scripts/analysis/recipe-diff-precision.sh "$PR_DIFF" "$RECIPE_DIFF" "$PRECISION_OUTPUT"; then
         log "  Recipe precision stats saved to: $PRECISION_OUTPUT"
 
         # Display key metrics from the new script output
