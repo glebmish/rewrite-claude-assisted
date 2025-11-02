@@ -9,9 +9,15 @@ def parse_diff_to_set(file_path):
     """
     changes = set()
     try:
-        # The unidiff library requires files to be opened in text mode.
-        with open(file_path, 'r', encoding='utf-8') as f:
-            patch_set = PatchSet(f)
+        # Read file in binary mode first to preserve all content
+        with open(file_path, 'rb') as f:
+            raw_content = f.read()
+
+        # Decode and normalize line endings (replace CRLF with LF, then strip any remaining \r)
+        diff_content = raw_content.decode('utf-8').replace('\r\n', '\n').replace('\r', '\n')
+
+        # Parse the normalized content
+        patch_set = PatchSet(diff_content)
 
         for patched_file in patch_set:
             # Use the target_file path for additions and source_file for removals
