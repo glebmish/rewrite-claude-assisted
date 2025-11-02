@@ -23,11 +23,7 @@ jobs:
             pr_index: 1
             run: 1
             total_runs: 1
-          - pr_url: "https://github.com/openrewrite-assist-testing-dataset/ecommerce-catalog/pull/1"
-            pr_num: "1"
-            pr_index: 2
-            run: 1
-            total_runs: 1
+      max-parallel: 1
       fail-fast: false
     uses: ./.github/workflows/rewrite-assist.yml
     with:
