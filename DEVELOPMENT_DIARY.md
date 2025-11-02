@@ -158,3 +158,38 @@ the result is not something useful to start with, but instead and overcomplicate
 That's what going on with suite analysis now. Fixing it.
 * Coming up with a robust analysis of a single run. Should probably result in multiple files and should run as a part of
 main evaluation action, not suite analysis. Suite analysis will only combine results, probably with a script, not a claude code command.
+
+2025-01-11
+* Spent unbelievable amount of time trying to make evals work. Main challenges:
+  * Working around Pro subscription limits. Solutions:
+    * Batching of runs + wait in between. Helped to eventually run all tests
+    * Testing with haiku models first. Reduced costs and wait time significantly
+    * Removing subjective evaluation. This one couldn't be downgraded to haiku to keep consistent "intelligence" baseline
+between tests, so removing it was the only way for now.
+    * Also, started to use Gemini for development a lot since all Claude limits went to running evals. It's worse,
+but has huge allowance even on free account.
+  * Bugs in Claude-generated scripts. Tbf it's mostly the lack of validation from me.
+    * cost analysis script didn't have info on haiku 3.5 (which is surprisingly the model used in subagents with `model: haiku`)
+    * cost analysis script matched on full model name, but turns out intermediate releases happen and do change suffix of the model name in logs.
+Added prefix match.
+    * seems like at some point output redirects (`echo 'a' > file`) were disallowed entirely and few of my commands broke.
+Rewrote commands to pass output files into a command instead of redirection. Don't like it though, it goes against unix practices.
+    * simplified precision calculations weren't correct.
+      * Before: looked at PR diff and diff between recipe and PR. Calculated metrics based on added and removed lines. 
+Didn't work because it was missing context of the main branch.
+      * After: looking at PR diff and recipe diff (from main). Comparing changes. Has all context about main branch. Easier to set up. 
+  * Complicated or unreliable workflows
+    * Git worktrees seem to be hard to grasp. Or maybe actions that have to be done in both worktrees and main repo directory.
+Removed it entirely since fixing one of the bugs made it unnecessary.
+    * Output files were unreliable. Sometimes named differently, sometimes different content, etc. Added more precision to the prompts
+to improve this. Still not 100%, but much better. Required files are mostly there, some non-essential or unnecessary files are less stable.
+  * Test cases prep
+    * Test cases were prepared before using Claude Code generation. On a closer look, most of the generated upgrade PRs were trash and had
+to be completely rewritten.
+  * General complexity of the eval setup: batches and aggregation as separate Github actions, removing duplicate runs and retries for aggregation, etc.
+* MAJOR MILESTONE: first [full eval](eval-checkpoints/2025-11-01-haiku-only) has been executed. Some learnings:
+  * Haiku 4.5 is significantly cheaper than Sonnet 4.5. Even more saw in subscription. Resulting dollar price difference seems not as significant as subscription consumption difference.
+  * Some complicated steps need simplifications - worktrees, diff capture
+  * Surprised to see a new SlashCommand tool. Always fails for some reason though with no details. Would be very useful.
+  * `model: haiku` in subagents SOMEHOW uses Haiku 3.5, not Haiku 4.5. Annoying, because more precise `haiku-4-5` doesn't seem to work either.
+  * Works awful on non-trivial PRs (>10 changed lines)
