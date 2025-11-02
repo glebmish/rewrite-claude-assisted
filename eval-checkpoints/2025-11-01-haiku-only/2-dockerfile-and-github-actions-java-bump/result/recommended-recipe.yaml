@@ -1,0 +1,74 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.java.migrate.UpgradeEclipseTemurinToVersion21
+displayName: Upgrade Eclipse Temurin from v17 to v21
+description: |
+  Upgrades the Java runtime from Eclipse Temurin 17 to Eclipse Temurin 21
+  across Docker base images and GitHub Actions CI/CD pipeline configurations.
+
+  This recipe updates:
+  - Dockerfile base images (both JDK and JRE variants)
+  - GitHub Actions workflow Java setup steps
+  - Step documentation to reflect the new version
+
+  Note: This recipe only updates runtime infrastructure. It does not modify
+  build.gradle source/target compatibility settings.
+
+recipeList:
+  # Update Docker builder stage JDK image
+  - org.openrewrite.text.FindAndReplace:
+      find: "eclipse-temurin:17-jdk-alpine"
+      replace: "eclipse-temurin:21-jdk-alpine"
+      regex: false
+      filePattern: "**/Dockerfile"
+
+  # Update Docker runtime stage JRE image
+  - org.openrewrite.text.FindAndReplace:
+      find: "eclipse-temurin:17-jre-alpine"
+      replace: "eclipse-temurin:21-jre-alpine"
+      regex: false
+      filePattern: "**/Dockerfile"
+
+  # Update GitHub Actions step name
+  - org.openrewrite.yaml.ChangePropertyValue:
+      propertyKey: "$.jobs.build.steps[?(@.uses =~ /actions\\/setup-java.*/)].name"
+      newValue: "Set up JDK 21"
+      oldValue: "Set up JDK 17"
+      fileMatcher: ".github/workflows/*.yml"
+
+  # Update GitHub Actions java-version parameter
+  - org.openrewrite.yaml.ChangePropertyValue:
+      propertyKey: "$.jobs.build.steps[?(@.uses =~ /actions\\/setup-java.*/)].with.java-version"
+      newValue: "'21'"
+      oldValue: "'17'"
+      fileMatcher: ".github/workflows/*.yml"
+
+---
+# Alternative simpler version using text replacement only
+type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.java.migrate.UpgradeEclipseTemurinToVersion21Simple
+displayName: Upgrade Eclipse Temurin to v21 (Simple Text Replacement)
+description: |
+  A simplified version using only text-based find and replace operations.
+  This version is more portable and doesn't require complex YAML manipulation.
+
+recipeList:
+  # Docker JDK image update
+  - org.openrewrite.text.FindAndReplace:
+      find: "eclipse-temurin:17-jdk-alpine"
+      replace: "eclipse-temurin:21-jdk-alpine"
+
+  # Docker JRE image update
+  - org.openrewrite.text.FindAndReplace:
+      find: "eclipse-temurin:17-jre-alpine"
+      replace: "eclipse-temurin:21-jre-alpine"
+
+  # GitHub Actions step name
+  - org.openrewrite.text.FindAndReplace:
+      find: "Set up JDK 17"
+      replace: "Set up JDK 21"
+
+  # GitHub Actions java-version value
+  - org.openrewrite.text.FindAndReplace:
+      find: "java-version: '17'"
+      replace: "java-version: '21'"

@@ -1,0 +1,53 @@
+{
+  "log_file": "/__w/rewrite-claude-assisted/rewrite-claude-assisted/.scratchpad/2025-11-01-15-25/claude-log.jsonl",
+  "analysis_timestamp": "2025-11-01T15:35:36Z",
+  "metrics": {
+    "total_messages": 237,
+    "tool_calls": 83,
+    "successful_tool_calls": 60,
+    "failed_tool_calls": 23,
+    "tool_success_rate": 0.7228,
+    "tools_used": [
+      "Edit",
+      "Glob",
+      "Read",
+      "SlashCommand",
+      "Task",
+      "TodoWrite",
+      "WebSearch",
+      "Write",
+      "bash",
+      "cd",
+      "date",
+      "find",
+      "get-session-id.sh",
+      "gh",
+      "git",
+      "ls",
+      "mkdir",
+      "pwd",
+      "wc"
+    ],
+    "tool_usage_breakdown": {
+      "Edit": 1,
+      "Glob": 2,
+      "Read": 6,
+      "SlashCommand": 1,
+      "Task": 5,
+      "TodoWrite": 7,
+      "WebSearch": 1,
+      "Write": 8,
+      "bash": 4,
+      "cd": 14,
+      "date": 2,
+      "find": 2,
+      "get-session-id.sh": 1,
+      "gh": 2,
+      "git": 6,
+      "ls": 7,
+      "mkdir": 10,
+      "pwd": 1,
+      "wc": 3
+    }
+  }
+}

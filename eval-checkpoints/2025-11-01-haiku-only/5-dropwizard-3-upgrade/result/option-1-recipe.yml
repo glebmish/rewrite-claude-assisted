@@ -1,0 +1,60 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: io.dropwizard.migration.Dropwizard_2_1_to_3_0_Migration
+displayName: Dropwizard 2.1 to 3.0 Migration
+description: >
+  Comprehensive migration recipe for Dropwizard applications from version 2.1 to 3.0.
+  Handles Gradle build file updates, dependency migrations, and source code transformations.
+
+tags:
+  - dropwizard
+  - migration
+  - java
+  - gradle
+
+recipeList:
+  # Gradle Build File Transformations
+  - org.openrewrite.gradle.UpdateJavaCompatibility:
+      version: 17
+
+  # Dependency Updates for Dropwizard Core
+  - org.openrewrite.gradle.UpdateDependencyVersion:
+      groupId: io.dropwizard
+      artifactId: dropwizard-core
+      newVersion: 3.0.0
+
+  - org.openrewrite.gradle.UpdateDependencyVersion:
+      groupId: io.dropwizard
+      artifactId: dropwizard-jdbi3
+      newVersion: 3.0.0
+
+  - org.openrewrite.gradle.UpdateDependencyVersion:
+      groupId: io.dropwizard
+      artifactId: dropwizard-auth
+      newVersion: 3.0.0
+
+  - org.openrewrite.gradle.UpdateDependencyVersion:
+      groupId: io.dropwizard
+      artifactId: dropwizard-testing
+      newVersion: 3.0.0
+
+  # Import Path Migrations
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: io.dropwizard.Configuration
+      newPackageName: io.dropwizard.core.Configuration
+
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: io.dropwizard.Application
+      newPackageName: io.dropwizard.core.Application
+
+  # Remove @Override from initialize() and run() methods
+  - org.openrewrite.java.RemoveAnnotation:
+      annotationType: java.lang.Override
+      methodPattern:
+        - "* initialize(..)"
+        - "* run(..)"
+
+  # Additional Cleanup and Formatting
+  - org.openrewrite.java.format.AutoFormat
+
+version: 1.0.0

@@ -1,0 +1,42 @@
+type: specs.openrewrite.org/v1beta/recipe
+name: com.weather.upgrade.Java17Migration
+displayName: Upgrade Weather Service to Java 17
+description: >-
+  Comprehensive recipe for upgrading weather-monitoring-service from Java 11 to Java 17.
+  Includes Java version updates, authentication modernization, and Docker base image updates.
+recipeList:
+  # Java version upgrade - comprehensive
+  - org.openrewrite.java.migrate.UpgradeToJava17
+
+  # Build configuration updates
+  - org.openrewrite.gradle.UpdateGradleProperties:
+      gradle-version: 7.6.4
+
+  # Remove deprecated custom auth filter implementations
+  - org.openrewrite.java.DeleteMethodArgument:
+      methodPattern: 'io.dropwizard.jersey.setup.JerseyEnvironment register(..)'
+      argumentIndex: 0
+
+  # Remove JwtAuthFilter class
+  - org.openrewrite.java.RemoveType:
+      typePattern: 'com.weather.api.auth.JwtAuthFilter'
+
+  # Remove JwtAuthenticator class
+  - org.openrewrite.java.RemoveType:
+      typePattern: 'com.weather.api.auth.JwtAuthenticator'
+
+  # Remove ApiKeyAuthFilter class
+  - org.openrewrite.java.RemoveType:
+      typePattern: 'com.weather.api.auth.ApiKeyAuthFilter'
+
+  # Remove unused imports from auth
+  - org.openrewrite.java.RemoveUnusedImports
+
+  # Dockerfile base image update (Java 17)
+  - org.openrewrite.docker.UpdateBaseImage:
+      fromImage: 'openjdk:11-jdk-slim'
+      toImage: 'eclipse-temurin:17-jdk-alpine'
+
+  - org.openrewrite.docker.UpdateBaseImage:
+      fromImage: 'openjdk:11-jre-slim'
+      toImage: 'eclipse-temurin:17-jre-alpine'

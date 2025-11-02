@@ -1,0 +1,33 @@
+diff --git a/build.gradle b/build.gradle
+index f6c2f9b..a4d751f 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -1,7 +1,7 @@
+ plugins {
+     id 'java'
+     id 'application'
+-    id 'com.github.johnrengelman.shadow' version '6.1.0'
++    id 'com.github.johnrengelman.shadow' version '8.1.1'
+ }
+
+ group = 'com.example.payment'
+@@ -74,7 +74,6 @@ application {
+ shadowJar {
+     archiveBaseName = 'payment-processing-service'
+     archiveVersion = version
+-    mainClassName = 'PaymentApplication'
+     mergeServiceFiles()
+ }
+
+diff --git a/gradle/wrapper/gradle-wrapper.properties b/gradle/wrapper/gradle-wrapper.properties
+index 6528428..0e1ae8c 100644
+--- a/gradle/wrapper/gradle-wrapper.properties
++++ b/gradle/wrapper/gradle-wrapper.properties
+@@ -1,6 +1,6 @@
+ distributionBase=GRADLE_USER_HOME
+ distributionPath=wrapper/dists
+-distributionUrl=https\://services.gradle.org/distributions/gradle-6.9-bin.zip
++distributionUrl=https\://services.gradle.org/distributions/gradle-8.1-bin.zip
+ networkTimeout=10000
+ validateDistributionUrl=true
+ zipStoreBase=GRADLE_USER_HOME

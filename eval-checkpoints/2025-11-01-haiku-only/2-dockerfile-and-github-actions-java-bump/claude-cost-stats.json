@@ -1,0 +1,69 @@
+{
+  "log_file": "/__w/rewrite-claude-assisted/rewrite-claude-assisted/.scratchpad/2025-11-01-08-25/claude-log.jsonl",
+  "analysis_timestamp": "2025-11-01T08:40:25Z",
+  "by_model": [
+    {
+      "model": "claude-3-5-haiku-20241022",
+      "usage": {
+        "input_tokens": 176,
+        "cache_creation_input_tokens": 54408,
+        "cache_read_input_tokens": 658300,
+        "output_tokens": 13264
+      },
+      "costs": {
+        "input_tokens_cost": 0.000528,
+        "cache_creation_input_tokens_cost": 0.20403,
+        "cache_read_input_tokens_cost": 0.19749,
+        "output_tokens_cost": 0.19896,
+        "total_cost": 0.601008
+      }
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "usage": {
+        "input_tokens": 155,
+        "cache_creation_input_tokens": 75033,
+        "cache_read_input_tokens": 1010102,
+        "output_tokens": 467
+      },
+      "costs": {
+        "input_tokens_cost": 0.000465,
+        "cache_creation_input_tokens_cost": 0.28137375,
+        "cache_read_input_tokens_cost": 0.3030306,
+        "output_tokens_cost": 0.007005,
+        "total_cost": 0.59187435
+      }
+    },
+    {
+      "model": "claude-sonnet-4-5-20250929",
+      "usage": {
+        "input_tokens": 761,
+        "cache_creation_input_tokens": 151951,
+        "cache_read_input_tokens": 2438223,
+        "output_tokens": 65974
+      },
+      "costs": {
+        "input_tokens_cost": 0.002283,
+        "cache_creation_input_tokens_cost": 0.56981625,
+        "cache_read_input_tokens_cost": 0.7314669,
+        "output_tokens_cost": 0.98961,
+        "total_cost": 2.29317615
+      }
+    }
+  ],
+  "totals": {
+    "usage": {
+      "input_tokens": 1092,
+      "cache_creation_input_tokens": 281392,
+      "cache_read_input_tokens": 4106625,
+      "output_tokens": 79705
+    },
+    "costs": {
+      "input_tokens_cost": 0.003276,
+      "cache_creation_input_tokens_cost": 1.05522,
+      "cache_read_input_tokens_cost": 1.2319875,
+      "output_tokens_cost": 1.195575,
+      "total_cost": 3.4860585
+    }
+  }
+}

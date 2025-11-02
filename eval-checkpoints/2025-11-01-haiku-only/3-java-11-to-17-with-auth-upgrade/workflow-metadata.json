@@ -1,0 +1,8 @@
+{
+  "pr_url": "https://github.com/openrewrite-assist-testing-dataset/weather-monitoring-service/pull/2",
+  "status": "success",
+  "exit_code": 0,
+  "duration_seconds": 284,
+  "start_time": "2025-11-01T09:03:16Z",
+  "end_time": "2025-11-01T09:08:00Z"
+}
