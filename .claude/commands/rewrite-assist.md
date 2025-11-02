@@ -41,10 +41,11 @@ Assuming you've already created scratchpad directory `.scratchpad/<yyyy-mm-dd-hh
 MUST be a result of `git diff` command execution
 ```bash
 cd .workspace/<repo-name>
-git diff <default-branch>...<pr-branch> --output=.scratchpad/<yyyy-mm-dd-hh-MM>/result/pr.diff
+git diff <default-branch>...<pr-branch> --output=.scratchpad/<yyyy-mm-dd-hh-MM>/result/pr.diff -- . ':!gradle/wrapper/gradle-wrapper.jar' ':!gradlew' ':!gradlew.bat'
 ```
 - Format: Unified diff format (output of `git diff`)
 - Purpose: Ground truth for comparison
+- Note: Excludes generated/binary Gradle wrapper files (gradle-wrapper.jar, gradlew, gradlew.bat)
 
 **2. `.scratchpad/<yyyy-mm-dd-hh-MM>/result/recommended-recipe.yaml`** - Final recipe YAML
 - Format: Valid OpenRewrite recipe YAML
@@ -55,10 +56,11 @@ git diff <default-branch>...<pr-branch> --output=.scratchpad/<yyyy-mm-dd-hh-MM>/
 MUST be a result of `git diff` command execution
 ```bash
 cd .workspace/<repo-name>
-git diff <default-branch>..<recipe-branch> --output=.scratchpad/<yyyy-mm-dd-hh-MM>/result/recommended-recipe.diff
+git diff <default-branch>..<recipe-branch> --output=.scratchpad/<yyyy-mm-dd-hh-MM>/result/recommended-recipe.diff -- . ':!gradle/wrapper/gradle-wrapper.jar' ':!gradlew' ':!gradlew.bat'
 ```
 - Format: Unified diff format (output of `git diff`)
 - Purpose: Result of OpenRewrite recipe execution for empirical validation
+- Note: Excludes generated/binary Gradle wrapper files (gradle-wrapper.jar, gradlew, gradlew.bat)
 
 **4. other output files**
 **Human-Readable Analysis**: Any comparison summaries, assessments, or detailed analysis should go in:
