@@ -1,0 +1,69 @@
+{
+  "log_file": "/__w/rewrite-claude-assisted/rewrite-claude-assisted/.scratchpad/2025-11-01-15-25/claude-log.jsonl",
+  "analysis_timestamp": "2025-11-01T15:35:37Z",
+  "by_model": [
+    {
+      "model": "claude-3-5-haiku-20241022",
+      "usage": {
+        "input_tokens": 151,
+        "cache_creation_input_tokens": 45396,
+        "cache_read_input_tokens": 391145,
+        "output_tokens": 7488
+      },
+      "costs": {
+        "input_tokens_cost": 0.000453,
+        "cache_creation_input_tokens_cost": 0.170235,
+        "cache_read_input_tokens_cost": 0.1173435,
+        "output_tokens_cost": 0.11232,
+        "total_cost": 0.40035149999999997
+      }
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "usage": {
+        "input_tokens": 243,
+        "cache_creation_input_tokens": 86878,
+        "cache_read_input_tokens": 1668972,
+        "output_tokens": 269
+      },
+      "costs": {
+        "input_tokens_cost": 0.000729,
+        "cache_creation_input_tokens_cost": 0.3257925,
+        "cache_read_input_tokens_cost": 0.5006916,
+        "output_tokens_cost": 0.004035,
+        "total_cost": 0.8312481
+      }
+    },
+    {
+      "model": "claude-sonnet-4-5-20250929",
+      "usage": {
+        "input_tokens": 2011,
+        "cache_creation_input_tokens": 176176,
+        "cache_read_input_tokens": 862898,
+        "output_tokens": 41373
+      },
+      "costs": {
+        "input_tokens_cost": 0.006033,
+        "cache_creation_input_tokens_cost": 0.66066,
+        "cache_read_input_tokens_cost": 0.25886939999999997,
+        "output_tokens_cost": 0.620595,
+        "total_cost": 1.5461574
+      }
+    }
+  ],
+  "totals": {
+    "usage": {
+      "input_tokens": 2405,
+      "cache_creation_input_tokens": 308450,
+      "cache_read_input_tokens": 2923015,
+      "output_tokens": 49130
+    },
+    "costs": {
+      "input_tokens_cost": 0.007215,
+      "cache_creation_input_tokens_cost": 1.1566874999999999,
+      "cache_read_input_tokens_cost": 0.8769045,
+      "output_tokens_cost": 0.73695,
+      "total_cost": 2.7777570000000003
+    }
+  }
+}

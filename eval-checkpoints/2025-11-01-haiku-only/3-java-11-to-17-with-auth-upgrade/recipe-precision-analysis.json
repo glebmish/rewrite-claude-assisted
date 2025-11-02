@@ -1,0 +1,23 @@
+{
+  "diff_files": {
+    "pr": "/__w/rewrite-claude-assisted/rewrite-claude-assisted/.scratchpad/2025-11-01-09-03/result/pr.diff",
+    "recipe_vs_pr": "/__w/rewrite-claude-assisted/rewrite-claude-assisted/.scratchpad/2025-11-01-09-03/result/recommended-recipe-to-pr.diff"
+  },
+  "analysis_timestamp": "2025-11-01T09:08:13Z",
+  "metrics": {
+    "total_expected_changes": 265,
+    "true_positives": 247,
+    "false_positives_unnecessary": 30,
+    "false_negatives_missing": 18,
+    "total_divergence": 48,
+    "precision": 0.8916,
+    "recall": 0.932,
+    "f1_score": 0.9113,
+    "is_perfect_match": false
+  },
+  "interpretation": {
+    "false_positives_unnecessary_meaning": "Recipe made changes that the original PR did not have.",
+    "false_negatives_missing_meaning": "PR has changes that the recipe failed to implement.",
+    "perfect_match": false
+  }
+}

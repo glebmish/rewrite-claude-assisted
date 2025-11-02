@@ -1,0 +1,53 @@
+{
+  "log_file": "/__w/rewrite-claude-assisted/rewrite-claude-assisted/.scratchpad/2025-11-01-08-51/claude-log.jsonl",
+  "analysis_timestamp": "2025-11-01T08:58:00Z",
+  "by_model": [
+    {
+      "model": "claude-3-5-haiku-20241022",
+      "usage": {
+        "input_tokens": 219,
+        "cache_creation_input_tokens": 73825,
+        "cache_read_input_tokens": 821368,
+        "output_tokens": 25009
+      },
+      "costs": {
+        "input_tokens_cost": 0.000657,
+        "cache_creation_input_tokens_cost": 0.27684375,
+        "cache_read_input_tokens_cost": 0.2464104,
+        "output_tokens_cost": 0.375135,
+        "total_cost": 0.89904615
+      }
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "usage": {
+        "input_tokens": 123,
+        "cache_creation_input_tokens": 83496,
+        "cache_read_input_tokens": 2855633,
+        "output_tokens": 512
+      },
+      "costs": {
+        "input_tokens_cost": 0.000369,
+        "cache_creation_input_tokens_cost": 0.31311,
+        "cache_read_input_tokens_cost": 0.8566899,
+        "output_tokens_cost": 0.00768,
+        "total_cost": 1.1778488999999999
+      }
+    }
+  ],
+  "totals": {
+    "usage": {
+      "input_tokens": 342,
+      "cache_creation_input_tokens": 157321,
+      "cache_read_input_tokens": 3677001,
+      "output_tokens": 25521
+    },
+    "costs": {
+      "input_tokens_cost": 0.001026,
+      "cache_creation_input_tokens_cost": 0.58995375,
+      "cache_read_input_tokens_cost": 1.1031003,
+      "output_tokens_cost": 0.382815,
+      "total_cost": 2.07689505
+    }
+  }
+}

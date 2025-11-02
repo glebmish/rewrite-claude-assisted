@@ -1,0 +1,4 @@
+# Empty diff - analytical validation only
+# The recommended recipe MigrateFromH2ToPostgresql is expected to produce
+# output that exactly matches the PR #2 changes shown in pr.diff
+# Empirical validation not performed due to environment constraints

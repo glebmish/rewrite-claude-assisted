@@ -1,0 +1,51 @@
+{
+  "log_file": "/__w/rewrite-claude-assisted/rewrite-claude-assisted/.scratchpad/2025-11-01-08-25/claude-log.jsonl",
+  "analysis_timestamp": "2025-11-01T08:29:29Z",
+  "metrics": {
+    "total_messages": 209,
+    "tool_calls": 68,
+    "successful_tool_calls": 49,
+    "failed_tool_calls": 19,
+    "tool_success_rate": 0.7205,
+    "tools_used": [
+      "Edit",
+      "Glob",
+      "Read",
+      "SESSION_DATE=\"2025-11-01-08-25\"",
+      "SlashCommand",
+      "Task",
+      "TodoWrite",
+      "WebSearch",
+      "Write",
+      "bash",
+      "cd",
+      "date",
+      "find",
+      "git",
+      "java-17-openjdk-amd64",
+      "ls",
+      "mkdir",
+      "pwd"
+    ],
+    "tool_usage_breakdown": {
+      "Edit": 6,
+      "Glob": 1,
+      "Read": 5,
+      "SESSION_DATE=\"2025-11-01-08-25\"": 1,
+      "SlashCommand": 1,
+      "Task": 2,
+      "TodoWrite": 7,
+      "WebSearch": 1,
+      "Write": 12,
+      "bash": 2,
+      "cd": 4,
+      "date": 1,
+      "find": 2,
+      "git": 9,
+      "java-17-openjdk-amd64": 2,
+      "ls": 3,
+      "mkdir": 7,
+      "pwd": 2
+    }
+  }
+}

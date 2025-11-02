@@ -1,0 +1,38 @@
+# Expected output from recommended recipe on master branch
+# This represents the theoretical changes the recipe should produce
+
+diff --git a/Dockerfile b/Dockerfile
+index ae04ef6..8896c45 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,5 +1,5 @@
+ # Multi-stage build with outdated base image
+-FROM openjdk:11-jdk-slim as builder
++FROM eclipse-temurin:17-jdk-alpine as builder
+
+ WORKDIR /app
+
+@@ -17,7 +17,7 @@ COPY data-collector/ ./data-collector/
+ RUN ./gradlew clean build -x test
+
+ # Runtime stage with outdated JRE
+-FROM openjdk:11-jre-slim
++FROM eclipse-temurin:17-jre-alpine
+
+ WORKDIR /app
+
+diff --git a/build.gradle b/build.gradle
+index 80a282f..55221a2 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -8,8 +8,8 @@ subprojects {
+     apply plugin: 'java'
+     apply plugin: 'application'
+
+-    sourceCompatibility = '11'
+-    targetCompatibility = '11'
++    sourceCompatibility = '17'
++    targetCompatibility = '17'
+
+     dependencies {
+         implementation 'io.dropwizard:dropwizard-core:2.0.34'

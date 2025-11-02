@@ -1,0 +1,10 @@
+# Analytical Validation Only
+# No empirical testing was performed with the recommended recipe composition.
+# The standard OpenRewrite recipes identified can only achieve ~35% coverage of PR changes.
+# Full implementation requires custom recipes for:
+# - Annotation parameter remapping (13+ occurrences)
+# - Configuration class modifications
+# - Application bootstrap updates
+# - YAML configuration changes
+#
+# See recommended-recipe.yaml and scratchpad for detailed analysis.

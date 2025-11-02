@@ -1,0 +1,382 @@
+diff --git a/.github/workflows/master-build.yml b/.github/workflows/master-build.yml
+index c37b7cc..097a4c5 100644
+--- a/.github/workflows/master-build.yml
++++ b/.github/workflows/master-build.yml
+@@ -11,10 +11,10 @@ jobs:
+     steps:
+     - uses: actions/checkout@v4
+ 
+-    - name: Set up JDK 11
++    - name: Set up JDK 17
+       uses: actions/setup-java@v3
+       with:
+-        java-version: '11'
++        java-version: '17'
+         distribution: 'temurin'
+ 
+     - name: Grant execute permission for gradlew
+diff --git a/.github/workflows/pr-build.yml b/.github/workflows/pr-build.yml
+index 9f2224e..2b051c1 100644
+--- a/.github/workflows/pr-build.yml
++++ b/.github/workflows/pr-build.yml
+@@ -11,10 +11,10 @@ jobs:
+     steps:
+     - uses: actions/checkout@v4
+ 
+-    - name: Set up JDK 11
++    - name: Set up JDK 17
+       uses: actions/setup-java@v3
+       with:
+-        java-version: '11'
++        java-version: '17'
+         distribution: 'temurin'
+ 
+     - name: Grant execute permission for gradlew
+diff --git a/.scratchpad/2025-11-01-14-57/rewrite-assist-scratchpad.md b/.scratchpad/2025-11-01-14-57/rewrite-assist-scratchpad.md
+deleted file mode 100644
+index a7c6263..0000000
+--- a/.scratchpad/2025-11-01-14-57/rewrite-assist-scratchpad.md
++++ /dev/null
+@@ -1,31 +0,0 @@
+-# Rewrite Assist Workflow - Session 2025-11-01-14-57
+-
+-## Session ID
+-0ad532de-14c6-455e-bb91-e159f8234647
+-
+-## Input PR
+-- URL: https://github.com/openrewrite-assist-testing-dataset/file-storage-service/pull/2
+-- Repository: openrewrite-assist-testing-dataset/file-storage-service
+-- PR Number: 2
+-
+-## Phase 1: Repository Setup ✓ COMPLETED
+-
+-### Actions Performed
+-1. Created scratchpad directory: `.scratchpad/2025-11-01-14-57/`
+-2. Retrieved session ID: `0ad532de-14c6-455e-bb91-e159f8234647`
+-3. Cloned repository with shallow clone (--depth 1):
+-   - Target: `git@github.com:openrewrite-assist-testing-dataset/file-storage-service.git`
+-   - Directory: `.workspace/file-storage-service`
+-4. Fetched PR #2 branch:
+-   - Command: `git fetch origin pull/2/head:pr-2`
+-   - Result: Successfully created local branch `pr-2`
+-
+-### Repository Status
+-- Location: `/__w/rewrite-claude-assisted/rewrite-claude-assisted/.workspace/file-storage-service`
+-- Current branch: master (default)
+-- Available branches:
+-  - master (main branch)
+-  - pr-2 (target PR branch)
+-
+-### Next Steps
+-- Phase 2: Extract intent from PR changes
+diff --git a/build.gradle b/build.gradle
+index 59a92fc..c8fe8e8 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -2,6 +2,12 @@ plugins {
+     id 'java'
+     id 'application'
+     id 'org.flywaydb.flyway' version '7.15.0'
++    id 'checkstyle'
++}
++
++checkstyle {
++    toolVersion = '8.45.1'
++    configFile = rootProject.file('config/checkstyle/checkstyle.xml')
+ }
+ 
+ repositories {
+@@ -9,9 +15,6 @@ repositories {
+     jcenter()
+ }
+ 
+-sourceCompatibility = '11'
+-targetCompatibility = '11'
+-
+ dependencies {
+     implementation 'io.dropwizard:dropwizard-core:2.0.34'
+     implementation 'io.dropwizard:dropwizard-auth:2.0.34'
+@@ -42,6 +45,12 @@ dependencies {
+     testImplementation 'org.hamcrest:hamcrest-all:1.3'
+ }
+ 
++java {
++    toolchain {
++        languageVersion = JavaLanguageVersion.of(17)
++    }
++}
++
+ application {
+     mainClass = 'com.filestorage.FileStorageApplication'
+ }
+@@ -53,10 +62,6 @@ flyway {
+     locations = ['classpath:db/migration']
+ }
+ 
+-wrapper {
+-    gradleVersion = '6.9'
+-}
+-
+ test {
+     useJUnit()
+ }
+\ No newline at end of file
+diff --git a/config/checkstyle/checkstyle.xml b/config/checkstyle/checkstyle.xml
+new file mode 100644
+index 0000000..71a04b3
+--- /dev/null
++++ b/config/checkstyle/checkstyle.xml
+@@ -0,0 +1,34 @@
++<?xml version="1.0"?>
++<!DOCTYPE module PUBLIC
++          "-//Puppy Crawl//DTD Check Configuration 1.3//EN"
++          "http://www.puppycrawl.com/dtds/configuration_1_3.dtd">
++
++<!--
++    Checkstyle configuration that checks the Google coding conventions from:
++    - Google Java Style
++      https://google-styleguide.googlecode.com/svn-history/r130/trunk/javaguide.html
++
++    Checkstyle is very configurable. Be sure to read the documentation at
++    http://checkstyle.sf.net (or in your downloaded distribution).
++
++    Most Checks are configurable, be sure to consult the documentation.
++
++    To completely disable a check, just comment it out or delete it from the file.
++
++    Authors: Max Vetrenko, Ruslan Diachenko, Roman Ivanov.
++ -->
++<module name = "Checker">
++    <property name="charset" value="UTF-8"/>
++
++    <property name="severity" value="warning"/>
++
++    <property name="fileExtensions" value="java, properties, xml"/>
++
++    <!-- Checks for whitespace -->
++    <!-- See http://checkstyle.sf.net/config_whitespace.html -->
++    <module name="FileTabCharacter">
++        <property name="eachLine" value="true"/>
++    </module>
++
++
++</module>
+\ No newline at end of file
+diff --git a/gradle/wrapper/gradle-wrapper.properties b/gradle/wrapper/gradle-wrapper.properties
+index 6528428..1af9e09 100644
+--- a/gradle/wrapper/gradle-wrapper.properties
++++ b/gradle/wrapper/gradle-wrapper.properties
+@@ -1,6 +1,6 @@
+ distributionBase=GRADLE_USER_HOME
+ distributionPath=wrapper/dists
+-distributionUrl=https\://services.gradle.org/distributions/gradle-6.9-bin.zip
++distributionUrl=https\://services.gradle.org/distributions/gradle-8.5-bin.zip
+ networkTimeout=10000
+ validateDistributionUrl=true
+ zipStoreBase=GRADLE_USER_HOME
+diff --git a/src/main/java/com/filestorage/FileStorageApplication.java b/src/main/java/com/filestorage/FileStorageApplication.java
+index 26bddbb..0347c03 100644
+--- a/src/main/java/com/filestorage/FileStorageApplication.java
++++ b/src/main/java/com/filestorage/FileStorageApplication.java
+@@ -6,7 +6,7 @@ import com.filestorage.health.S3HealthCheck;
+ import com.filestorage.resources.FileResource;
+ import com.filestorage.resources.MetadataResource;
+ import com.filestorage.auth.JwtAuthFilter;
+-import com.filestorage.auth.ApiKeyAuthFilter;
++
+ import com.filestorage.db.FileMetadataDAO;
+ import com.filestorage.service.FileStorageService;
+ import io.dropwizard.Application;
+@@ -56,15 +56,7 @@ public class FileStorageApplication extends Application<FileStorageConfiguration
+             .setPrefix("Bearer")
+             .buildAuthFilter();
+             
+-        final ContainerRequestFilter apiKeyFilter = new ApiKeyAuthFilter.Builder<Principal>()
+-            .setAuthenticator(new com.filestorage.auth.ApiKeyAuthenticator(configuration.getApiKeys()))
+-            .setPrefix("ApiKey")
+-            .buildAuthFilter();
+-            
+-        final ChainedAuthFilter chainedAuthFilter = new ChainedAuthFilter(
+-            List.of(jwtFilter, apiKeyFilter));
+-            
+-        environment.jersey().register(new AuthDynamicFeature(chainedAuthFilter));
++        environment.jersey().register(new AuthDynamicFeature(jwtFilter));
+         environment.jersey().register(new AuthValueFactoryProvider.Binder<>(Principal.class));
+         
+         // Register resources
+diff --git a/src/main/java/com/filestorage/auth/ApiKeyAuthFilter.java b/src/main/java/com/filestorage/auth/ApiKeyAuthFilter.java
+deleted file mode 100644
+index 8ae09cc..0000000
+--- a/src/main/java/com/filestorage/auth/ApiKeyAuthFilter.java
++++ /dev/null
+@@ -1,78 +0,0 @@
+-package com.filestorage.auth;
+-
+-import io.dropwizard.auth.AuthFilter;
+-
+-import javax.annotation.Priority;
+-import javax.ws.rs.Priorities;
+-import javax.ws.rs.WebApplicationException;
+-import javax.ws.rs.container.ContainerRequestContext;
+-import javax.ws.rs.core.SecurityContext;
+-import java.io.IOException;
+-import java.security.Principal;
+-import java.util.Optional;
+-
+-@Priority(Priorities.AUTHENTICATION)
+-public class ApiKeyAuthFilter<P extends Principal> extends AuthFilter<String, P> {
+-    
+-    private ApiKeyAuthFilter() {}
+-
+-    @Override
+-    public void filter(ContainerRequestContext requestContext) throws IOException {
+-        final String apiKey = requestContext.getHeaders().getFirst("X-API-Key");
+-        
+-        if (apiKey == null) {
+-            throw new WebApplicationException(unauthorizedHandler.buildResponse(prefix, realm));
+-        }
+-
+-        try {
+-            final Optional<P> result = authenticator.authenticate(apiKey);
+-            if (result.isPresent()) {
+-                requestContext.setSecurityContext(new ApiKeySecurityContext(result.get(), "API_KEY", requestContext));
+-                return;
+-            }
+-        } catch (Exception e) {
+-            logger.warn("Error authenticating API key", e);
+-        }
+-
+-        throw new WebApplicationException(unauthorizedHandler.buildResponse(prefix, realm));
+-    }
+-
+-    public static class Builder<P extends Principal> extends AuthFilter.AuthFilterBuilder<String, P, ApiKeyAuthFilter<P>> {
+-        @Override
+-        protected ApiKeyAuthFilter<P> newInstance() {
+-            return new ApiKeyAuthFilter<>();
+-        }
+-    }
+-    
+-    private static class ApiKeySecurityContext implements SecurityContext {
+-        private final Object principal;
+-        private final String scheme;
+-        private final ContainerRequestContext requestContext;
+-
+-        public ApiKeySecurityContext(Object principal, String scheme, ContainerRequestContext requestContext) {
+-            this.principal = principal;
+-            this.scheme = scheme;
+-            this.requestContext = requestContext;
+-        }
+-
+-        @Override
+-        public Principal getUserPrincipal() {
+-            return (Principal) principal;
+-        }
+-
+-        @Override
+-        public boolean isUserInRole(String role) {
+-            return true;
+-        }
+-
+-        @Override
+-        public boolean isSecure() {
+-            return requestContext.getSecurityContext().isSecure();
+-        }
+-
+-        @Override
+-        public String getAuthenticationScheme() {
+-            return scheme;
+-        }
+-    }
+-}
+\ No newline at end of file
+diff --git a/src/main/java/com/filestorage/auth/ApiKeyAuthenticator.java b/src/main/java/com/filestorage/auth/ApiKeyAuthenticator.java
+deleted file mode 100644
+index 217c6f7..0000000
+--- a/src/main/java/com/filestorage/auth/ApiKeyAuthenticator.java
++++ /dev/null
+@@ -1,41 +0,0 @@
+-package com.filestorage.auth;
+-
+-import io.dropwizard.auth.Authenticator;
+-
+-import java.security.Principal;
+-import java.util.List;
+-import java.util.Optional;
+-
+-public class ApiKeyAuthenticator implements Authenticator<String, Principal> {
+-    private final List<String> validApiKeys;
+-
+-    public ApiKeyAuthenticator(List<String> validApiKeys) {
+-        this.validApiKeys = validApiKeys;
+-    }
+-
+-    @Override
+-    public Optional<Principal> authenticate(String apiKey) {
+-        if (apiKey != null && validApiKeys.contains(apiKey)) {
+-            return Optional.of(new SimplePrincipal("api-user"));
+-        }
+-        return Optional.empty();
+-    }
+-    
+-    private static class SimplePrincipal implements Principal {
+-        private final String name;
+-        
+-        public SimplePrincipal(String name) {
+-            this.name = name;
+-        }
+-        
+-        @Override
+-        public String getName() {
+-            return name;
+-        }
+-        
+-        @Override
+-        public String toString() {
+-            return name;
+-        }
+-    }
+-}
+\ No newline at end of file
+diff --git a/src/main/java/com/filestorage/config/FileStorageConfiguration.java b/src/main/java/com/filestorage/config/FileStorageConfiguration.java
+index fc155a7..0abd803 100644
+--- a/src/main/java/com/filestorage/config/FileStorageConfiguration.java
++++ b/src/main/java/com/filestorage/config/FileStorageConfiguration.java
+@@ -24,9 +24,6 @@ public class FileStorageConfiguration extends Configuration {
+     @JsonProperty("jwtSecret")
+     private String jwtSecret = "storage-secret-key-2021";
+     
+-    @JsonProperty("apiKeys")
+-    private List<String> apiKeys = List.of("storage-api-key-001", "storage-api-key-002");
+-    
+     @JsonProperty("fileUploadLimits")
+     private FileUploadLimits fileUploadLimits = new FileUploadLimits();
+ 
+@@ -62,14 +59,6 @@ public class FileStorageConfiguration extends Configuration {
+         this.jwtSecret = jwtSecret;
+     }
+ 
+-    public List<String> getApiKeys() {
+-        return apiKeys;
+-    }
+-
+-    public void setApiKeys(List<String> apiKeys) {
+-        this.apiKeys = apiKeys;
+-    }
+-
+     public FileUploadLimits getFileUploadLimits() {
+         return fileUploadLimits;
+     }
+diff --git a/src/main/resources/application.yml b/src/main/resources/application.yml
+index 29f9251..f9d4ec3 100644
+--- a/src/main/resources/application.yml
++++ b/src/main/resources/application.yml
+@@ -78,9 +78,6 @@ metrics:
+       markerName: metrics
+ 
+ jwtSecret: "storage-secret-key-2021"
+-apiKeys:
+-  - "storage-api-key-001"
+-  - "storage-api-key-002"
+ 
+ fileUploadLimits:
+   maxFileSize: 104857600  # 100MB

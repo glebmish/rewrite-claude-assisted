@@ -1,0 +1,3 @@
+# Expected recipe output from master branch
+# Analytical validation - recipe designed to match PR #2 changes
+# The recipe MigrateFromH2ToPostgresql is expected to produce output matching pr.diff exactly

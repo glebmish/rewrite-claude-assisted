@@ -1,0 +1,58 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: MigrateFromH2ToPostgresql
+displayName: Migrate from H2 to PostgreSQL
+description: Comprehensive recipe to migrate from H2 to PostgreSQL, update GitHub Actions, and modify Dockerfile
+recipeList:
+  - org.openrewrite.github.UpgradeGitHubActionsCache
+  - org.openrewrite.docker.UpdateDockerfile:
+      fromImage: openjdk:17-jre-slim
+      toImage: eclipse-temurin:17-jre-alpine
+  - org.openrewrite.gradle.ReplaceDependency:
+      oldGroupId: com.h2database
+      oldArtifactId: h2
+      newGroupId: org.postgresql
+      newArtifactId: postgresql
+      newVersion: 42.6.0
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.testcontainers
+      artifactId: testcontainers
+      version: 1.17.6
+      scope: testImplementation
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.testcontainers
+      artifactId: postgresql
+      version: 1.17.6
+      scope: testImplementation
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.testcontainers
+      artifactId: junit-jupiter
+      version: 1.17.6
+      scope: testImplementation
+  - org.openrewrite.yaml.ChangeValue:
+      path: src/main/resources/config.yml
+      key: database.driverClass
+      value: org.postgresql.Driver
+  - org.openrewrite.yaml.ChangeValue:
+      path: src/main/resources/config.yml
+      key: database.user
+      value: "{{ GET_ENV_VAR:DATABASE_USER }}"
+  - org.openrewrite.yaml.ChangeValue:
+      path: src/main/resources/config.yml
+      key: database.password
+      value: "{{ GET_ENV_VAR:DATABASE_PASSWORD }}"
+  - org.openrewrite.yaml.ChangeValue:
+      path: src/main/resources/config.yml
+      key: database.url
+      value: "{{ GET_ENV_VAR:DATABASE_URL }}"
+  - org.openrewrite.yaml.ChangeValue:
+      path: src/main/resources/config.yml
+      key: database.properties.hibernate.dialect
+      value: org.hibernate.dialect.PostgreSQLDialect
+  - org.openrewrite.sql.ChangeTableDefinition:
+      path: src/main/resources/db/migration/V1__Create_posts_table.sql
+      tableName: posts
+      idColumn:
+        name: id
+        type: BIGSERIAL
+        primaryKey: true

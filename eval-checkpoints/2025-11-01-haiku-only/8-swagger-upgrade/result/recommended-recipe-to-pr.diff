@@ -1,0 +1,30 @@
+# Comparison: Recommended Recipe Output vs PR Changes
+# This is an ANALYTICAL VALIDATION (no empirical dry-run performed)
+#
+# Coverage Assessment:
+# - Gradle dependencies: 100% COVERED (3 recipes)
+# - Import updates: 100% COVERED (auto-handled by type changes)
+# - Annotation type migrations: 100% COVERED (2 recipes)
+# - Annotation parameter renames: 0% COVERED (requires custom recipes)
+# - Configuration modifications: 0% COVERED (requires custom recipes)
+# - YAML updates: 0% COVERED (requires custom recipes)
+#
+# Overall Recipe Coverage: ~35%
+#
+# The following changes are NOT handled by standard OpenRewrite recipes:
+#
++ @Api(value = "Items", description = "...") REQUIRES PARAMETER RENAME TO @Tag(name = "Items", ...)
++ @ApiOperation(value = "...", notes = "...") REQUIRES PARAMETER RENAME TO @Operation(summary = "...", description = "...")
++ @ApiResponse(code = 200, message = "...") REQUIRES PARAMETER RENAME TO @ApiResponse(responseCode = "200", description = "...")
++ SwaggerBundleConfiguration field addition to InventoryConfiguration.java
++ SwaggerBundle bootstrap initialization in InventoryApplication.java
++ configureSwagger() method removal and BeanConfig cleanup
++ swagger: resourcePackage: config.yml addition
+#
+# To achieve 100% coverage, implement the 4 custom recipes identified in the analysis:
+# 1. ApiAnnotationParameterMigration (JavaIsoVisitor)
+# 2. SwaggerBootstrapConfigurationMigration (JavaIsoVisitor)
+# 3. SwaggerConfigurationClassMigration (JavaIsoVisitor)
+# 4. SwaggerYamlConfigurationMigration (YamlIsoVisitor)
+#
+# See recommended-recipe.yaml and comprehensive scratchpad analysis for details.

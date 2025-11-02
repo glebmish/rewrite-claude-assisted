@@ -1,0 +1,8 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.analytics.dashboard.gradle.UpgradeTo8.1
+displayName: Upgrade Gradle wrapper to 8.1
+description: Upgrade the Gradle wrapper from 7.6 to 8.1 in analytics-dashboard
+recipeList:
+  - org.openrewrite.gradle.UpgradeGradleWrapper:
+      version: 8.1

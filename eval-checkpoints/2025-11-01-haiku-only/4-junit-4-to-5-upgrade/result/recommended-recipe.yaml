@@ -1,0 +1,14 @@
+type: specs.openrewrite.org/v1beta/recipe
+name: UserManagementServiceMigration
+displayName: Java 11→17, JUnit 4→5, Gradle 6.9→7.6.4 Migration
+description: Comprehensive modernization of User Management Service
+recipeList:
+  - org.openrewrite.java.migrate.UpgradeJavaVersion:
+      oldVersion: 11
+      newVersion: 17
+  - org.openrewrite.java.testing.junit5.JUnit4to5Migration
+  - org.openrewrite.gradle.UpdateGradleWrapper:
+      version: 7.6.4
+  - org.openrewrite.gradle.UpgradePluginVersion:
+      pluginId: com.github.johnrengelman.shadow
+      newVersion: 7.1.2

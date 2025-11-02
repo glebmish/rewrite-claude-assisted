@@ -1,0 +1,17 @@
+{
+  "diff_files": {
+    "pr_diff": "/home/glebmish/projects/rewrite-claude-assisted/eval-checkpoints/2025-11-01-haiku-only/1-gradle-wrapper-upgrade//result/pr.diff",
+    "recipe_diff": "/home/glebmish/projects/rewrite-claude-assisted/eval-checkpoints/2025-11-01-haiku-only/1-gradle-wrapper-upgrade//result/recommended-recipe.diff"
+  },
+  "metrics": {
+    "total_expected_changes": 2,
+    "true_positives": 2,
+    "false_positives": 0,
+    "false_negatives": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1_score": 1.0,
+    "is_perfect_match": true
+  },
+  "analysis_timestamp": "2025-11-01T22:24:33Z"
+}

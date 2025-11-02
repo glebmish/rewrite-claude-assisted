@@ -1,0 +1,191 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.notification.NotificationServiceJava21JakartaUpgrade
+displayName: Notification Service - Java 21 and Jakarta EE Migration
+description: >
+  Comprehensive upgrade recipe for notification-service project migration from Java 11 to Java 21,
+  including Jakarta EE 9+ migration (javax to jakarta namespace), Dropwizard 4.0.5 upgrade,
+  Gradle 8.5 update, and dependency version updates for Java 21 compatibility.
+
+recipeList:
+  # Jakarta EE 9+ Migration (javax.* to jakarta.*)
+  - org.openrewrite.java.migrate.jakarta.JavaxMigrationToJakarta
+  - org.openrewrite.java.migrate.jakarta.JavaxActivationMigrationToJakartaActivation
+  - org.openrewrite.java.migrate.jakarta.JavaxAnnotationMigrationToJakartaAnnotation
+  - org.openrewrite.java.migrate.jakarta.JavaxBatchMigrationToJakartaBatch
+  - org.openrewrite.java.migrate.jakarta.JavaxInjectMigrationToJakartaInject
+  - org.openrewrite.java.migrate.jakarta.JavaxPersistenceMigrationToJakartaPersistence
+  - org.openrewrite.java.migrate.jakarta.JavaxValidationMigrationToJakartaValidation
+  - org.openrewrite.java.migrate.jakarta.JavaxWebsocketMigrationToJakartaWebsocket
+  - org.openrewrite.java.migrate.jakarta.JavaxWsrsMigrationToJakartaWsrs
+  - org.openrewrite.java.migrate.jakarta.JavaxMailMigrationToJakartaMail
+
+  # Java 11 to Java 21 Migration
+  - org.openrewrite.java.migrate.UpgradeToJava21
+
+  # Gradle 8 Update
+  - org.openrewrite.gradle.UpdateGradleWrapper:
+      version: 8.5
+      distribution: bin
+
+  # Dependency Upgrades for Java 21 Compatibility
+  - org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+      groupId: io.dropwizard
+      artifactId: "*"
+      newVersion: 4.0.5
+      overrideManagedVersion: true
+
+  - org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+      groupId: com.google.guava
+      artifactId: guava
+      newVersion: 33.0.0-jre
+      overrideManagedVersion: true
+
+  - org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+      groupId: com.fasterxml.jackson.core
+      artifactId: "*"
+      newVersion: 2.16.1
+      overrideManagedVersion: true
+
+  - org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+      groupId: org.hibernate.validator
+      artifactId: hibernate-validator
+      newVersion: 8.0.1.Final
+      overrideManagedVersion: true
+
+  - org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+      groupId: org.apache.commons
+      artifactId: commons-lang3
+      newVersion: 3.14.0
+      overrideManagedVersion: true
+
+  - org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+      groupId: com.twilio.sdk
+      artifactId: twilio
+      newVersion: 10.0.0
+      overrideManagedVersion: true
+
+  - org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+      groupId: com.slack.api
+      artifactId: slack-api-client
+      newVersion: 1.34.0
+      overrideManagedVersion: true
+
+  - org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+      groupId: redis.clients
+      artifactId: jedis
+      newVersion: 5.1.2
+      overrideManagedVersion: true
+
+  - org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+      groupId: org.junit.jupiter
+      artifactId: "*"
+      newVersion: 5.10.1
+      overrideManagedVersion: true
+
+  - org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+      groupId: org.mockito
+      artifactId: "*"
+      newVersion: 5.9.0
+      overrideManagedVersion: true
+
+  - org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+      groupId: com.h2database
+      artifactId: h2
+      newVersion: 2.2.224
+      overrideManagedVersion: true
+
+  - org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+      groupId: com.auth0
+      artifactId: java-jwt
+      newVersion: 4.4.0
+      overrideManagedVersion: true
+
+  # Apache HttpClient 4.x to 5.x Migration
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: org.apache.httpcomponents
+      oldArtifactId: httpclient
+      newGroupId: org.apache.httpcomponents.client5
+      newArtifactId: httpclient5
+      newVersion: 5.3.1
+
+  # Mail API Migration (javax.mail to jakarta.mail with Angus implementation)
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: javax.mail
+      oldArtifactId: javax.mail-api
+      newGroupId: jakarta.mail
+      newArtifactId: jakarta.mail-api
+      newVersion: 2.1.2
+
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: com.sun.mail
+      oldArtifactId: javax.mail
+      newGroupId: org.eclipse.angus
+      newArtifactId: angus-mail
+      newVersion: 2.0.2
+
+  # Validation API Migration
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: javax.validation
+      oldArtifactId: validation-api
+      newGroupId: jakarta.validation
+      newArtifactId: jakarta.validation-api
+      newVersion: 3.0.2
+
+  # Remove deprecated dependencies
+  - org.openrewrite.java.dependencies.RemoveDependency:
+      groupId: org.apache.logging.log4j
+      artifactId: "*"
+
+  # Add new Dropwizard modules required in 4.0.5
+  - org.openrewrite.java.dependencies.AddDependency:
+      groupId: io.dropwizard
+      artifactId: dropwizard-db
+      version: 4.0.5
+      onlyIfUsing: io.dropwizard.jdbi3.*
+      acceptTransitive: true
+
+  - org.openrewrite.java.dependencies.AddDependency:
+      groupId: io.dropwizard
+      artifactId: dropwizard-migrations
+      version: 4.0.5
+      onlyIfUsing: io.dropwizard.jdbi3.*
+      acceptTransitive: true
+
+  # Dropwizard Package Restructuring (io.dropwizard to io.dropwizard.core)
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: io.dropwizard.Application
+      newPackageName: io.dropwizard.core.Application
+      recursive: false
+
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: io.dropwizard.Configuration
+      newPackageName: io.dropwizard.core.Configuration
+      recursive: false
+
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: io.dropwizard.setup
+      newPackageName: io.dropwizard.core.setup
+      recursive: true
+
+  # Java Toolchain Configuration Update
+  - org.openrewrite.gradle.UpdateJavaCompatibility:
+      version: 21
+      compatibilityType: source
+
+  - org.openrewrite.gradle.UpdateJavaCompatibility:
+      version: 21
+      compatibilityType: target
+
+  # Remove deprecated repositories
+  - org.openrewrite.gradle.RemoveRepository:
+      id: jcenter
+      type: repository
+
+tags:
+  - jakarta-ee
+  - java-21
+  - dropwizard
+  - gradle-8
+  - namespace-migration
+  - dependency-upgrade

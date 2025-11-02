@@ -1,0 +1,228 @@
+diff --git a/api/build.gradle b/api/build.gradle
+index b4d9390..6928cab 100644
+--- a/api/build.gradle
++++ b/api/build.gradle
+@@ -3,6 +3,7 @@ dependencies {
+     implementation project(':db')
+     implementation 'javax.ws.rs:javax.ws.rs-api:2.1.1'
+     implementation 'io.dropwizard:dropwizard-auth:2.1.4'
+-    implementation 'io.swagger:swagger-annotations:1.6.6'
++    implementation 'io.swagger.core.v3:swagger-annotations:2.2.39'
++
+     implementation 'com.auth0:java-jwt:4.0.0'
+ }
+\ No newline at end of file
+diff --git a/api/src/main/java/com/example/inventory/api/ItemResource.java b/api/src/main/java/com/example/inventory/api/ItemResource.java
+index 52f24c4..88bfd44 100644
+--- a/api/src/main/java/com/example/inventory/api/ItemResource.java
++++ b/api/src/main/java/com/example/inventory/api/ItemResource.java
+@@ -5,7 +5,11 @@ import com.example.inventory.core.User;
+ import com.example.inventory.db.ItemDAO;
+ import com.example.inventory.db.RawJdbcItemDAO;
+ import io.dropwizard.auth.Auth;
+-import io.swagger.annotations.*;
++import io.swagger.v3.oas.annotations.Operation;
++import io.swagger.v3.oas.annotations.Parameter;
++import io.swagger.v3.oas.annotations.responses.ApiResponse;
++import io.swagger.v3.oas.annotations.responses.ApiResponses;
++import io.swagger.v3.oas.annotations.tags.Tag;
+
+ import javax.validation.Valid;
+ import javax.ws.rs.*;
+@@ -18,7 +22,7 @@ import java.util.Optional;
+ @Path("/api/v1/items")
+ @Produces(MediaType.APPLICATION_JSON)
+ @Consumes(MediaType.APPLICATION_JSON)
+-@Api(value = "Items", description = "Operations for managing inventory items")
++@Tag(name = "Items", description = "Operations for managing inventory items")
+ public class ItemResource {
+
+     private final ItemDAO itemDAO;
+@@ -30,11 +34,11 @@ public class ItemResource {
+     }
+
+     @GET
+-    @ApiOperation(value = "Get all items", notes = "Returns a list of all items in inventory")
++    @Operation(summary = "Get all items", description = "Returns a list of all items in inventory")
+     @ApiResponses(value = {
+-        @ApiResponse(code = 200, message = "Successfully retrieved items"),
+-        @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
+-        @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden")
++        @ApiResponse(responseCode = "200", description = "Successfully retrieved items"),
++        @ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
++        @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden")
+      })
+      public List<Item> getAllItems(@Auth User user) {
+          return itemDAO.findAll();
+@@ -42,7 +46,7 @@ public class ItemResource {
+
+     @GET
+     @Path("/{id}")
+-    @ApiOperation(value = "Get item by ID", notes = "Returns a single item")
++    @Operation(summary = "Get item by ID", description = "Returns a single item")
+      public Response getItem(@PathParam("id") long id, @Auth User user) {
+          Optional<Item> item = itemDAO.findById(id);
+          if (item.isPresent()) {
+@@ -53,21 +57,21 @@ public class ItemResource {
+
+      @GET
+      @Path("/category/{category}")
+-    @ApiOperation(value = "Get items by category", notes = "Returns items in a specific category")
++    @Operation(summary = "Get items by category", description = "Returns items in a specific category")
+      public List<Item> getItemsByCategory(@PathParam("category") String category, @Auth User user) {
+          return itemDAO.findByCategory(category);
+      }
+
+      @GET
+      @Path("/low-stock")
+-    @ApiOperation(value = "Get low stock items", notes = "Returns items with quantity below threshold")
++    @Operation(summary = "Get low stock items", description = "Returns items with quantity below threshold")
+      public List<Item> getLowStockItems(@QueryParam("threshold") @DefaultValue("10") int threshold, @Auth User user) {
+          return itemDAO.findLowStock(threshold);
+      }
+
+      @GET
+      @Path("/expensive")
+-    @ApiOperation(value = "Get expensive items", notes = "Returns items above a price threshold")
++    @Operation(summary = "Get expensive items", description = "Returns items above a price threshold")
+      public Response getExpensiveItems(@QueryParam("minPrice") @DefaultValue("100.0") double minPrice, @Auth User user) {
+          try {
+              List<Item> items = rawJdbcItemDAO.findExpensiveItems(minPrice);
+@@ -78,7 +82,7 @@ public class ItemResource {
+      }
+
+      @POST
+-    @ApiOperation(value = "Create a new item", notes = "Creates a new inventory item")
++    @Operation(summary = "Create a new item", description = "Creates a new inventory item")
+      public Response createItem(@Valid Item item, @Auth User user) {
+          if (item.getName() == null || item.getSku() == null) {
+              return Response.status(Response.Status.BAD_REQUEST).build();
+@@ -92,7 +96,7 @@ public class ItemResource {
+
+      @PUT
+      @Path("/{id}")
+-    @ApiOperation(value = "Update an item", notes = "Updates an existing inventory item")
++    @Operation(summary = "Update an item", description = "Updates an existing inventory item")
+      public Response updateItem(@PathParam("id") long id, @Valid Item item, @Auth User user) {
+          Optional<Item> existingItem = itemDAO.findById(id);
+          if (!existingItem.isPresent()) {
+@@ -106,7 +110,7 @@ public class ItemResource {
+
+      @PUT
+      @Path("/{id}/quantity")
+-    @ApiOperation(value = "Adjust item quantity", notes = "Adjusts the quantity of an item")
++    @Operation(summary = "Adjust item quantity", description = "Adjusts the quantity of an item")
+      public Response adjustQuantity(@PathParam("id") long id,
+                                     @QueryParam("adjustment") int adjustment,
+                                     @Auth User user) {
+diff --git a/build.gradle b/build.gradle
+index 1213ea1..6a6042f 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -48,9 +48,7 @@ dependencies {
+      implementation 'io.dropwizard:dropwizard-migrations:2.1.4'
+      implementation 'mysql:mysql-connector-java:8.0.30'
+      implementation 'com.auth0:java-jwt:4.0.0'
+-    implementation 'io.swagger:swagger-core:1.6.6'
+-    implementation 'io.swagger:swagger-jersey2-jaxrs:1.6.6'
+-    implementation 'io.swagger:swagger-annotations:1.6.6'
++    implementation 'in.vectorpro.dropwizard:dropwizard-swagger:2.0.28-3'
+
+      testImplementation 'io.dropwizard:dropwizard-testing:2.1.4'
+      testImplementation 'com.h2database:h2:2.1.214'
+diff --git a/src/main/java/com/example/inventory/InventoryApplication.java b/src/main/java/com/example/inventory/InventoryApplication.java
+index f2bc8e5..cdc8d8a 100644
+--- a/src/main/java/com/example/inventory/InventoryApplication.java
++++ b/src/main/java/com/example/inventory/InventoryApplication.java
+@@ -14,9 +14,9 @@ import io.dropwizard.jdbi3.JdbiFactory;
+  import io.dropwizard.migrations.MigrationsBundle;
+  import io.dropwizard.setup.Bootstrap;
+  import io.dropwizard.setup.Environment;
+-import io.swagger.jaxrs.config.BeanConfig;
+-import io.swagger.jaxrs.listing.ApiListingResource;
+-import io.swagger.jaxrs.listing.SwaggerSerializers;
++import in.vectorpro.dropwizard.swagger.SwaggerBundle;
++import in.vectorpro.dropwizard.swagger.SwaggerBundleConfiguration;
++
+  import org.jdbi.v3.core.Jdbi;
+
+  import javax.sql.DataSource;
+@@ -40,6 +40,13 @@ public class InventoryApplication extends Application<InventoryConfiguration> {
+                  return configuration.getDataSourceFactory();
+              }
+          });
++
++        bootstrap.addBundle(new SwaggerBundle<InventoryConfiguration>() {
++            @Override
++            protected SwaggerBundleConfiguration getSwaggerBundleConfiguration(InventoryConfiguration configuration) {
++                return configuration.getSwaggerBundleConfiguration();
++            }
++        });
+      }
+
+      @Override
+@@ -62,19 +69,5 @@ public class InventoryApplication extends Application<InventoryConfiguration> {
+
+          // Register resources
+          environment.jersey().register(new ItemResource(itemDAO, rawJdbcItemDAO));
+-
+-        // Setup Swagger
+-        configureSwagger(environment);
+-    }
+-
+-    private void configureSwagger(Environment environment) {
+-        BeanConfig config = new BeanConfig();
+-        config.setTitle("Inventory Tracking API");
+-        config.setVersion("1.0.0");
+-        config.setResourcePackage("com.example.inventory.api");
+-        config.setScan(true);
+-
+-        environment.jersey().register(new ApiListingResource());
+-        environment.jersey().register(new SwaggerSerializers());
+      }
+  }
+\ No newline at end of file
+diff --git a/src/main/java/com/example/inventory/InventoryConfiguration.java b/src/main/java/com/example/inventory/InventoryConfiguration.java
+index 599a528..41393a9 100644
+--- a/src/main/java/com/example/inventory/InventoryConfiguration.java
++++ b/src/main/java/com/example/inventory/InventoryConfiguration.java
+@@ -1,6 +1,7 @@
+  package com.example.inventory;
+
+  import com.fasterxml.jackson.annotation.JsonProperty;
++import in.vectorpro.dropwizard.swagger.SwaggerBundleConfiguration;
+  import io.dropwizard.Configuration;
+  import io.dropwizard.db.DataSourceFactory;
+
+@@ -33,4 +34,15 @@ public class InventoryConfiguration extends Configuration {
+      public void setJwtSecret(String jwtSecret) {
+          this.jwtSecret = jwtSecret;
+      }
++
++    @JsonProperty("swagger")
++    private SwaggerBundleConfiguration swaggerBundleConfiguration;
++
++    public SwaggerBundleConfiguration getSwaggerBundleConfiguration() {
++        return swaggerBundleConfiguration;
++    }
++
++    public void setSwaggerBundleConfiguration(SwaggerBundleConfiguration swaggerBundleConfiguration) {
++        this.swaggerBundleConfiguration = swaggerBundleConfiguration;
++    }
+  }
+\ No newline at end of file
+diff --git a/src/main/resources/config.yml b/src/main/resources/config.yml
+index 693e6c3..8ffdce1 100644
+--- a/src/main/resources/config.yml
++++ b/src/main/resources/config.yml
+@@ -40,4 +40,7 @@ logging:
+        currentLogFilename: ./logs/inventory.log
+        archivedLogFilenamePattern: ./logs/inventory-%d{yyyy-MM-dd}.log
+        archivedFileCount: 5
+-      timeZone: UTC
+\ No newline at end of file
++      timeZone: UTC
++
++swagger:
++  resourcePackage: "com.example.inventory.api"
+\ No newline at end of file
