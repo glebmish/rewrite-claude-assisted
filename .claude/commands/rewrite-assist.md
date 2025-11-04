@@ -26,11 +26,14 @@ Discover available OpenRewrite recipes and map extracted intents to appropriate 
 ### Phase 4: Recipe validation
 Test each recipe produced on the previous phase and make the final decision on what recipe is the final version.
 
+ALWAYS use specialized subagents to perform the validation.
+
 ### Phase 5: Final decision
 
 Based on the results, choose the final recommended recipe and generate result artifacts.
 
-**Output Directory**: Create `result/` subdirectory in the scratchpad directory.
+**Output Directory**: Create `result/` subdirectory in the scratchpad directory. Make sure it is created before any
+attempts to use it for `git diff` or other commands.
 
 **CRITICAL**: The following 4 files MUST be generated in EXACTLY the specified formats. These files are parsed by automated analysis scripts.
 
