@@ -22,7 +22,7 @@ start_workflow_monitor() {
             sleep 5
             # Find the earliest JSONL file in ~/.claude/projects and subdirectories
             jsonl_file=$(find ~/.claude/projects -name "*.jsonl" -type f -printf '%T@ %p\n' | sort -n | head -1 | cut -d' ' -f2- || echo "")
-            echo "claude_log_file=$jsonl_file" >> $GITHUB_OUTPUT
+            echo "claude_logs=$(dirname $jsonl_file)" >> $GITHUB_OUTPUT
         done
 
         while true; do
