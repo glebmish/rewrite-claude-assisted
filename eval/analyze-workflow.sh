@@ -86,7 +86,7 @@ SESSION_FETCH_FAILED=false
 log "Phase 2: Running quantitative analysis..."
 
 log "  Running usage and cost stats analysis..."
-if scripts/analysis/claude-stats.py "$SESSION_LOG" --mode both; then
+if scripts/analysis/claude-stats.py "$SESSION_LOG"; then
     log "  Usage stats saved to: $SCRATCHPAD_DIR/claude-usage-stats.json"
     log "  Cost stats saved to: $SCRATCHPAD_DIR/claude-cost-stats.json"
 else
