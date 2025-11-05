@@ -20,8 +20,9 @@ start_workflow_monitor() {
     (
         while [[ -z ${jsonl_file:-} ]]; do
             sleep 5
-            # Find the earliest JSONL file in ~/.claude/projects and subdirectories
-            jsonl_file=$(find ~/.claude/projects -name "*.jsonl" -type f -printf '%T@ %p\n' | sort -n | head -1 | cut -d' ' -f2- || echo "")
+            # Find the earliest main JSONL file (exclude agent logs) in ~/.claude/projects and subdirectories
+            jsonl_file=$(find ~/.claude/projects -name "*.jsonl" ! -name "agent-*.jsonl" -type f -printf '%T@ %p\n' | sort -n | head -1 | cut -d' ' -f2- || echo "")
+            echo "claude_main_log=$jsonl_file" >> $GITHUB_OUTPUT
             echo "claude_logs=$(dirname $jsonl_file)" >> $GITHUB_OUTPUT
         done
 
