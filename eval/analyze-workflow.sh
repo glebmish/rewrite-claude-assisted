@@ -82,21 +82,15 @@ fi
 log "Session log saved to: $SESSION_LOG"
 SESSION_FETCH_FAILED=false
 
-# Phase 2: Quantitative analysis (separate files)
+# Phase 2: Quantitative analysis (combined usage and cost stats)
 log "Phase 2: Running quantitative analysis..."
 
-log "  Running usage stats analysis..."
-if scripts/analysis/claude-usage-stats.sh "$SESSION_LOG"; then
+log "  Running usage and cost stats analysis..."
+if scripts/analysis/claude-stats.py "$SESSION_LOG" --mode both; then
     log "  Usage stats saved to: $SCRATCHPAD_DIR/claude-usage-stats.json"
-else
-    log "  Warning: Usage stats analysis failed"
-fi
-
-log "  Running cost stats analysis..."
-if scripts/analysis/claude-cost-stats.sh "$SESSION_LOG"; then
     log "  Cost stats saved to: $SCRATCHPAD_DIR/claude-cost-stats.json"
 else
-    log "  Warning: Cost stats analysis failed"
+    log "  Warning: Stats analysis failed"
 fi
 
 log "Quantitative analysis complete"
