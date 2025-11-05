@@ -345,6 +345,65 @@ def parse_jsonl_file(file_path: Path) -> List[Dict]:
     return entries
 
 
+def _parse_log_entries(
+    entries: List[Dict],
+    extract_tasks: bool = False
+) -> Tuple[List[ToolUse], Optional[List[TaskToolCall]], Dict[str, bool], Dict[str, Dict], bool]:
+    """
+    Common parsing logic for both main and agent logs.
+
+    Args:
+        entries: Parsed JSONL entries
+        extract_tasks: Whether to extract Task tool calls (main log only)
+
+    Returns:
+        (tool_uses, task_calls, failed_tool_map, usage_by_model, is_sidechain)
+        task_calls will be None if extract_tasks is False
+    """
+    tool_uses = []
+    task_calls = [] if extract_tasks else None
+    failed_tool_map = {}
+    usage_by_model = {}
+    is_sidechain = False
+
+    for entry in entries:
+        # Check sidechain flag (only relevant for agent logs)
+        if "isSidechain" in entry:
+            is_sidechain = entry["isSidechain"]
+
+        # Process message content
+        message_content = entry.get("message", {}).get("content", [])
+        if not isinstance(message_content, list):
+            continue
+
+        for content_item in message_content:
+            if content_item.get("type") == "tool_use":
+                tool_use = extract_tool_use(content_item, entry.get("timestamp", ""))
+                tool_uses.append(tool_use)
+
+                # Extract Task calls if requested (main log only)
+                if extract_tasks and content_item.get("name") == "Task":
+                    task_call = extract_task_call(content_item, entry.get("timestamp", ""))
+                    task_calls.append(task_call)
+
+            elif content_item.get("type") == "tool_result":
+                tool_use_id = content_item.get("tool_use_id")
+                is_error = content_item.get("is_error", False)
+                failed_tool_map[tool_use_id] = is_error
+
+        # Accumulate usage by model
+        msg_usage = entry.get("message", {}).get("usage")
+        model = entry.get("message", {}).get("model")
+        if msg_usage and model:
+            accumulate_usage(usage_by_model, model, msg_usage)
+
+    # Mark failed tools
+    for tool_use in tool_uses:
+        tool_use.is_failed = failed_tool_map.get(tool_use.tool_use_id, False)
+
+    return tool_uses, task_calls, failed_tool_map, usage_by_model, is_sidechain
+
+
 def parse_main_log(log_path: Path) -> Tuple[AgentUsage, List[ToolUse], List[TaskToolCall], Dict[str, bool]]:
     """
     Parse main log file and extract:
@@ -356,59 +415,39 @@ def parse_main_log(log_path: Path) -> Tuple[AgentUsage, List[ToolUse], List[Task
     Returns:
         (main_agent_usage, all_tool_uses, task_tool_calls, failed_tool_map)
     """
-    tool_uses = []
-    task_calls = []
-    failed_tool_map = {}
-    usage_by_model = {}
-
     # Parse JSONL file
     messages = parse_jsonl_file(log_path)
 
+    # Extract common data
+    tool_uses, task_calls, failed_tool_map, usage_by_model, _ = _parse_log_entries(
+        messages, extract_tasks=True
+    )
+
+    # Do agent correlation (main log specific)
     for entry in messages:
-        # Process message content
         message_content = entry.get("message", {}).get("content", [])
         if not isinstance(message_content, list):
             continue
 
         for content_item in message_content:
-            if content_item.get("type") == "tool_use":
-                tool_use = extract_tool_use(content_item, entry.get("timestamp", ""))
-                tool_uses.append(tool_use)
-
-                # Check if this is a Task call
-                if content_item.get("name") == "Task":
-                    task_call = extract_task_call(content_item, entry.get("timestamp", ""))
-                    task_calls.append(task_call)
-
-            elif content_item.get("type") == "tool_result":
+            if content_item.get("type") == "tool_result":
                 tool_use_id = content_item.get("tool_use_id")
-                is_error = content_item.get("is_error", False)
-                failed_tool_map[tool_use_id] = is_error
-
-                # Check for agent correlation
                 tool_result_data = entry.get("toolUseResult", {})
+
                 if "agentId" in tool_result_data:
-                    # Find corresponding task call and set agent_id
+                    agent_id = tool_result_data["agentId"]
+
+                    # Set agent_id on corresponding task call
                     for tc in task_calls:
                         if tc.tool_use_id == tool_use_id:
-                            tc.agent_id = tool_result_data["agentId"]
+                            tc.agent_id = agent_id
                             break
 
-                    # Also set agent_id on the tool_use
+                    # Set agent_id on corresponding tool_use
                     for tu in tool_uses:
                         if tu.tool_use_id == tool_use_id:
-                            tu.agent_id = tool_result_data["agentId"]
+                            tu.agent_id = agent_id
                             break
-
-        # Accumulate usage by model
-        msg_usage = entry.get("message", {}).get("usage")
-        model = entry.get("message", {}).get("model")
-        if msg_usage and model:
-            accumulate_usage(usage_by_model, model, msg_usage)
-
-    # Mark failed tools
-    for tool_use in tool_uses:
-        tool_use.is_failed = failed_tool_map.get(tool_use.tool_use_id, False)
 
     # Build main agent usage
     main_usage = build_agent_usage(
@@ -430,48 +469,19 @@ def parse_agent_log(log_path: Path, agent_id: str, task_call: Optional[TaskToolC
     Returns:
         AgentUsage object
     """
-    tool_uses = []
-    failed_tool_map = {}
-    usage_by_model = {}
-    is_sidechain = False
-
     # Parse JSONL file
     messages = parse_jsonl_file(log_path)
 
-    for entry in messages:
-        # Check sidechain flag (only need to check once)
-        if "isSidechain" in entry:
-            is_sidechain = entry["isSidechain"]
+    # Extract common data (no task extraction for agent logs)
+    tool_uses, _, _, usage_by_model, is_sidechain = _parse_log_entries(
+        messages, extract_tasks=False
+    )
 
-        # Process content (same logic as main log)
-        message_content = entry.get("message", {}).get("content", [])
-        if not isinstance(message_content, list):
-            continue
-
-        for content_item in message_content:
-            if content_item.get("type") == "tool_use":
-                tool_use = extract_tool_use(content_item, entry.get("timestamp", ""))
-                tool_uses.append(tool_use)
-
-            elif content_item.get("type") == "tool_result":
-                tool_use_id = content_item.get("tool_use_id")
-                is_error = content_item.get("is_error", False)
-                failed_tool_map[tool_use_id] = is_error
-
-        # Accumulate usage
-        msg_usage = entry.get("message", {}).get("usage")
-        model = entry.get("message", {}).get("model")
-        if msg_usage and model:
-            accumulate_usage(usage_by_model, model, msg_usage)
-
-    # Mark failed tools
-    for tool_use in tool_uses:
-        tool_use.is_failed = failed_tool_map.get(tool_use.tool_use_id, False)
-
-    # Build agent usage
+    # Determine subagent metadata
     subagent_type = task_call.subagent_type if task_call else "unknown"
     description = task_call.description if task_call else "Sidechain agent"
 
+    # Build agent usage
     agent_usage = build_agent_usage(
         agent_id=agent_id,
         messages=messages,
