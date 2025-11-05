@@ -110,23 +110,66 @@ fi
 
 echo "Session file validated for project: $CURRENT_PROJECT_DIR"
 
-# Determine output file path
-if [ -n "$OUTPUT_FILE" ]; then
-  DEST_FILE="$OUTPUT_FILE"
+# Discover agent logs in same directory
+echo "Discovering agent logs in: $SESSION_DIR"
+AGENT_FILES=$(find "$SESSION_DIR" -name "agent-*.jsonl" -type f 2>/dev/null || true)
+
+if [ -n "$AGENT_FILES" ]; then
+    AGENT_COUNT=$(echo "$AGENT_FILES" | wc -l)
+    echo "Found $AGENT_COUNT agent log(s)"
 else
-  SESSION_DEST_DIR="./.sessions"
-  if [ -n "$SCRATCHPAD_FILE" ]; then
-    SESSION_DEST_DIR=$(dirname "$SCRATCHPAD_FILE")
-  fi
-  DEST_FILE="$SESSION_DEST_DIR/claude-log.jsonl"
+    echo "No agent logs found"
 fi
 
-# Create output directory if needed
-mkdir -p "$(dirname "$DEST_FILE")"
+# Determine output directory and main log filename
+if [ -n "$OUTPUT_FILE" ]; then
+  # If output file specified, use its directory and basename
+  OUTPUT_DIR="$(dirname "$OUTPUT_FILE")"
+  MAIN_LOG_FILENAME="$(basename "$OUTPUT_FILE")"
+else
+  # Default: use scratchpad directory or .sessions
+  OUTPUT_DIR="./.sessions"
+  if [ -n "$SCRATCHPAD_FILE" ]; then
+    OUTPUT_DIR=$(dirname "$SCRATCHPAD_FILE")
+  fi
+  MAIN_LOG_FILENAME="claude-log.jsonl"
+fi
 
-# Copy session file
-cp "$SESSION_FILE" "$DEST_FILE"
+# Create log directory structure
+LOG_DIR="$OUTPUT_DIR/log"
+mkdir -p "$LOG_DIR"
 
-echo "Session file copied to: $DEST_FILE"
+# Copy main session log to log directory
+MAIN_LOG_DEST="$LOG_DIR/$MAIN_LOG_FILENAME"
+cp "$SESSION_FILE" "$MAIN_LOG_DEST"
+echo "Main session log copied to: $MAIN_LOG_DEST"
 
-echo "Session file copied successfully."
+# Copy all agent logs to log directory
+if [ -n "$AGENT_FILES" ]; then
+    echo "Copying agent logs to: $LOG_DIR"
+    echo "$AGENT_FILES" | while IFS= read -r agent_file; do
+        if [ -n "$agent_file" ]; then
+            agent_filename=$(basename "$agent_file")
+            cp "$agent_file" "$LOG_DIR/$agent_filename"
+            echo "  Copied: $agent_filename"
+        fi
+    done
+else
+    echo "No agent logs to copy"
+fi
+
+# Create backward-compatible symlink at old location
+COMPAT_SYMLINK="$OUTPUT_DIR/claude-log.jsonl"
+if [ ! -e "$COMPAT_SYMLINK" ]; then
+    ln -s "log/$MAIN_LOG_FILENAME" "$COMPAT_SYMLINK"
+    echo "Created backward-compatible symlink: $COMPAT_SYMLINK -> log/$MAIN_LOG_FILENAME"
+fi
+
+# Log summary
+echo ""
+echo "Session logs copied successfully:"
+echo "  Main log: $MAIN_LOG_DEST"
+if [ -n "$AGENT_FILES" ]; then
+    AGENT_COUNT=$(echo "$AGENT_FILES" | wc -l)
+    echo "  Agent logs: $AGENT_COUNT file(s) in $LOG_DIR"
+fi
