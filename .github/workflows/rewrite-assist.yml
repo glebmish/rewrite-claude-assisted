@@ -86,8 +86,8 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ${{ inputs.artifact_prefix && format('{0}-claude-log', inputs.artifact_prefix) || format('{0}-claude-log', github.run_number) }}
-          path: ${{steps.run_claude_code_workflow.outputs.claude_log_file}}
+          name: ${{ inputs.artifact_prefix && format('{0}-claude-logs', inputs.artifact_prefix) || format('{0}-claude-log', github.run_number) }}
+          path: ${{steps.run_claude_code_workflow.outputs.claude_logs}}
           if-no-files-found: ignore
           include-hidden-files: true
 
