@@ -289,44 +289,55 @@ def build_agent_usage(
 def parse_jsonl_file(file_path: Path) -> List[Dict]:
     """
     Parse JSONL file that may contain pretty-printed JSON objects.
-    Uses a JSON decoder to extract objects one by one.
+
+    Handles newline-delimited JSON where objects may span multiple lines.
+    Uses a state machine to accumulate lines until a complete JSON object is formed.
     """
     entries = []
+    current_lines = []
+    brace_count = 0
+    in_string = False
+    escape_next = False
+
     with open(file_path) as f:
-        content = f.read()
+        for line in f:
+            # Track if we're inside a JSON object
+            for char in line:
+                if escape_next:
+                    escape_next = False
+                    continue
 
-    # Use JSONDecoder to parse multiple JSON objects from the content
-    decoder = json.JSONDecoder()
-    idx = 0
-    error_count = 0
-    max_errors = 50  # Limit error messages to avoid spam
+                if char == '\\':
+                    escape_next = True
+                    continue
 
-    while idx < len(content):
-        # Skip whitespace
-        while idx < len(content) and content[idx].isspace():
-            idx += 1
+                if char == '"' and not escape_next:
+                    in_string = not in_string
+                    continue
 
-        if idx >= len(content):
-            break
+                if not in_string:
+                    if char == '{':
+                        brace_count += 1
+                    elif char == '}':
+                        brace_count -= 1
 
-        try:
-            obj, end_idx = decoder.raw_decode(content, idx)
-            # Only add if it's a dictionary (not a string or other type)
-            if isinstance(obj, dict):
-                entries.append(obj)
-            idx += end_idx
-        except json.JSONDecodeError as e:
-            if error_count < max_errors:
-                print(f"Warning: JSON decode error at position {idx}: {e}", file=sys.stderr)
-                error_count += 1
-            elif error_count == max_errors:
-                print("Warning: Too many JSON errors, suppressing further warnings", file=sys.stderr)
-                error_count += 1
+            current_lines.append(line)
 
-            # Try to skip to next object (look for next '{')
-            idx = content.find('{', idx + 1)
-            if idx == -1:
-                break
+            # If brace count is zero and we have content, we have a complete object
+            if brace_count == 0 and current_lines:
+                json_str = ''.join(current_lines).strip()
+                if json_str:
+                    try:
+                        obj = json.loads(json_str)
+                        if isinstance(obj, dict):
+                            entries.append(obj)
+                    except json.JSONDecodeError as e:
+                        # Silently skip malformed JSON
+                        pass
+
+                current_lines = []
+                in_string = False
+                escape_next = False
 
     return entries
 
