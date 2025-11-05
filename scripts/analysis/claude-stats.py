@@ -228,11 +228,14 @@ def build_agent_usage(
     successful = sum(1 for t in tool_uses if not t.is_failed)
     failed = sum(1 for t in tool_uses if t.is_failed)
 
-    # Format tool names with failure markers
+    # Determine agent prefix for tool names
+    agent_prefix = "main" if agent_id == "main" else (subagent_type or agent_id)
+
+    # Format tool names with agent prefix and failure markers
     tools_used = []
     for tool_use in tool_uses:
-        prefix = "*" if tool_use.is_failed else ""
-        tools_used.append(f"{prefix}{tool_use.tool_text}")
+        failure_marker = "*" if tool_use.is_failed else ""
+        tools_used.append(f"{agent_prefix} - {failure_marker}{tool_use.tool_text}")
 
     # Aggregate usage across all models
     total_usage = {
@@ -497,7 +500,8 @@ def build_ordered_tools_list(
        c. Continue with next main agent tool
 
     Returns:
-        List of tool names, with * prefix for failed tools
+        List of tool names with agent prefix, with * prefix for failed tools
+        Format: "agent_name - Tool(...)" or "agent_name - *Tool(...)"
     """
     result = []
 
@@ -505,12 +509,13 @@ def build_ordered_tools_list(
     main_tool_uses.sort(key=lambda t: t.timestamp)
 
     for tool_use in main_tool_uses:
-        # Format tool name with failure marker
-        prefix = "*" if tool_use.is_failed else ""
-        tool_text = f"{prefix}{tool_use.tool_text}"
+        # Format tool name with agent prefix and failure marker
+        failure_marker = "*" if tool_use.is_failed else ""
+        tool_text = f"main - {failure_marker}{tool_use.tool_text}"
         result.append(tool_text)
 
         # If this is a Task call, insert all subagent tools
+        # (subagent tools already have their agent prefix from build_agent_usage)
         if tool_use.is_task_call and tool_use.agent_id:
             agent = subagents.get(tool_use.agent_id)
             if agent:
@@ -655,7 +660,7 @@ def write_cost_output(log_dir: Path, analysis: SessionAnalysis):
     print(f"Cost statistics saved to: {output_file}")
 
 
-def print_summary(analysis: SessionAnalysis, mode: str):
+def print_summary(analysis: SessionAnalysis):
     """Print human-readable summary to stdout."""
     print()
     print("=" * 70)
@@ -663,66 +668,64 @@ def print_summary(analysis: SessionAnalysis, mode: str):
     print("=" * 70)
     print()
 
-    if mode in ["usage", "both"]:
-        print("USAGE STATISTICS:")
-        print("-" * 70)
-        print(f"Main Agent:")
-        print(f"  Messages: {analysis.main_agent.messages}")
-        print(f"  Tool calls: {analysis.main_agent.tool_calls}")
-        print(f"  Successful: {analysis.main_agent.successful_tool_calls}")
-        print(f"  Failed: {analysis.main_agent.failed_tool_calls}")
-        success_rate = (
-            analysis.main_agent.successful_tool_calls / analysis.main_agent.tool_calls
-            if analysis.main_agent.tool_calls > 0
-            else 0.0
-        )
-        print(f"  Success rate: {success_rate:.2%}")
-        print()
+    print("USAGE STATISTICS:")
+    print("-" * 70)
+    print(f"Main Agent:")
+    print(f"  Messages: {analysis.main_agent.messages}")
+    print(f"  Tool calls: {analysis.main_agent.tool_calls}")
+    print(f"  Successful: {analysis.main_agent.successful_tool_calls}")
+    print(f"  Failed: {analysis.main_agent.failed_tool_calls}")
+    success_rate = (
+        analysis.main_agent.successful_tool_calls / analysis.main_agent.tool_calls
+        if analysis.main_agent.tool_calls > 0
+        else 0.0
+    )
+    print(f"  Success rate: {success_rate:.2%}")
+    print()
 
-        if analysis.subagents:
-            print(f"Subagents ({len(analysis.subagents)}):")
-            for agent in analysis.subagents:
-                print(f"  [{agent.agent_id}] {agent.subagent_type}")
-                print(f"    Description: {agent.description}")
-                print(f"    Messages: {agent.messages}")
-                print(f"    Tool calls: {agent.tool_calls} ({agent.successful_tool_calls} successful, {agent.failed_tool_calls} failed)")
-                print()
+    if analysis.subagents:
+        print(f"Subagents ({len(analysis.subagents)}):")
+        for agent in analysis.subagents:
+            print(f"  [{agent.agent_id}] {agent.subagent_type}")
+            print(f"    Description: {agent.description}")
+            print(f"    Messages: {agent.messages}")
+            print(f"    Tool calls: {agent.tool_calls} ({agent.successful_tool_calls} successful, {agent.failed_tool_calls} failed)")
+            print()
 
-        print(f"Totals:")
-        print(f"  Total messages: {analysis.totals['total_messages']}")
-        print(f"  Total tool calls: {analysis.totals['total_tool_calls']}")
-        print(f"  Overall success rate: {analysis.totals['overall_tool_success_rate']:.2%}")
-        print()
+    print(f"Totals:")
+    print(f"  Total messages: {analysis.totals['total_messages']}")
+    print(f"  Total tool calls: {analysis.totals['total_tool_calls']}")
+    print(f"  Overall success rate: {analysis.totals['overall_tool_success_rate']:.2%}")
+    print()
 
-    if mode in ["cost", "both"]:
-        print("COST STATISTICS:")
-        print("-" * 70)
-        print(f"Main Agent:")
-        print(f"  Input tokens: {analysis.main_agent.usage['input_tokens']:,}")
-        print(f"  Output tokens: {analysis.main_agent.usage['output_tokens']:,}")
-        print(f"  Cache creation tokens: {analysis.main_agent.usage['cache_creation_input_tokens']:,}")
-        print(f"  Cache read tokens: {analysis.main_agent.usage['cache_read_input_tokens']:,}")
-        print(f"  Total cost: ${analysis.main_agent.costs['total_cost']:.4f}")
-        print()
+    print("COST STATISTICS:")
+    print("-" * 70)
+    print(f"Main Agent:")
+    print(f"  Input tokens: {analysis.main_agent.usage['input_tokens']:,}")
+    print(f"  Output tokens: {analysis.main_agent.usage['output_tokens']:,}")
+    print(f"  Cache creation tokens: {analysis.main_agent.usage['cache_creation_input_tokens']:,}")
+    print(f"  Cache read tokens: {analysis.main_agent.usage['cache_read_input_tokens']:,}")
+    print(f"  Total cost: ${analysis.main_agent.costs['total_cost']:.4f}")
+    print()
 
-        if analysis.subagents:
-            print(f"Subagents ({len(analysis.subagents)}):")
-            for agent in analysis.subagents:
-                print(f"  [{agent.agent_id}] {agent.subagent_type}")
-                print(f"    Input tokens: {agent.usage['input_tokens']:,}")
-                print(f"    Output tokens: {agent.usage['output_tokens']:,}")
-                print(f"    Cache creation tokens: {agent.usage['cache_creation_input_tokens']:,}")
-                print(f"    Cache read tokens: {agent.usage['cache_read_input_tokens']:,}")
-                print(f"    Cost: ${agent.costs['total_cost']:.4f}")
-                print()
+    if analysis.subagents:
+        print(f"Subagents ({len(analysis.subagents)}):")
+        for agent in analysis.subagents:
+            print(f"  [{agent.agent_id}] {agent.subagent_type}")
+            print(f"    Input tokens: {agent.usage['input_tokens']:,}")
+            print(f"    Output tokens: {agent.usage['output_tokens']:,}")
+            print(f"    Cache creation tokens: {agent.usage['cache_creation_input_tokens']:,}")
+            print(f"    Cache read tokens: {agent.usage['cache_read_input_tokens']:,}")
+            print(f"    Cost: ${agent.costs['total_cost']:.4f}")
+            print()
 
-        print(f"Total:")
-        print(f"  Total input tokens: {analysis.totals['usage']['input_tokens']:,}")
-        print(f"  Total output tokens: {analysis.totals['usage']['output_tokens']:,}")
-        print(f"  Total cache creation tokens: {analysis.totals['usage']['cache_creation_input_tokens']:,}")
-        print(f"  Total cache read tokens: {analysis.totals['usage']['cache_read_input_tokens']:,}")
-        print(f"  Total cost: ${analysis.totals['costs']['total_cost']:.4f}")
-        print()
+    print(f"Total:")
+    print(f"  Total input tokens: {analysis.totals['usage']['input_tokens']:,}")
+    print(f"  Total output tokens: {analysis.totals['usage']['output_tokens']:,}")
+    print(f"  Total cache creation tokens: {analysis.totals['usage']['cache_creation_input_tokens']:,}")
+    print(f"  Total cache read tokens: {analysis.totals['usage']['cache_read_input_tokens']:,}")
+    print(f"  Total cost: ${analysis.totals['costs']['total_cost']:.4f}")
+    print()
 
     print("=" * 70)
 
@@ -742,23 +745,11 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Analyze usage and costs
+  # Analyze usage and costs (always generates both output files)
   %(prog)s /path/to/session.jsonl
-
-  # Analyze only usage
-  %(prog)s /path/to/session.jsonl --mode usage
-
-  # Analyze only costs
-  %(prog)s /path/to/session.jsonl --mode cost
 """,
     )
     parser.add_argument("log_file", help="Path to main log file (UUID.jsonl)")
-    parser.add_argument(
-        "--mode",
-        choices=["usage", "cost", "both"],
-        default="both",
-        help="Analysis mode (default: both)",
-    )
     args = parser.parse_args()
 
     log_file = Path(args.log_file)
@@ -814,15 +805,12 @@ Examples:
         tools_used_ordered=tools_ordered,
     )
 
-    # Write output files
-    if args.mode in ["usage", "both"]:
-        write_usage_output(log_dir, analysis)
-
-    if args.mode in ["cost", "both"]:
-        write_cost_output(log_dir, analysis)
+    # Write output files (always both)
+    write_usage_output(log_dir, analysis)
+    write_cost_output(log_dir, analysis)
 
     # Print summary
-    print_summary(analysis, args.mode)
+    print_summary(analysis)
 
 
 if __name__ == "__main__":
