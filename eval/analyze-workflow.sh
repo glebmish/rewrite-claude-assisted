@@ -72,7 +72,7 @@ SCRATCHPAD_DIR="$(dirname $SCRATCHPAD_FILE)"
 # Phase 1: Fetch session log
 log "Phase 1: Fetching Claude session log..."
 
-SESSION_LOG="$SCRATCHPAD_DIR/claude-log.jsonl"
+SESSION_LOG="$SCRATCHPAD_DIR/log/claude-log.jsonl"
 
 # Fetch session using existing script
 if ! scripts/fetch-session.sh -s "$SESSION_ID" -o "$SESSION_LOG"; then
