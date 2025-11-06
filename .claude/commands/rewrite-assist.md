@@ -26,7 +26,9 @@ Discover available OpenRewrite recipes and map extracted intents to appropriate 
 ### Phase 4: Recipe validation
 Test each recipe produced on the previous phase and make the final decision on what recipe is the final version.
 
-ALWAYS use specialized subagents to perform the validation.
+ALWAYS use specialized subagents to perform the validation. You MUST let subagent know what options current task belongs to
+(e.g. `this recipe is called option 1`, `this recipe is called option 2`)
+NEVER validate recipes concurrently. Shared workspace is used and concurrent validations will be unreliable and lead to obscure bugs.
 
 ### Phase 5: Final decision
 
@@ -35,7 +37,10 @@ Based on the results, choose the final recommended recipe and generate result ar
 **Output Directory**: Create `result/` subdirectory in the scratchpad directory. Make sure it is created before any
 attempts to use it for `git diff` or other commands.
 
-**CRITICAL**: The following 4 files MUST be generated in EXACTLY the specified formats. These files are parsed by automated analysis scripts.
+**CRITICAL**: The following 3 files MUST be generated in EXACTLY the specified formats. These files are parsed by automated analysis scripts.
+For the recommended recipe, you MUST only use yml and diff files saved to the scratchpad by subagents. If the files are not there,
+you MUST NOT try to acquire them in any other way such as running gradle command, or create files that you assume are correct. In this case you
+must clearly state that the task is failed and don't do anything else.
 
 #### Required Files
 Assuming you've already created scratchpad directory `.scratchpad/<yyyy-mm-dd-hh-MM>/` at the start of the workflow
@@ -44,7 +49,7 @@ Assuming you've already created scratchpad directory `.scratchpad/<yyyy-mm-dd-hh
 MUST be a result of `git diff` command execution
 ```bash
 cd .workspace/<repo-name>
-git diff <default-branch>...<pr-branch> --output=.scratchpad/<yyyy-mm-dd-hh-MM>/result/pr.diff -- . ':!gradle/wrapper/gradle-wrapper.jar' ':!gradlew' ':!gradlew.bat'
+git diff <default-branch> <pr-branch> --output=.scratchpad/<yyyy-mm-dd-hh-MM>/result/pr.diff -- . ':!gradle/wrapper/gradle-wrapper.jar' ':!gradlew' ':!gradlew.bat'
 ```
 - Format: Unified diff format (output of `git diff`)
 - Purpose: Ground truth for comparison
@@ -59,7 +64,7 @@ git diff <default-branch>...<pr-branch> --output=.scratchpad/<yyyy-mm-dd-hh-MM>/
 MUST be a result of `git diff` command execution
 ```bash
 cd .workspace/<repo-name>
-git diff <default-branch>..<recipe-branch> --output=.scratchpad/<yyyy-mm-dd-hh-MM>/result/recommended-recipe.diff -- . ':!gradle/wrapper/gradle-wrapper.jar' ':!gradlew' ':!gradlew.bat'
+git diff <default-branch> <recipe-branch> --output=.scratchpad/<yyyy-mm-dd-hh-MM>/result/recommended-recipe.diff -- . ':!gradle/wrapper/gradle-wrapper.jar' ':!gradlew' ':!gradlew.bat'
 ```
 - Format: Unified diff format (output of `git diff`)
 - Purpose: Result of OpenRewrite recipe execution for empirical validation
