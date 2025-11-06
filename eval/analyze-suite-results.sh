@@ -139,10 +139,10 @@ for run_dir in $run_dirs; do
     successful_tools="0"
     tool_success_rate="0"
     if [ -f "$run_dir/claude-usage-stats.json" ]; then
-        total_messages=$(extract_json_value "$run_dir/claude-usage-stats.json" ".metrics.total_messages" "0")
-        tool_calls=$(extract_json_value "$run_dir/claude-usage-stats.json" ".metrics.tool_calls" "0")
-        successful_tools=$(extract_json_value "$run_dir/claude-usage-stats.json" ".metrics.successful_tool_calls" "0")
-        tool_success_rate=$(extract_json_value "$run_dir/claude-usage-stats.json" ".metrics.tool_success_rate" "0")
+        total_messages=$(extract_json_value "$run_dir/claude-usage-stats.json" ".totals.total_messages" "0")
+        tool_calls=$(extract_json_value "$run_dir/claude-usage-stats.json" ".totals.total_tool_calls" "0")
+        successful_tools=$(extract_json_value "$run_dir/claude-usage-stats.json" ".totals.total_successful_tool_calls" "0")
+        tool_success_rate=$(extract_json_value "$run_dir/claude-usage-stats.json" ".totals.overall_tool_success_rate" "0")
     fi
     
     # Parse subjective-evaluation.json
