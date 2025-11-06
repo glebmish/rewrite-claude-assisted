@@ -68,7 +68,6 @@ class AgentUsage:
     agent_id: str
     subagent_type: Optional[str] = None  # None for main agent
     description: Optional[str] = None  # None for main agent
-    is_sidechain: bool = False
     messages: int = 0
     tool_calls: int = 0
     successful_tool_calls: int = 0
@@ -221,7 +220,6 @@ def build_agent_usage(
     usage_by_model: Dict[str, Dict],
     subagent_type: Optional[str] = None,
     description: Optional[str] = None,
-    is_sidechain: bool = False,
 ) -> AgentUsage:
     """Build AgentUsage object from parsed data."""
     # Count successful and failed tools
@@ -277,7 +275,6 @@ def build_agent_usage(
         agent_id=agent_id,
         subagent_type=subagent_type,
         description=description,
-        is_sidechain=is_sidechain,
         messages=len(messages),
         tool_calls=len(tool_uses),
         successful_tool_calls=successful,
@@ -348,7 +345,7 @@ def parse_jsonl_file(file_path: Path) -> List[Dict]:
 def _parse_log_entries(
     entries: List[Dict],
     extract_tasks: bool = False
-) -> Tuple[List[ToolUse], Optional[List[TaskToolCall]], Dict[str, bool], Dict[str, Dict], bool]:
+) -> Tuple[List[ToolUse], Optional[List[TaskToolCall]], Dict[str, bool], Dict[str, Dict]]:
     """
     Common parsing logic for both main and agent logs.
 
@@ -357,20 +354,15 @@ def _parse_log_entries(
         extract_tasks: Whether to extract Task tool calls (main log only)
 
     Returns:
-        (tool_uses, task_calls, failed_tool_map, usage_by_model, is_sidechain)
+        (tool_uses, task_calls, failed_tool_map, usage_by_model)
         task_calls will be None if extract_tasks is False
     """
     tool_uses = []
     task_calls = [] if extract_tasks else None
     failed_tool_map = {}
     usage_by_model = {}
-    is_sidechain = False
 
     for entry in entries:
-        # Check sidechain flag (only relevant for agent logs)
-        if "isSidechain" in entry:
-            is_sidechain = entry["isSidechain"]
-
         # Process message content
         message_content = entry.get("message", {}).get("content", [])
         if not isinstance(message_content, list):
@@ -401,7 +393,7 @@ def _parse_log_entries(
     for tool_use in tool_uses:
         tool_use.is_failed = failed_tool_map.get(tool_use.tool_use_id, False)
 
-    return tool_uses, task_calls, failed_tool_map, usage_by_model, is_sidechain
+    return tool_uses, task_calls, failed_tool_map, usage_by_model
 
 
 def parse_main_log(log_path: Path) -> Tuple[AgentUsage, List[ToolUse], List[TaskToolCall], Dict[str, bool]]:
@@ -419,7 +411,7 @@ def parse_main_log(log_path: Path) -> Tuple[AgentUsage, List[ToolUse], List[Task
     messages = parse_jsonl_file(log_path)
 
     # Extract common data
-    tool_uses, task_calls, failed_tool_map, usage_by_model, _ = _parse_log_entries(
+    tool_uses, task_calls, failed_tool_map, usage_by_model = _parse_log_entries(
         messages, extract_tasks=True
     )
 
@@ -473,7 +465,7 @@ def parse_agent_log(log_path: Path, agent_id: str, task_call: Optional[TaskToolC
     messages = parse_jsonl_file(log_path)
 
     # Extract common data (no task extraction for agent logs)
-    tool_uses, _, _, usage_by_model, is_sidechain = _parse_log_entries(
+    tool_uses, _, _, usage_by_model = _parse_log_entries(
         messages, extract_tasks=False
     )
 
@@ -489,7 +481,6 @@ def parse_agent_log(log_path: Path, agent_id: str, task_call: Optional[TaskToolC
         usage_by_model=usage_by_model,
         subagent_type=subagent_type,
         description=description,
-        is_sidechain=is_sidechain,
     )
 
     return agent_usage
@@ -594,14 +585,12 @@ def write_usage_output(log_dir: Path, analysis: SessionAnalysis):
                 else 0.0,
                 4,
             ),
-            "tools_used": analysis.main_agent.tools_used,
         },
         "subagents": [
             {
                 "agent_id": agent.agent_id,
                 "subagent_type": agent.subagent_type,
                 "description": agent.description,
-                "is_sidechain": agent.is_sidechain,
                 "messages": agent.messages,
                 "tool_calls": agent.tool_calls,
                 "successful_tool_calls": agent.successful_tool_calls,
@@ -610,7 +599,6 @@ def write_usage_output(log_dir: Path, analysis: SessionAnalysis):
                     agent.successful_tool_calls / agent.tool_calls if agent.tool_calls > 0 else 0.0,
                     4,
                 ),
-                "tools_used": agent.tools_used,
             }
             for agent in analysis.subagents
         ],
@@ -621,7 +609,7 @@ def write_usage_output(log_dir: Path, analysis: SessionAnalysis):
             "total_failed_tool_calls": analysis.totals["total_failed_tool_calls"],
             "overall_tool_success_rate": analysis.totals["overall_tool_success_rate"],
         },
-        "tools_used_ordered": analysis.tools_used_ordered,
+        "tools_used": analysis.tools_used_ordered,
     }
 
     with open(output_file, "w") as f:
@@ -651,7 +639,6 @@ def write_cost_output(log_dir: Path, analysis: SessionAnalysis):
                 "agent_id": agent.agent_id,
                 "subagent_type": agent.subagent_type,
                 "description": agent.description,
-                "is_sidechain": agent.is_sidechain,
                 "usage": agent.usage,
                 "costs": agent.costs,
                 "by_model": {model: data for model, data in agent.models_used.items()},
@@ -756,10 +743,15 @@ def main():
         epilog="""
 Examples:
   # Analyze usage and costs (always generates both output files)
-  %(prog)s /path/to/session.jsonl
+  %(prog)s /path/to/log/session.jsonl -o /path/to/output
 """,
     )
     parser.add_argument("log_file", help="Path to main log file (UUID.jsonl)")
+    parser.add_argument(
+        "-o", "--output-dir",
+        help="Output directory for JSON files (default: same as log file directory)",
+        default=None
+    )
     args = parser.parse_args()
 
     log_file = Path(args.log_file)
@@ -767,7 +759,14 @@ Examples:
         print(f"Error: Log file not found: {log_file}", file=sys.stderr)
         sys.exit(1)
 
-    log_dir = log_file.parent
+    # Determine output directory
+    if args.output_dir:
+        output_dir = Path(args.output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+    else:
+        output_dir = log_file.parent
+
+    log_dir = log_file.parent  # For discovering agent logs
 
     # Parse main log
     print(f"Analyzing main log: {log_file.name}")
@@ -816,8 +815,8 @@ Examples:
     )
 
     # Write output files (always both)
-    write_usage_output(log_dir, analysis)
-    write_cost_output(log_dir, analysis)
+    write_usage_output(output_dir, analysis)
+    write_cost_output(output_dir, analysis)
 
     # Print summary
     print_summary(analysis)

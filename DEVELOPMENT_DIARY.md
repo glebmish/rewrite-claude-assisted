@@ -193,3 +193,7 @@ to be completely rewritten.
   * Surprised to see a new SlashCommand tool. Always fails for some reason though with no details. Would be very useful.
   * `model: haiku` in subagents SOMEHOW uses Haiku 3.5, not Haiku 4.5. Annoying, because more precise `haiku-4-5` doesn't seem to work either.
   * Works awful on non-trivial PRs (>10 changed lines)
+
+##
+
+* An easy way to continue remote session locally 
