@@ -14,6 +14,7 @@
       "Bash(chmod:*)",
       "Bash(echo:*)",
       "Bash(sed:*)",
+      "Bash(curl:*)",
       "Bash(scripts/fetch-session.sh:*)",
       "Bash(scripts/get-session-id.sh:*)",
       "Bash(./scripts/fetch-session.sh:*)",
@@ -32,7 +33,8 @@
       "WebFetch(domain:docs.openrewrite.org)",
       "WebFetch(domain:github.com)",
       "Write",
-      "Edit"
+      "Edit",
+      "WebSearch"
     ],
     "deny": [
       "Bash(git push:*)",
