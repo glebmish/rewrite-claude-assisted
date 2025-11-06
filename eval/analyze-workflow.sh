@@ -9,13 +9,13 @@ log() {
 GITHUB_STEP_SUMMARY="${GITHUB_STEP_SUMMARY:-/dev/null}"
 
 # Source shared settings parser
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/parse-settings.sh"
+#SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+#source "$SCRIPT_DIR/parse-settings.sh"
 
 # Parse settings file for tool restrictions
-SETTINGS_FILE="${SETTINGS_FILE:-$SCRIPT_DIR/settings.json}"
-log "Parsing settings file: $SETTINGS_FILE"
-parse_settings_file "$SETTINGS_FILE"
+#SETTINGS_FILE="${SETTINGS_FILE:-$SCRIPT_DIR/settings.json}"
+#log "Parsing settings file: $SETTINGS_FILE"
+#parse_settings_file "$SETTINGS_FILE"
 
 # Initialize variables
 SCRATCHPAD_FILE=""
@@ -72,10 +72,11 @@ SCRATCHPAD_DIR="$(dirname $SCRATCHPAD_FILE)"
 # Phase 1: Fetch session log
 log "Phase 1: Fetching Claude session log..."
 
-SESSION_LOG="$SCRATCHPAD_DIR/log/claude-log.jsonl"
+LOG_DIR="$SCRATCHPAD_DIR/log"
+SESSION_LOG="$LOG_DIR/$SESSION_ID.jsonl"
 
 # Fetch session using existing script
-if ! scripts/fetch-session.sh -s "$SESSION_ID" -o "$SESSION_LOG"; then
+if ! scripts/fetch-session.sh -s "$SESSION_ID" -o "$LOG_DIR"; then
     log "Error: Failed to fetch session log"
     exit 1
 fi
@@ -86,7 +87,7 @@ SESSION_FETCH_FAILED=false
 log "Phase 2: Running quantitative analysis..."
 
 log "  Running usage and cost stats analysis..."
-if scripts/analysis/claude-stats.py "$SESSION_LOG"; then
+if scripts/analysis/claude-stats.py "$SESSION_LOG" -o "$SCRATCHPAD_DIR"; then
     log "  Usage stats saved to: $SCRATCHPAD_DIR/claude-usage-stats.json"
     log "  Cost stats saved to: $SCRATCHPAD_DIR/claude-cost-stats.json"
 else

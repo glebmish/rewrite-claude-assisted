@@ -56,9 +56,9 @@ All scratchpad, context and analysis files for the given session and subagent se
 * Pass the context on what the current directory is to each subagent. They must use this existing directory.
 * !!IMPORTANT!! At the beginning of main session retrieve session ID using and save it to the scratchpad directory: `scripts/get-session-id.sh -o .scratchpad/<yyy-mm-dd-hh-MM>/session-id.txt`
 * Your scratchpad is a detailed, chronological execution log, not a summary. It must be a completely honest record of your process.
-You must* log both successes and failures. When a tool call fails, you must* log the error message from stderr and your
+You *must* log both successes and failures. When a tool call fails, you *must* log the error message from stderr and your
 hypothesis about the cause of the failure before logging your next recovery attempt. Do not hide your mistakes. 
-A detailed failure log is more valuable than a clean but misleading summary.
+A detailed failure log is more valuable than a clean but misleading summary. Describing your struggles will help me to improve the workflow.
 
 ALWAYS keep the following types of scratchpads
 * Slash command execution log:

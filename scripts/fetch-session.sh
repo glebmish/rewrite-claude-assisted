@@ -3,35 +3,27 @@
 set -euxo pipefail
 
 # Initialize variables
-SCRATCHPAD_FILE=""
 SESSION_ID=""
-UUID=""
-OUTPUT_FILE=""
+OUTPUT_DIR=""
 
 # Function to show usage
 usage() {
-    echo "Usage: $0 [-f <filepath-to-scratchpad>] [-s <session-id>] [-o <output-file>]"
-    echo "  -f: Extract session ID from scratchpad file"
-    echo "  -s: Use provided session ID directly"
-    echo "  -o: Specify output file path for the session log"
+    echo "Usage: $0 -s <session-id> -o <output-dir>"
+    echo "  -s: Specify session id"
+    echo "  -o: Specify output directory path for the session logs"
     echo "Examples:"
-    echo "  $0 -f /path/to/scratchpad.md"
-    echo "  $0 -s 0ab55372-1fc8-4700-975c-c1c770076a0f"
-    echo "  $0 -s 0ab55372-1fc8-4700-975c-c1c770076a0f -o /path/to/output.jsonl"
+    echo "  $0 -s 0ab55372-1fc8-4700-975c-c1c770076a0f -o /path/to/logs"
     exit 1
 }
 
 # Parse command line arguments
-while getopts "f:s:o:h" opt; do
+while getopts "s:o:h" opt; do
     case $opt in
-        f)
-            SCRATCHPAD_FILE="$OPTARG"
-            ;;
         s)
             SESSION_ID="$OPTARG"
             ;;
         o)
-            OUTPUT_FILE="$OPTARG"
+            OUTPUT_DIR="$OPTARG"
             ;;
         h)
             usage
@@ -43,34 +35,9 @@ while getopts "f:s:o:h" opt; do
     esac
 done
 
-# Check that exactly one option is provided
-if [[ -n "$SCRATCHPAD_FILE" && -n "$SESSION_ID" ]]; then
-    echo "Error: Cannot use both -f and -s options simultaneously"
+if [[ -z "$SESSION_ID" ]]; then
+    echo "Error: Must provide -s option"
     usage
-fi
-
-if [[ -z "$SCRATCHPAD_FILE" && -z "$SESSION_ID" ]]; then
-    echo "Error: Must provide either -f or -s option"
-    usage
-fi
-
-# Handle scratchpad file input
-if [ -n "$SCRATCHPAD_FILE" ]; then
-    # Check if scratchpad file exists
-    if [ ! -f "$SCRATCHPAD_FILE" ]; then
-        echo "Error: Scratchpad file '$SCRATCHPAD_FILE' not found"
-        exit 1
-    fi
-
-    # Extract UUID from first line of scratchpad file
-    UUID=$(head -n1 "$SCRATCHPAD_FILE" | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}')
-
-    if [ -z "$UUID" ]; then
-        echo "Error: No UUID found in first line of '$SCRATCHPAD_FILE'"
-        exit 1
-    fi
-
-    echo "Found UUID: $UUID"
 fi
 
 # Handle session ID input
@@ -80,20 +47,42 @@ if [ -n "$SESSION_ID" ]; then
         echo "Error: Invalid session ID format. Expected UUID format."
         exit 1
     fi
-    
-    UUID="$SESSION_ID"
-    echo "Using session ID: $UUID"
+
+    echo "Using session ID: $SESSION_ID"
 fi
+
+if [ -z "$OUTPUT_DIR" ]; then
+  echo "Error: Must provide -o option"
+  usage
+fi
+
+mkdir -p "$OUTPUT_DIR"
+
+# Function to check if an agent log is a warmup agent
+is_warmup_agent() {
+    local agent_file="$1"
+
+    # Read first line and check if it contains "Warmup" as first user message
+    local first_line=$(head -n 1 "$agent_file")
+
+    # Check if type is "user" and message content is "Warmup"
+    if echo "$first_line" | grep -q '"type":"user"' && \
+       echo "$first_line" | grep -q '"content":"Warmup"'; then
+        return 0  # true - is warmup agent
+    else
+        return 1  # false - not warmup agent
+    fi
+}
 
 # Get current project directory name
 CURRENT_PROJECT_DIR=$(basename "$(pwd)")
 echo "Current project directory: $CURRENT_PROJECT_DIR"
 
 # Search for <id>.jsonl recursively in ~/.claude/projects
-SESSION_FILE=$(find ~/.claude/projects -name "${UUID}.jsonl" -type f 2>/dev/null)
+SESSION_FILE=$(find ~/.claude/projects -name "${SESSION_ID}.jsonl" -type f 2>/dev/null)
 
 if [ -z "$SESSION_FILE" ]; then
-    echo "Error: Session file '${UUID}.jsonl' not found in ~/.claude/projects"
+    echo "Error: Session file '${SESSION_ID}.jsonl' not found in ~/.claude/projects"
     exit 1
 fi
 
@@ -121,55 +110,26 @@ else
     echo "No agent logs found"
 fi
 
-# Determine output directory and main log filename
-if [ -n "$OUTPUT_FILE" ]; then
-  # If output file specified, use its directory and basename
-  OUTPUT_DIR="$(dirname "$OUTPUT_FILE")"
-  MAIN_LOG_FILENAME="$(basename "$OUTPUT_FILE")"
-else
-  # Default: use scratchpad directory or .sessions
-  OUTPUT_DIR="./.sessions"
-  if [ -n "$SCRATCHPAD_FILE" ]; then
-    OUTPUT_DIR=$(dirname "$SCRATCHPAD_FILE")
-  fi
-  MAIN_LOG_FILENAME="claude-log.jsonl"
-fi
+cp "$SESSION_FILE" "$OUTPUT_DIR"
+echo "Main session log copied to: $OUTPUT_DIR"
 
-# Create log directory structure
-LOG_DIR="$OUTPUT_DIR/log"
-mkdir -p "$LOG_DIR"
-
-# Copy main session log to log directory
-MAIN_LOG_DEST="$LOG_DIR/$MAIN_LOG_FILENAME"
-cp "$SESSION_FILE" "$MAIN_LOG_DEST"
-echo "Main session log copied to: $MAIN_LOG_DEST"
-
-# Copy all agent logs to log directory
+# Copy all agent logs to log directory (excluding warmup agents)
 if [ -n "$AGENT_FILES" ]; then
-    echo "Copying agent logs to: $LOG_DIR"
+    echo "Copying agent logs to: $OUTPUT_DIR"
+    COPIED_COUNT=0
+    SKIPPED_COUNT=0
     echo "$AGENT_FILES" | while IFS= read -r agent_file; do
         if [ -n "$agent_file" ]; then
-            agent_filename=$(basename "$agent_file")
-            cp "$agent_file" "$LOG_DIR/$agent_filename"
-            echo "  Copied: $agent_filename"
+            if is_warmup_agent "$agent_file"; then
+                echo "  Skipping warmup agent: $(basename "$agent_file")"
+                SKIPPED_COUNT=$((SKIPPED_COUNT + 1))
+            else
+                cp "$agent_file" "$OUTPUT_DIR"
+                COPIED_COUNT=$((COPIED_COUNT + 1))
+            fi
         fi
     done
+    echo "Agent logs copied: $COPIED_COUNT, skipped warmup agents: $SKIPPED_COUNT"
 else
     echo "No agent logs to copy"
-fi
-
-# Create backward-compatible symlink at old location
-COMPAT_SYMLINK="$OUTPUT_DIR/claude-log.jsonl"
-if [ ! -e "$COMPAT_SYMLINK" ]; then
-    ln -s "log/$MAIN_LOG_FILENAME" "$COMPAT_SYMLINK"
-    echo "Created backward-compatible symlink: $COMPAT_SYMLINK -> log/$MAIN_LOG_FILENAME"
-fi
-
-# Log summary
-echo ""
-echo "Session logs copied successfully:"
-echo "  Main log: $MAIN_LOG_DEST"
-if [ -n "$AGENT_FILES" ]; then
-    AGENT_COUNT=$(echo "$AGENT_FILES" | wc -l)
-    echo "  Agent logs: $AGENT_COUNT file(s) in $LOG_DIR"
 fi
