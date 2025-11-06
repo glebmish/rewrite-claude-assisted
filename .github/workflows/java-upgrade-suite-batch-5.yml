@@ -13,14 +13,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - pr_url: "https://github.com/openrewrite-assist-testing-dataset/inventory-tracking-system/pull/2"
+          - pr_url: "https://github.com/openrewrite-assist-testing-dataset/user-management-service/pull/2"
             pr_num: "2"
-            pr_index: 8
-            run: 1
-            total_runs: 1
-          - pr_url: "https://github.com/openrewrite-assist-testing-dataset/file-storage-service/pull/2"
-            pr_num: "2"
-            pr_index: 9
+            pr_index: 4
             run: 1
             total_runs: 1
       max-parallel: 1
