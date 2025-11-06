@@ -8,8 +8,9 @@
 ## Bash Commands
 
 ### Main restrictions
-NEVER EVER use `>` or `>>` redirects for writing files. Prefer using command line arguments to choose output.
-If such argument is not available, use Write or Edit tools.
+NEVER UNDER ANY CIRCUMSTANCES use `>` or `>>` redirects for writing files. Prefer using command line arguments to choose output.
+If such argument is not available, use Write or Edit tools. Example: "Read(input_file) -> Write(input_file)" is GOOD, "Bash(cat input_file > output_file)" is BAD.
+!I REPEAT AND REMEMBER IT AS IF YOU LIFE DEPENDS ON IT: NEVER UNDER ANY CIRCUMSTANCES use `>` or `>>` redirects for writing files!
 
 Be mindful of what pattern you use in Edit tool. If a string like `---\n\n` used to separate parts of document,
 appending to the end of the document by replacing `---\n\n` with a text won't work since there will be multiple
@@ -54,7 +55,8 @@ is transferred to the main scratchpad and intermediate files are deleted.
 * At the beginning of main session get current date and time and create `.scratchpad/<yyyy-mm-dd-hh-MM>` directory.
 All scratchpad, context and analysis files for the given session and subagent sessions must be saved to this directory.
 * Pass the context on what the current directory is to each subagent. They must use this existing directory.
-* !!IMPORTANT!! At the beginning of main session retrieve session ID using and save it to the scratchpad directory: `scripts/get-session-id.sh -o .scratchpad/<yyy-mm-dd-hh-MM>/session-id.txt`
+* !!IMPORTANT!! At the beginning of main session retrieve session ID using and save it to the scratchpad directory: `scripts/get-session-id.sh -o .scratchpad/<yyy-mm-dd-hh-MM>/session-id.txt`.
+Do retry it with different path variations and ALWAYS fail fast if you are not able to execute this command.
 * Your scratchpad is a detailed, chronological execution log, not a summary. It must be a completely honest record of your process.
 You *must* log both successes and failures. When a tool call fails, you *must* log the error message from stderr and your
 hypothesis about the cause of the failure before logging your next recovery attempt. Do not hide your mistakes. 
