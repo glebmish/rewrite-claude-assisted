@@ -8,8 +8,9 @@
 ## Bash Commands
 
 ### Main restrictions
-NEVER EVER use `>` or `>>` redirects for writing files. Prefer using command line arguments to choose output.
-If such argument is not available, use Write or Edit tools.
+NEVER UNDER ANY CIRCUMSTANCES use `>` or `>>` redirects for writing files. Prefer using command line arguments to choose output.
+If such argument is not available, use Write or Edit tools. Example: "Read(input_file) -> Write(input_file)" is GOOD, "Bash(cat input_file > output_file)" is BAD.
+!I REPEAT AND REMEMBER IT AS IF YOU LIFE DEPENDS ON IT: NEVER UNDER ANY CIRCUMSTANCES use `>` or `>>` redirects for writing files!
 
 Be mindful of what pattern you use in Edit tool. If a string like `---\n\n` used to separate parts of document,
 appending to the end of the document by replacing `---\n\n` with a text won't work since there will be multiple
