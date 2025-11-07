@@ -36,3 +36,7 @@ Thumbs.db
 .workspace
 .scratchpad
 .sessions
+
+
+.env
+venv
