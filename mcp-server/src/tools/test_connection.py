@@ -20,7 +20,7 @@ async def test_connection(message: Optional[str] = None) -> dict:
     response = {
         "status": "connected",
         "timestamp": timestamp,
-        "server": "openrewrite-assistant",
+        "server": "openrewrite-mcp",
         "version": "0.1.0"
     }
 
