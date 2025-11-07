@@ -2,16 +2,20 @@
 
 A Model Context Protocol (MCP) server that provides Claude Code with access to OpenRewrite recipe discovery and documentation.
 
-## Current Status: Phase 1 (Mock Implementation)
+## Current Status: Phase 2 (PostgreSQL Database)
 
-This is Phase 1 of the implementation, featuring:
+This is Phase 2 of the implementation, featuring:
 - ✅ Working MCP server with stdio transport
 - ✅ Three functional tools (test_connection, find_recipes, get_recipe)
-- ✅ Mock data for testing and validation
+- ✅ PostgreSQL database with pgvector extension
+- ✅ Automated Docker container lifecycle management
+- ✅ Database schema with recipes, examples, and options
+- ✅ Auto-seeding of initial recipe data
 - ✅ Claude Code integration ready
 
+**Note:** Phase 2 returns all recipes (search intent ignored). Phase 3 will implement semantic search with embeddings.
+
 **Future Phases:**
-- Phase 2: PostgreSQL with pgvector integration
 - Phase 3: Real RAG-based recipe search with embeddings
 - Phase 4: Data indexing and Docker distribution
 
@@ -59,6 +63,7 @@ Get documentation for org.openrewrite.java.spring.boot3.UpgradeSpringBoot_3_0
 ### Prerequisites
 - Python 3.8 or higher
 - pip
+- Docker and Docker Compose (required for Phase 2)
 - Claude Code
 
 ### Setup Steps
@@ -68,7 +73,7 @@ Get documentation for org.openrewrite.java.spring.boot3.UpgradeSpringBoot_3_0
    cd /home/glebmish/projects/rewrite-claude-assisted/mcp-server
    ```
 
-2. **Create and activate virtual environment (if not already done):**
+2. **Create and activate virtual environment:**
    ```bash
    python3 -m venv venv
    source venv/bin/activate  # On Linux/Mac
@@ -79,10 +84,18 @@ Get documentation for org.openrewrite.java.spring.boot3.UpgradeSpringBoot_3_0
    pip install -r requirements.txt
    ```
 
-4. **Create .env file (optional for Phase 1):**
+4. **Configure environment (optional - defaults work out of the box):**
    ```bash
    cp .env.example .env
+   # Edit .env if you need custom database settings
    ```
+
+**Note:** The startup script automatically:
+- Starts PostgreSQL Docker container
+- Waits for database to be ready
+- Creates database schema
+- Seeds initial recipe data (if empty)
+- Stops container when server shuts down
 
 ## Configuration for Claude Code
 
@@ -145,9 +158,9 @@ Use find_recipes to search for Spring Boot migration recipes
 Use get_recipe to get documentation for org.openrewrite.java.spring.boot3.UpgradeSpringBoot_3_0
 ```
 
-## Mock Data (Phase 1)
+## Recipe Data (Phase 2)
 
-The current implementation includes mock data for the following recipes:
+The database is seeded with the following recipes:
 - Spring Boot 3.0 Migration
 - JUnit 4 to JUnit 5 Migration
 - Java 17 Migration
@@ -163,35 +176,53 @@ mcp-server/
 ├── src/
 │   ├── server.py              # Main MCP server
 │   ├── config.py              # Configuration management
-│   ├── tools/
-│   │   ├── test_connection.py # Health check tool
-│   │   ├── find_recipes.py    # Recipe search (mock)
-│   │   └── get_recipe.py      # Recipe documentation (mock)
+│   ├── db/
+│   │   ├── connection.py      # Database connection pool
+│   │   └── queries.py         # Recipe database queries
+│   └── tools/
+│       ├── test_connection.py # Health check tool
+│       ├── find_recipes.py    # Recipe search (database)
+│       └── get_recipe.py      # Recipe documentation (database)
 ├── scripts/
-│   └── startup.sh             # Server startup script
+│   ├── startup.sh             # Server startup script (manages Docker)
+│   └── seed_db.py             # Database seeding script
+├── db-init/
+│   ├── 01-create-extensions.sql  # pgvector extension
+│   └── 02-create-schema.sql      # Database schema
+├── docker-compose.yml         # PostgreSQL service definition
 ├── requirements.txt           # Python dependencies
-├── .env.example              # Environment template
-├── .mcp.json                 # Claude Code configuration
-└── README.md                 # This file
+├── .env.example               # Environment template
+├── .mcp.json                  # Claude Code configuration
+└── README.md                  # This file
 ```
 
 ## Troubleshooting
 
+### Docker Issues
+- **Docker not found**: Install Docker Desktop or Docker Engine
+- **Port 5432 already in use**: Stop existing PostgreSQL or change `DB_PORT` in .env
+- **Permission denied**: Ensure Docker daemon is running and user has permissions
+- **Container won't start**: Check logs with `docker-compose logs postgres`
+- **Manual cleanup**: Run `docker-compose down -v` to stop and remove containers
+
 ### Server not connecting
-- Check that the virtual environment is activated
-- Verify Python dependencies are installed: `pip list | grep mcp`
+- Check that Docker is running: `docker ps`
+- Check PostgreSQL container is healthy: `docker-compose ps`
+- Verify Python dependencies are installed: `pip list | grep asyncpg`
 - Check Claude Code logs: `~/Library/Logs/Claude/mcp-server-openrewrite-mcp.log`
 - Ensure the startup script is executable: `chmod +x scripts/startup.sh`
+
+### Database connection errors
+- Verify container is running: `docker-compose ps`
+- Check database logs: `docker-compose logs postgres`
+- Test connection: `docker-compose exec postgres psql -U mcp_user -d openrewrite_recipes`
+- Verify .env settings match docker-compose.yml
 
 ### Tools not appearing
 - Restart Claude Code after configuration changes
 - Run `/mcp` command to verify server is loaded
 - Check stderr logs for any server errors
-
-### Import errors in server.py
-- Make sure you're running from the correct directory
-- The server must be started via `startup.sh` which sets proper paths
-- Verify all dependencies are installed in the virtual environment
+- Verify database has recipes: `docker-compose exec postgres psql -U mcp_user -d openrewrite_recipes -c "SELECT COUNT(*) FROM recipes;"`
 
 ## Logging
 
@@ -201,20 +232,18 @@ mcp-server/
 
 ## Next Steps (Future Phases)
 
-**Phase 2**: Database Integration
-- PostgreSQL with pgvector Docker setup
-- Database schema creation
-- Connection pooling
-
-**Phase 3**: Real Implementation
-- sentence-transformers embeddings
-- Vector similarity search
-- Real recipe documentation retrieval
+**Phase 3**: Semantic Search with Embeddings
+- Generate embeddings for all recipes using sentence-transformers
+- Implement vector similarity search using pgvector
+- Replace simple "return all recipes" logic with true RAG-based search
+- Add relevance scoring based on cosine similarity
 
 **Phase 4**: Data Distribution
-- Recipe data ingestion pipeline
-- Docker image with pre-loaded data
-- Version management
+- Scrape/ingest real OpenRewrite recipe documentation
+- Build automated data ingestion pipeline from docs.openrewrite.org
+- Create Docker image with pre-loaded recipe database
+- Implement version management for recipe updates
+- Set up CI/CD for weekly recipe data refreshes
 
 ## Contributing
 

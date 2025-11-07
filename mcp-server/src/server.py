@@ -8,6 +8,7 @@ from mcp.types import Tool, TextContent
 import mcp.server.stdio
 
 from config import config
+from db.connection import init_pool, close_pool
 from tools.test_connection import test_connection
 from tools.find_recipes import find_recipes
 from tools.get_recipe import get_recipe
@@ -168,14 +169,35 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
 async def main():
     """Run the MCP server."""
     logger.info(f"Starting {config.SERVER_NAME} v{config.SERVER_VERSION}")
+
+    # Initialize database connection pool (required - server will fail if DB unavailable)
+    try:
+        await init_pool(
+            host=config.DB_HOST,
+            port=config.DB_PORT,
+            database=config.DB_NAME,
+            user=config.DB_USER,
+            password=config.DB_PASSWORD
+        )
+        logger.info("Database connection established")
+    except Exception as e:
+        logger.error(f"Failed to connect to database: {e}")
+        logger.error("Server cannot start without database connection")
+        sys.exit(1)
+
     logger.info("Server ready to accept connections via stdio")
 
-    async with mcp.server.stdio.stdio_server() as (read_stream, write_stream):
-        await app.run(
-            read_stream,
-            write_stream,
-            app.create_initialization_options()
-        )
+    try:
+        async with mcp.server.stdio.stdio_server() as (read_stream, write_stream):
+            await app.run(
+                read_stream,
+                write_stream,
+                app.create_initialization_options()
+            )
+    finally:
+        # Cleanup on shutdown
+        await close_pool()
+        logger.info("Server shutdown complete")
 
 
 if __name__ == "__main__":
