@@ -1,11 +1,15 @@
-"""Find recipes tool with mock data for Phase 1."""
+"""Find recipes tool with database backend (Phase 2)."""
 import sys
+import logging
 from pathlib import Path
 from typing import List, Dict
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from config import config
+from db.queries import find_all_recipes
+
+logger = logging.getLogger(__name__)
 
 # Mock recipe database
 MOCK_RECIPES = [
@@ -82,38 +86,30 @@ def _calculate_mock_relevance(recipe: Dict, intent: str) -> float:
 
 async def find_recipes(intent: str, limit: int = None, min_score: float = None) -> List[Dict]:
     """
-    Find OpenRewrite recipes based on user intent (mock implementation).
+    Find OpenRewrite recipes based on user intent.
 
-    Performs a semantic search to find recipes that match the user's described
-    intent. This is a mock implementation using simple keyword matching.
-    Phase 3 will replace this with real vector similarity search.
+    Phase 2: Returns all recipes from database (ignores search intent).
+    Phase 3: Will use vector similarity search with embeddings.
 
     Args:
-        intent: Description of what the user wants to accomplish
+        intent: Description of what the user wants to accomplish (currently ignored)
         limit: Maximum number of results to return (default: 5)
-        min_score: Minimum relevance score threshold (default: 0.5)
+        min_score: Minimum relevance score threshold (currently ignored)
 
     Returns:
-        List of recipe objects with relevance scores, sorted by relevance
+        List of recipe objects from database
     """
     if limit is None:
         limit = config.DEFAULT_RECIPE_LIMIT
-    if min_score is None:
-        min_score = config.MIN_SIMILARITY_SCORE
 
-    # Calculate relevance scores for all recipes
-    scored_recipes = []
-    for recipe in MOCK_RECIPES:
-        score = _calculate_mock_relevance(recipe, intent)
-        if score >= min_score:
-            scored_recipes.append({
-                "recipe_id": recipe["recipe_id"],
-                "name": recipe["name"],
-                "description": recipe["description"],
-                "relevance_score": round(score, 3),
-                "tags": recipe["tags"]
-            })
+    # Phase 2: Ignore intent and min_score, just return all recipes
+    # Phase 3 will implement proper semantic search
+    logger.info(f"Finding recipes (intent='{intent}', limit={limit})")
 
-    # Sort by relevance (descending) and limit results
-    scored_recipes.sort(key=lambda x: x["relevance_score"], reverse=True)
-    return scored_recipes[:limit]
+    try:
+        results = await find_all_recipes(limit=limit)
+        logger.info(f"Found {len(results)} recipes from database")
+        return results
+    except Exception as e:
+        logger.error(f"Database query failed: {e}")
+        raise
