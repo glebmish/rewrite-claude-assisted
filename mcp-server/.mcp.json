@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "openrewrite-assistant": {
+      "type": "stdio",
+      "command": "/home/glebmish/projects/rewrite-claude-assisted/mcp-server/scripts/startup.sh",
+      "args": [],
+      "env": {}
+    }
+  }
+}
