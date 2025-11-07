@@ -93,7 +93,7 @@ Copy or symlink the `.mcp.json` file to your project root or Claude Code will au
 ```json
 {
   "mcpServers": {
-    "openrewrite-assistant": {
+    "openrewrite-mcp": {
       "type": "stdio",
       "command": "/home/glebmish/projects/rewrite-claude-assisted/mcp-server/scripts/startup.sh",
       "args": [],
@@ -106,7 +106,7 @@ Copy or symlink the `.mcp.json` file to your project root or Claude Code will au
 ### Option 2: Using claude mcp add command
 
 ```bash
-claude mcp add --transport stdio openrewrite-assistant -- /home/glebmish/projects/rewrite-claude-assisted/mcp-server/scripts/startup.sh
+claude mcp add --transport stdio openrewrite-mcp -- /home/glebmish/projects/rewrite-claude-assisted/mcp-server/scripts/startup.sh
 ```
 
 ## Testing the Server
@@ -127,7 +127,7 @@ The server will log to stderr when it's ready.
 After configuration, restart Claude Code and verify the server is connected:
 
 1. In Claude Code, run the `/mcp` command to see available servers
-2. You should see "openrewrite-assistant" listed
+2. You should see "openrewrite-mcp" listed
 3. Try using one of the tools:
 
 **Test connection:**
@@ -180,7 +180,7 @@ mcp-server/
 ### Server not connecting
 - Check that the virtual environment is activated
 - Verify Python dependencies are installed: `pip list | grep mcp`
-- Check Claude Code logs: `~/Library/Logs/Claude/mcp-server-openrewrite-assistant.log`
+- Check Claude Code logs: `~/Library/Logs/Claude/mcp-server-openrewrite-mcp.log`
 - Ensure the startup script is executable: `chmod +x scripts/startup.sh`
 
 ### Tools not appearing
