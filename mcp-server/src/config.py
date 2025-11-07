@@ -12,7 +12,7 @@ class Config:
     """Configuration settings for the MCP server."""
 
     # Server metadata
-    SERVER_NAME: str = "openrewrite-assistant"
+    SERVER_NAME: str = "openrewrite-mcp"
     SERVER_VERSION: str = "0.1.0"
 
     # Database settings (for future phases)
