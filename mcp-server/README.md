@@ -9,9 +9,11 @@ This is Phase 2 of the implementation, featuring:
 - ✅ Three functional tools (test_connection, find_recipes, get_recipe)
 - ✅ PostgreSQL database with pgvector extension
 - ✅ Automated Docker container lifecycle management
-- ✅ Database schema with recipes, examples, and options
+- ✅ Simplified database schema: recipe_name + full markdown documentation
 - ✅ Auto-seeding of initial recipe data
 - ✅ Claude Code integration ready
+
+**Database Design:** Simple single-table schema stores recipe name and full markdown documentation. This design is optimized for RAG-based semantic search (Phase 3) where embeddings will be generated from the full markdown text. Enhanced schema designs with structured metadata are documented in `docs/schema-design-research.md` for future consideration.
 
 **Note:** Phase 2 returns all recipes (search intent ignored). Phase 3 will implement semantic search with embeddings.
 
@@ -188,12 +190,50 @@ mcp-server/
 │   └── seed_db.py             # Database seeding script
 ├── db-init/
 │   ├── 01-create-extensions.sql  # pgvector extension
-│   └── 02-create-schema.sql      # Database schema
+│   └── 02-create-schema.sql      # Database schema (simplified)
+├── docs/
+│   └── schema-design-research.md # Enhanced schema research & future designs
 ├── docker-compose.yml         # PostgreSQL service definition
 ├── requirements.txt           # Python dependencies
 ├── .env.example               # Environment template
 ├── .mcp.json                  # Claude Code configuration
 └── README.md                  # This file
+```
+
+## Database Schema
+
+**Current (Phase 2): Simplified Design**
+
+```sql
+CREATE TABLE recipes (
+    id SERIAL PRIMARY KEY,
+    recipe_name VARCHAR(500) UNIQUE NOT NULL,
+    markdown_doc TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE recipe_embeddings (
+    id SERIAL PRIMARY KEY,
+    recipe_id INTEGER REFERENCES recipes(id) ON DELETE CASCADE,
+    embedding vector(384),
+    embedding_model VARCHAR(200),
+    created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+**Design Rationale:**
+- Single table stores recipe name and full markdown documentation
+- Optimized for RAG: embeddings generated from complete markdown
+- Simple to maintain and query
+- Future enhancements documented in `docs/schema-design-research.md`
+
+**Future Enhancement Options:**
+See `docs/schema-design-research.md` for:
+- Structured metadata extraction (options, examples, tags)
+- Recipe relationships and composition tracking
+- Artifact and source tracking
+- Programmatic extraction using OpenRewrite Environment API
 ```
 
 ## Troubleshooting
