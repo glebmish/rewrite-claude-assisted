@@ -38,10 +38,9 @@ Thumbs.db
 .sessions
 
 # Python
-__pycache__/
 *.pyc
 *.pyo
-
 **/venv
 .env
 venv
+**/__pycache__
