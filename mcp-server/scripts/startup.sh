@@ -1,5 +1,5 @@
 #!/bin/bash
-# Startup script for OpenRewrite MCP Server (Phase 2)
+# Startup script for OpenRewrite MCP Server
 # Automatically manages PostgreSQL Docker container lifecycle
 
 set -e
@@ -19,6 +19,9 @@ if [ -f .env ]; then
 fi
 
 # Set defaults for database configuration
+DB_IMAGE_NAME="${DB_IMAGE_NAME:-openrewrite-recipes-db}"
+DB_IMAGE_TAG="${DB_IMAGE_TAG:-latest}"
+DB_IMAGE_REGISTRY="${DB_IMAGE_REGISTRY:-}"
 DB_HOST="${DB_HOST:-localhost}"
 DB_PORT="${DB_PORT:-5432}"
 DB_NAME="${DB_NAME:-openrewrite_recipes}"
@@ -26,6 +29,7 @@ DB_USER="${DB_USER:-mcp_user}"
 DB_PASSWORD="${DB_PASSWORD:-changeme}"
 
 # Export for docker-compose
+export DB_IMAGE_NAME DB_IMAGE_TAG DB_IMAGE_REGISTRY
 export DB_HOST DB_PORT DB_NAME DB_USER DB_PASSWORD
 
 # Cleanup function to stop Docker container
@@ -44,13 +48,13 @@ trap cleanup EXIT INT TERM
 # Activate virtual environment
 if [ ! -d "venv" ]; then
     echo "Error: Virtual environment not found at $PROJECT_DIR/venv" >&2
-    echo "Please run: python3 -m venv venv && venv/bin/pip install -r requirements.txt" >&2
+    echo "Please run: ./scripts/setup.sh" >&2
     exit 1
 fi
 
 # Check if Docker is available
 if ! command -v docker &> /dev/null; then
-    echo "Error: Docker not found. Please install Docker to use Phase 2 MCP server." >&2
+    echo "Error: Docker not found. Please install Docker." >&2
     exit 1
 fi
 
@@ -58,6 +62,16 @@ if ! command -v docker-compose &> /dev/null; then
     echo "Error: docker-compose not found. Please install docker-compose." >&2
     exit 1
 fi
+
+# Check if required image exists
+FULL_IMAGE="${DB_IMAGE_REGISTRY:+${DB_IMAGE_REGISTRY}/}${DB_IMAGE_NAME}:${DB_IMAGE_TAG}"
+if ! docker image inspect "$FULL_IMAGE" &> /dev/null; then
+    echo "Error: Database image not found: $FULL_IMAGE" >&2
+    echo "Please run the setup script first: ./scripts/setup.sh" >&2
+    exit 1
+fi
+
+echo "Using database image: $FULL_IMAGE" >&2
 
 # Start PostgreSQL container
 echo "Starting PostgreSQL container..." >&2
@@ -111,13 +125,13 @@ asyncio.run(test())
     exit 1
 fi
 
-# Check if database needs to be seeded
-NEEDS_SEED=$("$PROJECT_DIR/venv/bin/python" -c "
+# Verify recipes are available
+RECIPE_COUNT=$("$PROJECT_DIR/venv/bin/python" -c "
 import asyncio
 import asyncpg
 import sys
 
-async def check():
+async def count():
     try:
         conn = await asyncpg.connect(
             host='$DB_HOST',
@@ -129,20 +143,14 @@ async def check():
         )
         count = await conn.fetchval('SELECT COUNT(*) FROM recipes')
         await conn.close()
-        if count == 0:
-            print('yes')
-        else:
-            print('no')
-    except Exception:
-        print('yes')
+        print(count)
+    except Exception as e:
+        print(0)
 
-asyncio.run(check())
-" < /dev/null 2>/dev/null || echo "yes")
+asyncio.run(count())
+" < /dev/null 2>/dev/null || echo "0")
 
-if [ "$NEEDS_SEED" = "yes" ]; then
-    echo "Database is empty, seeding with initial data..." >&2
-    "$PROJECT_DIR/venv/bin/python" "$PROJECT_DIR/scripts/seed_db.py" < /dev/null >&2
-fi
+echo "✅ Database contains $RECIPE_COUNT recipes" >&2
 
 # Start MCP server
 echo "Starting MCP server..." >&2
