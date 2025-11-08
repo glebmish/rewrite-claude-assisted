@@ -11,7 +11,7 @@ prs:
     url: "https://github.com/openrewrite-assist-testing-dataset/ecommerce-catalog/pull/1"
     runs: 1
   - name: java-11-to-17-with-auth-upgrade
-    url: "https://github.com/openrewrite-assist-testing-dataset/weather-monitoring-service/pull/2"
+    url: "https://github.com/openrewrite-assist-testing-dataset/weather-monitoring-service/pull/3"
     runs: 1
   - name: junit-4-to-5-upgrade
     url: "https://github.com/openrewrite-assist-testing-dataset/user-management-service/pull/2"
