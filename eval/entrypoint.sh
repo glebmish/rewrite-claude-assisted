@@ -180,6 +180,7 @@ METADATA_FILE="$SCRATCHPAD_DIR/workflow-metadata.json"
 cat > "$METADATA_FILE" << EOF
 {
   "pr_url": "$PR_URL",
+  "commit_hash": "${GITHUB_SHA:-unknown}",
   "status": "$EXECUTION_STATUS",
   "exit_code": $EXIT_CODE,
   "duration_seconds": $DURATION,
