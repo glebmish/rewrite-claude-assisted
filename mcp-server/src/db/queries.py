@@ -1,10 +1,37 @@
 """Database queries for recipes."""
 import logging
+import re
 from typing import List, Dict, Optional
 
 from db.connection import get_connection
 
 logger = logging.getLogger(__name__)
+
+
+def extract_title_from_markdown(markdown: str) -> str:
+    """Extract recipe title from markdown (first # heading)."""
+    match = re.search(r'^#\s+(.+?)$', markdown, re.MULTILINE)
+    return match.group(1) if match else "Unknown Recipe"
+
+
+def extract_description_from_markdown(markdown: str) -> str:
+    """Extract short description from markdown (text after recipe name in bold)."""
+    # Look for pattern like **org.openrewrite.java.ChangeType**
+    # followed by description text
+    match = re.search(r'\*\*([^*]+)\*\*\s*\n\s*\n_([^_]+)_', markdown, re.MULTILINE)
+    if match:
+        return match.group(2).strip()
+
+    # Fallback: first paragraph after frontmatter
+    lines = markdown.split('\n')
+    for i, line in enumerate(lines):
+        if line.startswith('---') and i > 0:
+            # Found end of frontmatter, look for first non-empty line
+            for j in range(i+1, len(lines)):
+                if lines[j].strip() and not lines[j].startswith('#'):
+                    return lines[j].strip()
+
+    return "No description available"
 
 
 async def find_all_recipes(limit: int = 5) -> List[Dict]:
@@ -23,87 +50,50 @@ async def find_all_recipes(limit: int = 5) -> List[Dict]:
     async with get_connection() as conn:
         results = await conn.fetch("""
             SELECT
-                recipe_id,
-                name,
-                description,
-                tags
+                id,
+                recipe_name,
+                markdown_doc
             FROM recipes
-            ORDER BY name
+            ORDER BY recipe_name
             LIMIT $1
         """, limit)
 
         return [
             {
-                'recipe_id': r['recipe_id'],
-                'name': r['name'],
-                'description': r['description'],
-                'tags': list(r['tags']) if r['tags'] else [],
+                'recipe_id': r['recipe_name'],
+                'name': extract_title_from_markdown(r['markdown_doc']),
+                'description': extract_description_from_markdown(r['markdown_doc']),
+                'tags': [],  # Could extract from markdown if needed
                 'relevance_score': 1.0  # Placeholder for Phase 3
             }
             for r in results
         ]
 
 
-async def get_recipe_details(recipe_id: str) -> Optional[Dict]:
+async def get_recipe_details(recipe_name: str) -> Optional[Dict]:
     """
-    Get full recipe details including examples and options.
+    Get full recipe documentation.
 
     Args:
-        recipe_id: Unique recipe identifier
+        recipe_name: Unique recipe name (fully qualified)
 
     Returns:
-        Dictionary with full recipe details, or None if not found
+        Dictionary with recipe name and full markdown documentation, or None if not found
     """
     async with get_connection() as conn:
-        # Fetch recipe
         recipe = await conn.fetchrow("""
-            SELECT * FROM recipes WHERE recipe_id = $1
-        """, recipe_id)
+            SELECT recipe_name, markdown_doc
+            FROM recipes
+            WHERE recipe_name = $1
+        """, recipe_name)
 
         if not recipe:
             return None
 
-        # Fetch examples
-        examples = await conn.fetch("""
-            SELECT title, before_code, after_code
-            FROM recipe_examples
-            WHERE recipe_id = $1
-            ORDER BY display_order, id
-        """, recipe['id'])
-
-        # Fetch options
-        options = await conn.fetch("""
-            SELECT name, type, description, default_value
-            FROM recipe_options
-            WHERE recipe_id = $1
-            ORDER BY display_order, id
-        """, recipe['id'])
-
         return {
-            'recipe_id': recipe['recipe_id'],
-            'name': recipe['name'],
-            'description': recipe['description'],
-            'full_documentation': recipe['full_documentation'],
-            'usage_instructions': recipe['usage_instructions'],
-            'source_url': recipe['source_url'],
-            'tags': list(recipe['tags']) if recipe['tags'] else [],
-            'examples': [
-                {
-                    'title': e['title'],
-                    'before': e['before_code'],
-                    'after': e['after_code']
-                }
-                for e in examples
-            ],
-            'options': [
-                {
-                    'name': o['name'],
-                    'type': o['type'],
-                    'description': o['description'],
-                    'default': o['default_value']
-                }
-                for o in options
-            ]
+            'recipe_id': recipe['recipe_name'],
+            'name': extract_title_from_markdown(recipe['markdown_doc']),
+            'markdown_documentation': recipe['markdown_doc']
         }
 
 
