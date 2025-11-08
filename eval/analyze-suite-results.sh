@@ -111,6 +111,7 @@ for run_dir in $run_dirs; do
             pr_key="${repo_name}/${pr_num}"
         fi
 
+        commit_hash=$(extract_json_value "$run_dir/workflow-metadata.json" ".commit_hash" "unknown")
         status=$(extract_json_value "$run_dir/workflow-metadata.json" ".status" "unknown")
         exit_code=$(extract_json_value "$run_dir/workflow-metadata.json" ".exit_code" "1")
         duration=$(extract_json_value "$run_dir/workflow-metadata.json" ".duration_seconds" "0")
@@ -200,7 +201,7 @@ for run_dir in $run_dirs; do
 
     # Store run data
 #    all_runs+=("$pr_num|$pr_url|$run_number|$status|$duration|$duration_min|$cost|$score_truth|$score_extract|$score_mapping|$score_valid|$score_overall|$total_messages|$tool_calls|$successful_tools|$tool_success_rate|$unnecessary_changes|$missing_changes|$precision|$recall|$f1_score|$is_perfect_match")
-    all_runs+=("$pr_key|$pr_num|$pr_url|$repo_name|$run_number|$status|$duration|$duration_min|$cost|$total_messages|$tool_calls|$successful_tools|$tool_success_rate|$unnecessary_changes|$missing_changes|$precision|$recall|$f1_score|$is_perfect_match")
+    all_runs+=("$pr_key|$pr_num|$pr_url|$repo_name|$commit_hash|$run_number|$status|$duration|$duration_min|$cost|$total_messages|$tool_calls|$successful_tools|$tool_success_rate|$unnecessary_changes|$missing_changes|$precision|$recall|$f1_score|$is_perfect_match")
 done
 
 # Calculate suite-level metrics
@@ -250,12 +251,12 @@ summary_file="$OUTPUT_DIR/summary.md"
     echo ""
 #    echo "| PR | Run | Status | Duration | Cost | Truth | Extract | Mapping | Valid | Overall | Msgs | Tools | Tool Success | Unnecessary | Missing | Precision | Recall | F1 | Perfect |"
 #    echo "|----|-----|--------|----------|------|-------|---------|---------|-------|---------|------|-------|--------------|-------------|---------|-----------|--------|----|---------|"
-    echo "| Repo | PR | Run | Status | Duration | Cost | Msgs | Tools | Tool Success | Unnecessary | Missing | Precision | Recall | F1 | Perfect |"
-    echo "|------|-----|-----|--------|----------|------|------|-------|--------------|-------------|---------|-----------|--------|----|---------|"
+    echo "| Repo | Commit | PR | Run | Status | Duration | Cost | Msgs | Tools | Tool Success | Unnecessary | Missing | Precision | Recall | F1 | Perfect |"
+    echo "|------|--------|-----|-----|--------|----------|------|------|-------|--------------|-------------|---------|-----------|--------|----|---------|"
 
     for run_data in "${all_runs[@]}"; do
 #        IFS='|' read -r run_pr run_pr_url run_num run_status run_dur run_dur_min run_cost run_truth run_extract run_mapping run_valid run_overall run_msg run_tools run_succ_tools run_tool_rate prec_unnecessary prec_missing prec_precision prec_recall prec_f1 prec_perfect <<< "$run_data"
-        IFS='|' read -r run_pr_key run_pr run_pr_url run_repo run_num run_status run_dur run_dur_min run_cost run_msg run_tools run_succ_tools run_tool_rate prec_unnecessary prec_missing prec_precision prec_recall prec_f1 prec_perfect <<< "$run_data"
+        IFS='|' read -r run_pr_key run_pr run_pr_url run_repo run_commit_hash run_num run_status run_dur run_dur_min run_cost run_msg run_tools run_succ_tools run_tool_rate prec_unnecessary prec_missing prec_precision prec_recall prec_f1 prec_perfect <<< "$run_data"
 
         
         status_icon=$GREEN
@@ -308,8 +309,12 @@ summary_file="$OUTPUT_DIR/summary.md"
             formatted_tool_rate=$(printf '%.2f' $run_tool_rate 2>/dev/null || echo "$run_tool_rate")
         fi
 
+        # Format commit hash (first 7 characters)
+        commit_display="${run_commit_hash:0:7}"
+        [ "$commit_display" = "unknown" ] && commit_display="N/A"
+
 #        echo "| $pr_link | $run_num/$total_pr_runs | $status_icon | ${run_dur_min}m | \$$(printf '%.2f' $run_cost 2>/dev/null || echo "$run_cost") | $run_truth | $run_extract | $run_mapping | $run_valid | $run_overall | $run_msg | $run_tools | ${run_succ_tools}/${run_tools} (${formatted_tool_rate}) | $prec_unnecessary | $prec_missing | $formatted_precision | $formatted_recall | $formatted_f1 | $perfect_icon |"
-        echo "| $repo_display | $pr_link | $run_num/$total_pr_runs | $status_icon | ${run_dur_min}m | \$$(printf '%.2f' $run_cost 2>/dev/null || echo "$run_cost") | $run_msg | $run_tools | ${run_succ_tools}/${run_tools} (${formatted_tool_rate}) | $prec_unnecessary | $prec_missing | $formatted_precision | $formatted_recall | $formatted_f1 | $perfect_icon |"
+        echo "| $repo_display | $commit_display | $pr_link | $run_num/$total_pr_runs | $status_icon | ${run_dur_min}m | \$$(printf '%.2f' $run_cost 2>/dev/null || echo "$run_cost") | $run_msg | $run_tools | ${run_succ_tools}/${run_tools} (${formatted_tool_rate}) | $prec_unnecessary | $prec_missing | $formatted_precision | $formatted_recall | $formatted_f1 | $perfect_icon |"
     done
     
 } > "$summary_file"
