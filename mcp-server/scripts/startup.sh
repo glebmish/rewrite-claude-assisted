@@ -61,7 +61,7 @@ fi
 
 # Start PostgreSQL container
 echo "Starting PostgreSQL container..." >&2
-docker-compose up -d postgres
+docker-compose up -d postgres < /dev/null
 
 # Wait for database to be ready
 echo "Waiting for database to be ready..." >&2
@@ -69,14 +69,14 @@ MAX_RETRIES=30
 RETRY_COUNT=0
 
 while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-    if docker-compose exec -T postgres pg_isready -U "$DB_USER" -d "$DB_NAME" 2>/dev/null; then
+    if docker-compose exec -T postgres pg_isready -U "$DB_USER" -d "$DB_NAME" < /dev/null 2>/dev/null; then
         echo "✅ Database is ready!" >&2
         break
     fi
     RETRY_COUNT=$((RETRY_COUNT + 1))
     if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
         echo "Error: Database failed to start after ${MAX_RETRIES} seconds" >&2
-        docker-compose logs postgres >&2
+        docker-compose logs postgres < /dev/null >&2
         exit 1
     fi
     sleep 1
@@ -106,7 +106,7 @@ async def test():
         sys.exit(1)
 
 asyncio.run(test())
-"; then
+" < /dev/null; then
     echo "Error: Cannot connect to database" >&2
     exit 1
 fi
@@ -137,13 +137,13 @@ async def check():
         print('yes')
 
 asyncio.run(check())
-" 2>/dev/null || echo "yes")
+" < /dev/null 2>/dev/null || echo "yes")
 
 if [ "$NEEDS_SEED" = "yes" ]; then
     echo "Database is empty, seeding with initial data..." >&2
-    "$PROJECT_DIR/venv/bin/python" "$PROJECT_DIR/scripts/seed_db.py" >&2
+    "$PROJECT_DIR/venv/bin/python" "$PROJECT_DIR/scripts/seed_db.py" < /dev/null >&2
 fi
 
 # Start MCP server
 echo "Starting MCP server..." >&2
-exec "$PROJECT_DIR/venv/bin/python" "$PROJECT_DIR/src/server.py"
+exec "$PROJECT_DIR/venv/bin/python" -u "$PROJECT_DIR/src/server.py"
