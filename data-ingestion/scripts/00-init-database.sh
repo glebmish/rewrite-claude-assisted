@@ -4,9 +4,8 @@ set -euo pipefail
 # Script: 00-init-database.sh
 # Purpose: Initialize PostgreSQL database and apply schema
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-REPO_ROOT="$(cd "$PROJECT_DIR/.." && pwd)"
+SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
+PROJECT_DIR="$SCRIPT_DIR/.."
 
 # Colors for output
 RED='\033[0;31m'
@@ -64,7 +63,7 @@ DB_PASSWORD="${DB_PASSWORD:-changeme}"
 POSTGRES_CONTAINER_NAME="${POSTGRES_CONTAINER_NAME:-openrewrite-postgres}"
 
 # Schema files location
-SCHEMA_DIR="$REPO_ROOT/mcp-server/db-init"
+SCHEMA_DIR="$PROJECT_DIR/db-init"
 
 echo "========================================="
 echo "Stage 0: Initialize Database"
