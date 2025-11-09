@@ -14,6 +14,60 @@ from tools.find_recipes import MOCK_RECIPES
 from tools.get_recipe import MOCK_RECIPE_DOCS
 
 
+def generate_markdown_from_mock(recipe_data: dict, full_doc: dict = None) -> str:
+    """Generate markdown documentation from mock recipe data."""
+    recipe_id = recipe_data['recipe_id']
+    name = recipe_data['name']
+    description = recipe_data['description']
+    tags = recipe_data.get('tags', [])
+
+    # Start with basic structure
+    markdown = f"""---
+sidebar_label: "{name}"
+---
+
+# {name}
+
+**{recipe_id}**
+
+_{description}_
+
+### Tags
+
+{chr(10).join(f'* {tag}' for tag in tags) if tags else '* No tags'}
+
+## Recipe source
+
+This is a placeholder recipe for Phase 2 testing.
+"""
+
+    # Add full documentation if available
+    if full_doc:
+        if full_doc.get('full_documentation'):
+            markdown += f"\n{full_doc['full_documentation']}\n"
+
+        if full_doc.get('usage_instructions'):
+            markdown += f"\n## Usage\n\n{full_doc['usage_instructions']}\n"
+
+        # Add examples
+        if full_doc.get('examples'):
+            markdown += "\n## Examples\n\n"
+            for example in full_doc['examples']:
+                markdown += f"### {example['title']}\n\n"
+                markdown += f"**Before:**\n```java\n{example['before']}\n```\n\n"
+                markdown += f"**After:**\n```java\n{example['after']}\n```\n\n"
+
+        # Add options
+        if full_doc.get('options'):
+            markdown += "\n## Options\n\n"
+            markdown += "| Type | Name | Description | Default |\n"
+            markdown += "| -- | -- | -- | -- |\n"
+            for option in full_doc['options']:
+                markdown += f"| `{option['type']}` | {option['name']} | {option['description']} | `{option['default']}` |\n"
+
+    return markdown
+
+
 async def seed_database(
     host: str = "localhost",
     port: int = 5432,
@@ -42,71 +96,31 @@ async def seed_database(
         print(f"Seeding {len(MOCK_RECIPES)} recipes...")
 
         for recipe_data in MOCK_RECIPES:
-            recipe_id = recipe_data['recipe_id']
+            recipe_name = recipe_data['recipe_id']
             print(f"  - {recipe_data['name']}")
 
-            # Insert recipe
-            recipe_row_id = await conn.fetchval("""
-                INSERT INTO recipes (recipe_id, name, description, tags)
-                VALUES ($1, $2, $3, $4)
-                ON CONFLICT (recipe_id) DO UPDATE
-                SET name = EXCLUDED.name,
-                    description = EXCLUDED.description,
-                    tags = EXCLUDED.tags,
+            # Get full documentation if available
+            full_doc = MOCK_RECIPE_DOCS.get(recipe_name)
+
+            # Generate markdown
+            markdown_doc = generate_markdown_from_mock(recipe_data, full_doc)
+
+            # Insert recipe with markdown
+            await conn.execute("""
+                INSERT INTO recipes (recipe_name, markdown_doc)
+                VALUES ($1, $2)
+                ON CONFLICT (recipe_name) DO UPDATE
+                SET markdown_doc = EXCLUDED.markdown_doc,
                     updated_at = NOW()
-                RETURNING id
-            """, recipe_id, recipe_data['name'],
-                recipe_data['description'], recipe_data['tags'])
-
-            # Insert full details if available
-            if recipe_id in MOCK_RECIPE_DOCS:
-                full_doc = MOCK_RECIPE_DOCS[recipe_id]
-
-                await conn.execute("""
-                    UPDATE recipes
-                    SET full_documentation = $1,
-                        usage_instructions = $2,
-                        source_url = $3,
-                        updated_at = NOW()
-                    WHERE id = $4
-                """, full_doc.get('full_documentation'),
-                    full_doc.get('usage_instructions'),
-                    full_doc.get('source_url'),
-                    recipe_row_id)
-
-                # Delete existing examples and options for this recipe (for idempotency)
-                await conn.execute(
-                    "DELETE FROM recipe_examples WHERE recipe_id = $1",
-                    recipe_row_id
-                )
-                await conn.execute(
-                    "DELETE FROM recipe_options WHERE recipe_id = $1",
-                    recipe_row_id
-                )
-
-                # Insert examples
-                for idx, example in enumerate(full_doc.get('examples', [])):
-                    await conn.execute("""
-                        INSERT INTO recipe_examples
-                        (recipe_id, title, before_code, after_code, display_order)
-                        VALUES ($1, $2, $3, $4, $5)
-                    """, recipe_row_id, example['title'],
-                        example['before'], example['after'], idx)
-
-                # Insert options
-                for idx, option in enumerate(full_doc.get('options', [])):
-                    await conn.execute("""
-                        INSERT INTO recipe_options
-                        (recipe_id, name, type, description, default_value, display_order)
-                        VALUES ($1, $2, $3, $4, $5, $6)
-                    """, recipe_row_id, option['name'], option['type'],
-                        option['description'], str(option['default']), idx)
+            """, recipe_name, markdown_doc)
 
         count = await conn.fetchval("SELECT COUNT(*) FROM recipes")
         print(f"\n✅ Database seeded successfully with {count} recipes")
 
     except Exception as e:
         print(f"❌ Error seeding database: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
     finally:
         await conn.close()

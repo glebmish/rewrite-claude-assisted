@@ -9,9 +9,11 @@ This is Phase 2 of the implementation, featuring:
 - ✅ Three functional tools (test_connection, find_recipes, get_recipe)
 - ✅ PostgreSQL database with pgvector extension
 - ✅ Automated Docker container lifecycle management
-- ✅ Database schema with recipes, examples, and options
+- ✅ Simplified database schema: recipe_name + full markdown documentation
 - ✅ Auto-seeding of initial recipe data
 - ✅ Claude Code integration ready
+
+**Database Design:** Simple single-table schema stores recipe name and full markdown documentation. This design is optimized for RAG-based semantic search (Phase 3) where embeddings will be generated from the full markdown text. Enhanced schema designs with structured metadata are documented in `docs/schema-design-research.md` for future consideration.
 
 **Note:** Phase 2 returns all recipes (search intent ignored). Phase 3 will implement semantic search with embeddings.
 
@@ -62,40 +64,72 @@ Get documentation for org.openrewrite.java.spring.boot3.UpgradeSpringBoot_3_0
 
 ### Prerequisites
 - Python 3.8 or higher
-- pip
-- Docker and Docker Compose (required for Phase 2)
+- Docker and Docker Compose
 - Claude Code
 
-### Setup Steps
+### Quick Setup (Recommended)
 
-1. **Clone or navigate to the mcp-server directory:**
+Run the automated setup script:
+
+```bash
+cd mcp-server
+./scripts/setup.sh
+```
+
+This one-time setup will:
+- ✅ Verify Docker and Python installation
+- ✅ Pull or build the pre-loaded database image (~500MB, contains ~1000+ recipes)
+- ✅ Create Python virtual environment
+- ✅ Install dependencies
+
+**First run takes 5-10 minutes** (pulls or builds Docker image), subsequent starts are instant.
+
+### Manual Setup (Alternative)
+
+1. **Navigate to directory:**
    ```bash
-   cd /home/glebmish/projects/rewrite-claude-assisted/mcp-server
+   cd mcp-server
    ```
 
-2. **Create and activate virtual environment:**
+2. **Configure environment:**
+   ```bash
+   cp .env.example .env
+   # Edit .env to customize image name/tag if needed
+   ```
+
+3. **Create virtual environment:**
    ```bash
    python3 -m venv venv
-   source venv/bin/activate  # On Linux/Mac
-   ```
-
-3. **Install dependencies:**
-   ```bash
+   source venv/bin/activate
    pip install -r requirements.txt
    ```
 
-4. **Configure environment (optional - defaults work out of the box):**
+4. **Prepare database image:**
    ```bash
-   cp .env.example .env
-   # Edit .env if you need custom database settings
+   # Option 1: Pull from registry (if available)
+   docker pull openrewrite-recipes-db:latest
+
+   # Option 2: Build locally (15-20 minutes)
+   cd ../data-ingestion
+   ./scripts/run-full-pipeline.sh
    ```
 
-**Note:** The startup script automatically:
-- Starts PostgreSQL Docker container
-- Waits for database to be ready
-- Creates database schema
-- Seeds initial recipe data (if empty)
-- Stops container when server shuts down
+### Updating Recipe Data
+
+To update to the latest OpenRewrite recipes:
+
+```bash
+./scripts/rebuild-database.sh
+```
+
+This rebuilds the Docker image with fresh data. The image will be tagged with the current date.
+
+To use a specific version, edit `.env`:
+```bash
+DB_IMAGE_TAG=2025-11-08  # or 'latest'
+```
+
+Then restart the server. Run updates periodically (e.g., monthly) to keep recipes current.
 
 ## Configuration for Claude Code
 
@@ -158,16 +192,18 @@ Use find_recipes to search for Spring Boot migration recipes
 Use get_recipe to get documentation for org.openrewrite.java.spring.boot3.UpgradeSpringBoot_3_0
 ```
 
-## Recipe Data (Phase 2)
+## Recipe Data
 
-The database is seeded with the following recipes:
-- Spring Boot 3.0 Migration
-- JUnit 4 to JUnit 5 Migration
-- Java 17 Migration
-- Secure Random Number Generation
-- Remove Unused Imports
-- javax to jakarta Migration
-- Log4j to SLF4J Migration
+Pre-loaded database image contains **~1000+ recipes** from all official OpenRewrite modules:
+- All Spring Boot migrations (2.x → 3.x, etc.)
+- Java version upgrades (8 → 11 → 17 → 21)
+- Framework migrations (JUnit, Mockito, AssertJ, etc.)
+- Security fixes and best practices
+- Logging framework migrations
+- Dependency updates
+- And much more...
+
+**Data Source:** Generated from the official [rewrite-recipe-markdown-generator](https://github.com/openrewrite/rewrite-recipe-markdown-generator) repository, which uses OpenRewrite's RecipeDescriptor API to extract metadata from all published recipe modules.
 
 ## Project Structure
 
@@ -184,16 +220,56 @@ mcp-server/
 │       ├── find_recipes.py    # Recipe search (database)
 │       └── get_recipe.py      # Recipe documentation (database)
 ├── scripts/
-│   ├── startup.sh             # Server startup script (manages Docker)
-│   └── seed_db.py             # Database seeding script
+│   ├── startup.sh             # Server startup script (manages Docker lifecycle)
+│   ├── setup.sh               # One-time setup (pull/build images, install deps)
+│   ├── rebuild-database.sh    # Rebuild pre-loaded database image
+│   └── seed_db.py             # Database seeding script (for testing)
 ├── db-init/
 │   ├── 01-create-extensions.sql  # pgvector extension
-│   └── 02-create-schema.sql      # Database schema
-├── docker-compose.yml         # PostgreSQL service definition
+│   └── 02-create-schema.sql      # Database schema (simplified)
+├── docs/
+│   └── schema-design-research.md # Enhanced schema research & future designs
+├── docker-compose.yml         # PostgreSQL configuration
 ├── requirements.txt           # Python dependencies
-├── .env.example               # Environment template
+├── .env.example               # Environment template with image configuration
 ├── .mcp.json                  # Claude Code configuration
 └── README.md                  # This file
+```
+
+## Database Schema
+
+**Current (Phase 2): Simplified Design**
+
+```sql
+CREATE TABLE recipes (
+    id SERIAL PRIMARY KEY,
+    recipe_name VARCHAR(500) UNIQUE NOT NULL,
+    markdown_doc TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE recipe_embeddings (
+    id SERIAL PRIMARY KEY,
+    recipe_id INTEGER REFERENCES recipes(id) ON DELETE CASCADE,
+    embedding vector(384),
+    embedding_model VARCHAR(200),
+    created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+**Design Rationale:**
+- Single table stores recipe name and full markdown documentation
+- Optimized for RAG: embeddings generated from complete markdown
+- Simple to maintain and query
+- Future enhancements documented in `docs/schema-design-research.md`
+
+**Future Enhancement Options:**
+See `docs/schema-design-research.md` for:
+- Structured metadata extraction (options, examples, tags)
+- Recipe relationships and composition tracking
+- Artifact and source tracking
+- Programmatic extraction using OpenRewrite Environment API
 ```
 
 ## Troubleshooting
