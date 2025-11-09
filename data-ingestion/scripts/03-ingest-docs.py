@@ -77,6 +77,13 @@ def extract_recipe_name_from_markdown(markdown: str, normalized_path: str) -> Op
     if search_path.startswith('core.'):
         search_path = search_path[5:]  # Remove 'core.' prefix
 
+    # Strip common suffixes that appear in file paths but not in recipe names
+    suffixes_to_strip = ['-recipe', '-moderne-edition', '-community-edition', '-best-practices']
+    for suffix in suffixes_to_strip:
+        if search_path.endswith(suffix):
+            search_path = search_path[:-len(suffix)]
+            break
+
     # In markdown, underscores are escaped as \_, so we need to escape them in our search string
     normalized_lower = search_path.lower().replace('_', r'\_')
 

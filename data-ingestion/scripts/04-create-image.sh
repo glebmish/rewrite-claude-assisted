@@ -16,7 +16,7 @@ fi
 
 # Configuration with defaults
 POSTGRES_CONTAINER_NAME="${POSTGRES_CONTAINER_NAME:-openrewrite-postgres}"
-IMAGE_NAME="${IMAGE_NAME:-openrewrite-recipes-db}"
+IMAGE_NAME="${IMAGE_NAME:-bboygleb/openrewrite-recipes-db}"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
 REGISTRY_URL="${REGISTRY_URL:-}"
 
