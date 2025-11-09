@@ -4,8 +4,8 @@ set -euo pipefail
 # Script: 01-setup-generator.sh
 # Purpose: Clone and set up the rewrite-recipe-markdown-generator repository
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
+PROJECT_DIR="$SCRIPT_DIR/.."
 
 # Load environment variables
 if [ -f "$PROJECT_DIR/.env" ]; then
@@ -27,17 +27,26 @@ echo "========================================="
 mkdir -p "$GENERATOR_WORKSPACE"
 cd "$GENERATOR_WORKSPACE"
 
-GENERATOR_DIR="$GENERATOR_WORKSPACE/rewrite-recipe-markdown-generator"
+GENERATOR_DIR="rewrite-recipe-markdown-generator"
 
 # Check if generator already exists
 if [ -d "$GENERATOR_DIR" ]; then
     echo "✓ Generator repository already exists at: $GENERATOR_DIR"
-    echo "  To update, run: cd $GENERATOR_DIR && git pull"
+    echo "  To re-setup, remove the directory and run this script again"
 else
     echo "→ Cloning generator repository..."
-    git clone --depth 1 "$GENERATOR_REPO_URL" "$GENERATOR_DIR"
+    git clone "$GENERATOR_REPO_URL" "$GENERATOR_DIR"
     echo "✓ Generator cloned successfully"
+
+    # Checkout to specific commit for reproducibility
+    echo ""
+    echo "→ Checking out to commit 171ed7c4 for stable version..."
+    cd "$GENERATOR_DIR"
+    git checkout 171ed7c4
+    cd -
+    echo "✓ Checked out to commit 171ed7c4"
 fi
+cd "$GENERATOR_DIR"
 
 # Verify Java version
 echo ""
@@ -64,7 +73,6 @@ fi
 echo "✓ Java 17 verified: $JAVA_HOME"
 
 # Verify Gradle wrapper
-cd "$GENERATOR_DIR"
 if [ ! -f "./gradlew" ]; then
     echo "✗ Error: Gradle wrapper not found in $GENERATOR_DIR"
     exit 1
@@ -74,6 +82,42 @@ echo "✓ Gradle wrapper verified"
 
 # Make gradlew executable
 chmod +x ./gradlew
+
+# Apply workarounds to build.gradle.kts for reproducibility
+echo ""
+echo "→ Applying version pinning workarounds to build.gradle.kts..."
+
+BUILD_FILE="build.gradle.kts"
+if [ ! -f "$BUILD_FILE" ]; then
+    echo "✗ Error: build.gradle.kts not found"
+    exit 1
+fi
+
+# Pin rewriteVersion to stable version for reproducibility
+if grep -q 'val rewriteVersion = "latest.release"' "$BUILD_FILE"; then
+    sed -i 's/val rewriteVersion = "latest.release"/val rewriteVersion = "8.64.0"/' "$BUILD_FILE"
+    echo "✓ Pinned rewriteVersion to 8.64.0"
+else
+    echo "  Note: rewriteVersion already modified or not found"
+fi
+
+# Pin moderne-recipe-bom version for reproducibility
+if grep -q '"io.moderne.recipe:moderne-recipe-bom:$rewriteVersion"' "$BUILD_FILE"; then
+    sed -i 's/"io.moderne.recipe:moderne-recipe-bom:$rewriteVersion"/"io.moderne.recipe:moderne-recipe-bom:0.21.0"/' "$BUILD_FILE"
+    echo "✓ Pinned moderne-recipe-bom to 0.21.0"
+else
+    echo "  Note: moderne-recipe-bom already modified or not found"
+fi
+
+# Pin rewrite-spring-to-quarkus version for reproducibility
+if grep -q '"org.openrewrite.recipe:rewrite-spring-to-quarkus:$rewriteVersion"' "$BUILD_FILE"; then
+    sed -i 's/"org.openrewrite.recipe:rewrite-spring-to-quarkus:$rewriteVersion"/"org.openrewrite.recipe:rewrite-spring-to-quarkus:0.2.0"/' "$BUILD_FILE"
+    echo "✓ rewrite-spring-to-quarkus to 0.2.0"
+else
+    echo "  Note: rewrite-spring-to-quarkus already modified or not found"
+fi
+
+echo "✓ Build configuration workarounds applied"
 
 echo ""
 echo "========================================="

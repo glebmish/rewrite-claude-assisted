@@ -4,8 +4,8 @@ set -euo pipefail
 # Script: 02-generate-docs.sh
 # Purpose: Run the gradle task to generate all recipe markdown documentation
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
+PROJECT_DIR="$SCRIPT_DIR/.."
 
 # Load environment variables
 if [ -f "$PROJECT_DIR/.env" ]; then
@@ -57,7 +57,7 @@ else
 fi
 
 # Verify output
-OUTPUT_PATH="$GENERATOR_DIR/$GENERATOR_OUTPUT_DIR"
+OUTPUT_PATH="$GENERATOR_OUTPUT_DIR"
 RECIPES_PATH="$OUTPUT_PATH/recipes"
 
 if [ ! -d "$RECIPES_PATH" ]; then
@@ -80,8 +80,5 @@ echo "========================================="
 echo "Output directory: $RECIPES_PATH"
 echo "Total markdown files: $RECIPE_COUNT"
 echo "Disk usage: $(du -sh "$OUTPUT_PATH" | cut -f1)"
-echo ""
-echo "Sample recipes:"
-find "$RECIPES_PATH" -name "*.md" | head -5
 echo ""
 echo "Next step: Run 03-ingest-docs.py"
