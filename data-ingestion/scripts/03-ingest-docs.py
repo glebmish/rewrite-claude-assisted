@@ -58,18 +58,27 @@ def extract_recipe_name_from_markdown(markdown: str, normalized_path: str) -> Op
     Returns:
         The full recipe name if found, None otherwise
 
-    Example:
+    Examples:
         normalized_path: "java.spring.boot3.upgradespringboot_3_0"
         markdown contains: "**org.openrewrite.java.spring.boot3.UpgradeSpringBoot\_3\_0**"
         returns: "org.openrewrite.java.spring.boot3.UpgradeSpringBoot_3_0"
+
+        normalized_path: "core.renamefile"
+        markdown contains: "**org.openrewrite.RenameFile**"
+        returns: "org.openrewrite.RenameFile"
     """
     # Find all bold patterns **...**
     pattern = r'\*\*([^*]+)\*\*'
     matches = re.finditer(pattern, markdown)
 
     # Search for a match containing the normalized path (case-insensitive)
+    # Strip 'core.' prefix as core recipes are under org.openrewrite directly
+    search_path = normalized_path
+    if search_path.startswith('core.'):
+        search_path = search_path[5:]  # Remove 'core.' prefix
+
     # In markdown, underscores are escaped as \_, so we need to escape them in our search string
-    normalized_lower = normalized_path.lower().replace('_', r'\_')
+    normalized_lower = search_path.lower().replace('_', r'\_')
 
     for match in matches:
         bold_content = match.group(1)
