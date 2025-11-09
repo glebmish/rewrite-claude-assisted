@@ -2,6 +2,9 @@
 """
 Script: 03-ingest-docs.py
 Purpose: Parse generated markdown files and ingest them into PostgreSQL database
+
+Note: This script expects the PostgreSQL database to already be running and
+initialized with the schema. Run 00-init-database.sh first if not already done.
 """
 
 import asyncio
@@ -156,8 +159,8 @@ async def ingest_recipes():
     # Test database connection
     log(f"→ Testing database connection...", force=True)
     if not await test_connection():
-        log(f"  Make sure PostgreSQL is running:", force=True)
-        log(f"  docker-compose up -d", force=True)
+        log(f"  Database is not running or not initialized.", force=True)
+        log(f"  Run 00-init-database.sh first to initialize the database.", force=True)
         sys.exit(1)
     log(f"✓ Database connection successful", force=True)
 
