@@ -60,7 +60,7 @@ def extract_recipe_name_from_markdown(markdown: str, normalized_path: str) -> Op
 
     Example:
         normalized_path: "java.spring.boot3.upgradespringboot_3_0"
-        markdown contains: "**org.openrewrite.java.spring.boot3.UpgradeSpringBoot_3_0**"
+        markdown contains: "**org.openrewrite.java.spring.boot3.UpgradeSpringBoot\_3\_0**"
         returns: "org.openrewrite.java.spring.boot3.UpgradeSpringBoot_3_0"
     """
     # Find all bold patterns **...**
@@ -68,7 +68,8 @@ def extract_recipe_name_from_markdown(markdown: str, normalized_path: str) -> Op
     matches = re.finditer(pattern, markdown)
 
     # Search for a match containing the normalized path (case-insensitive)
-    normalized_lower = normalized_path.lower()
+    # In markdown, underscores are escaped as \_, so we need to escape them in our search string
+    normalized_lower = normalized_path.lower().replace('_', r'\_')
 
     for match in matches:
         bold_content = match.group(1)
