@@ -10,10 +10,9 @@ import os
 import sys
 import re
 from pathlib import Path
-from typing import Optional, Dict, Tuple
+from typing import Optional
 from dotenv import load_dotenv
 from tqdm import tqdm
-import yaml
 
 # Configuration
 SCRIPT_DIR = Path(__file__).parent
@@ -30,8 +29,8 @@ DB_USER = os.getenv('DB_USER', 'mcp_user')
 DB_PASSWORD = os.getenv('DB_PASSWORD', 'changeme')
 
 # Generator configuration
-GENERATOR_WORKSPACE = os.getenv('GENERATOR_WORKSPACE', str(PROJECT_DIR / 'workspace'))
-GENERATOR_OUTPUT_DIR = os.getenv('GENERATOR_OUTPUT_DIR', 'build/docs')
+GENERATOR_WORKSPACE = str(PROJECT_DIR / 'workspace')
+GENERATOR_OUTPUT_DIR = 'build/docs'
 GENERATOR_DIR = Path(GENERATOR_WORKSPACE) / 'rewrite-recipe-markdown-generator'
 RECIPES_DIR = GENERATOR_DIR / GENERATOR_OUTPUT_DIR / 'recipes'
 
@@ -45,62 +44,44 @@ def log(message: str, force: bool = False):
         print(message, file=sys.stderr)
 
 
-def extract_frontmatter(markdown: str) -> Tuple[Optional[Dict], str]:
+def extract_recipe_name_from_markdown(markdown: str, normalized_path: str) -> Optional[str]:
     """
-    Extract YAML frontmatter from markdown.
+    Extract recipe name from markdown by finding bold pattern containing normalized path.
+
+    Args:
+        markdown: The markdown content to search
+        normalized_path: The normalized path (e.g., "java.spring.boot3.upgradespringboot_3_0")
 
     Returns:
-        (frontmatter_dict, markdown_without_frontmatter)
+        The full recipe name if found, None otherwise
+
+    Example:
+        normalized_path: "java.spring.boot3.upgradespringboot_3_0"
+        markdown contains: "**org.openrewrite.java.spring.boot3.UpgradeSpringBoot_3_0**"
+        returns: "org.openrewrite.java.spring.boot3.UpgradeSpringBoot_3_0"
     """
-    if not markdown.startswith('---'):
-        return None, markdown
+    # Find all bold patterns **...**
+    pattern = r'\*\*([^*]+)\*\*'
+    matches = re.finditer(pattern, markdown)
 
-    # Find the closing ---
-    end_match = re.search(r'\n---\n', markdown[3:])
-    if not end_match:
-        return None, markdown
+    # Search for a match containing the normalized path (case-insensitive)
+    normalized_lower = normalized_path.lower()
 
-    frontmatter_text = markdown[3:3 + end_match.start()]
-    remaining_markdown = markdown[3 + end_match.end():]
-
-    try:
-        frontmatter = yaml.safe_load(frontmatter_text)
-        return frontmatter, remaining_markdown
-    except yaml.YAMLError:
-        return None, markdown
-
-
-def extract_recipe_name_from_markdown(markdown: str) -> Optional[str]:
-    """
-    Extract recipe name from markdown content.
-
-    Strategies:
-    1. Look for bold recipe name pattern: **org.openrewrite.java.ChangeType**
-    2. Look for H2/H3 with 'Recipe source' or 'Fully qualified name'
-    """
-    # Strategy 1: Bold pattern (most common)
-    # Look for **fully.qualified.ClassName** or **org.openrewrite...**
-    pattern = r'\*\*(org\.openrewrite\.[a-zA-Z0-9_.]+)\*\*'
-    match = re.search(pattern, markdown)
-    if match:
-        return match.group(1)
-
-    # Strategy 2: Look for lines starting with "**Fully qualified name:**"
-    pattern = r'\*\*Fully qualified name:\*\*\s+`([^`]+)`'
-    match = re.search(pattern, markdown)
-    if match:
-        return match.group(1)
+    for match in matches:
+        bold_content = match.group(1)
+        if normalized_lower in bold_content.lower():
+            return bold_content.strip()
 
     return None
 
 
-def path_to_recipe_name(file_path: Path, recipes_base: Path) -> str:
+def path_to_normalized_name(file_path: Path, recipes_base: Path) -> str:
     """
-    Convert file path to fully qualified recipe name.
+    Convert file path to normalized recipe path for matching.
 
     Example:
         recipes/java/spring/boot3/upgradespringboot_3_0.md
-        -> org.openrewrite.java.spring.boot3.UpgradeSpringBoot_3_0
+        -> java.spring.boot3.upgradespringboot_3_0
     """
     # Get relative path from recipes base
     rel_path = file_path.relative_to(recipes_base)
@@ -108,48 +89,38 @@ def path_to_recipe_name(file_path: Path, recipes_base: Path) -> str:
     # Remove .md extension
     path_without_ext = rel_path.with_suffix('')
 
-    # Convert path to package-like structure
-    parts = list(path_without_ext.parts)
+    # Convert path separators to dots
+    normalized = str(path_without_ext).replace('/', '.')
 
-    # Convert last part (class name) to PascalCase if needed
-    # This is a best-effort conversion
-    class_name = parts[-1]
-
-    # Common convention: file names are lowercase, class names are PascalCase
-    # Example: changetype -> ChangeType
-    if class_name.islower() or '_' in class_name:
-        # Try to detect word boundaries and capitalize
-        words = re.findall(r'[a-z]+|[A-Z][a-z]*|\d+', class_name)
-        class_name = ''.join(word.capitalize() for word in words)
-
-    parts[-1] = class_name
-
-    # Join with dots and add org.openrewrite prefix
-    return 'org.openrewrite.' + '.'.join(parts)
+    return normalized
 
 
 def extract_recipe_name(file_path: Path, markdown: str, recipes_base: Path) -> str:
     """
-    Extract recipe name using multiple strategies.
+    Extract recipe name by finding bold pattern containing normalized path.
 
-    Priority:
-    1. Frontmatter recipe_id field
-    2. Bold pattern in markdown
-    3. Derive from file path
+    Process:
+    1. Convert file path to normalized name (e.g., java/spring/boot3/upgradespringboot.md -> java.spring.boot3.upgradespringboot)
+    2. Find bold pattern **...** containing this normalized path (case-insensitive)
+    3. Return the full content between ** markers as the recipe name
+
+    Raises:
+        ValueError: If recipe name cannot be extracted
     """
-    # Strategy 1: Frontmatter
-    frontmatter, _ = extract_frontmatter(markdown)
-    if frontmatter and 'recipe_id' in frontmatter:
-        return frontmatter['recipe_id']
+    # Get normalized path from file
+    normalized_path = path_to_normalized_name(file_path, recipes_base)
 
-    # Strategy 2: Extract from markdown content
-    recipe_name = extract_recipe_name_from_markdown(markdown)
+    # Extract recipe name from markdown using normalized path
+    recipe_name = extract_recipe_name_from_markdown(markdown, normalized_path)
+
     if recipe_name:
         return recipe_name
 
-    # Strategy 3: Derive from path (fallback)
-    log(f"  Warning: Could not extract recipe name from content, deriving from path: {file_path}")
-    return path_to_recipe_name(file_path, recipes_base)
+    # If not found, raise error with helpful message
+    raise ValueError(
+        f"Could not extract recipe name from {file_path.name}. "
+        f"Expected to find bold pattern containing '{normalized_path}' (case-insensitive)"
+    )
 
 
 async def test_connection() -> bool:
@@ -201,11 +172,13 @@ async def ingest_recipes():
     )
 
     try:
-        # Collect all markdown files
+        # Collect all markdown files (excluding README.md files)
         log(f"→ Scanning for markdown files...", force=True)
-        markdown_files = list(RECIPES_DIR.rglob('*.md'))
+        all_markdown_files = list(RECIPES_DIR.rglob('*.md'))
+        markdown_files = [f for f in all_markdown_files if f.name != 'README.md']
         total_files = len(markdown_files)
-        log(f"✓ Found {total_files} markdown files", force=True)
+        excluded_count = len(all_markdown_files) - total_files
+        log(f"✓ Found {total_files} markdown files (excluded {excluded_count} README.md files)", force=True)
 
         if total_files == 0:
             log(f"✗ Error: No markdown files found in {RECIPES_DIR}", force=True)
