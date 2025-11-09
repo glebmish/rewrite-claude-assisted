@@ -8,26 +8,26 @@ prs:
     url: "https://github.com/openrewrite-assist-testing-dataset/analytics-dashboard/pull/1"
     runs: 1
   - name: dockerfile-and-github-actions-java-bump
-    url: "https://github.com/openrewrite-assist-testing-dataset/ecommerce-catalog/pull/1"
+    url: "https://github.com/openrewrite-assist-testing-dataset/ecommerce-catalog/pull/2"
     runs: 1
   - name: java-11-to-17-with-auth-upgrade
     url: "https://github.com/openrewrite-assist-testing-dataset/weather-monitoring-service/pull/3"
     runs: 1
   - name: junit-4-to-5-upgrade
-    url: "https://github.com/openrewrite-assist-testing-dataset/user-management-service/pull/2"
+    url: "https://github.com/openrewrite-assist-testing-dataset/user-management-service/pull/3"
     runs: 1
   - name: dropwizard-3-upgrade
-    url: "https://github.com/openrewrite-assist-testing-dataset/task-management-api/pull/2"
+    url: "https://github.com/openrewrite-assist-testing-dataset/task-management-api/pull/3"
     runs: 1
   - name: h2-to-postgres-migration
-    url: "https://github.com/openrewrite-assist-testing-dataset/simple-blog-platform/pull/2"
+    url: "https://github.com/openrewrite-assist-testing-dataset/simple-blog-platform/pull/3"
     runs: 1
   - name: complicated-java-dropwizard-upgrade
-    url: "https://github.com/openrewrite-assist-testing-dataset/notification-service/pull/2"
+    url: "https://github.com/openrewrite-assist-testing-dataset/notification-service/pull/3"
     runs: 1
   - name: swagger-upgrade
     url: "https://github.com/openrewrite-assist-testing-dataset/inventory-tracking-system/pull/2"
     runs: 1
   - name: onboard-checkstyle-and-deprecate-auth
-    url: "https://github.com/openrewrite-assist-testing-dataset/file-storage-service/pull/2"
+    url: "https://github.com/openrewrite-assist-testing-dataset/file-storage-service/pull/3"
     runs: 1
