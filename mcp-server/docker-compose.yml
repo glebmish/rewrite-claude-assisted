@@ -4,7 +4,7 @@ services:
   postgres:
     # Pre-loaded database image with all OpenRewrite recipes
     # Configure image name/tag in .env
-    image: ${DB_IMAGE_REGISTRY:+${DB_IMAGE_REGISTRY}/}${DB_IMAGE_NAME:-openrewrite-recipes-db}:${DB_IMAGE_TAG:-latest}
+    image: bboygleb/openrewrite-recipes-db:latest
     container_name: openrewrite-mcp-db
     environment:
       POSTGRES_DB: ${DB_NAME:-openrewrite_recipes}
