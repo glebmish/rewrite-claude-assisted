@@ -176,3 +176,206 @@ Percentage of runs that completed successfully (exit_code=0)
 - **Mapping Effectiveness**: Recipe selection appropriateness
 - **Validation Correctness**: Validation metrics match claims
 - **Overall**: Combined session effectiveness score
+
+---
+
+# Data Ingestion Pipeline Workflow
+
+The `data-ingestion.yml` workflow automates the complete OpenRewrite recipe database ingestion pipeline, generating documentation and creating a Docker image pre-loaded with recipe data.
+
+## Workflow Overview
+
+The pipeline:
+1. Clones the official `rewrite-recipe-markdown-generator` repository
+2. Generates comprehensive markdown documentation for all OpenRewrite recipes (~1000+ recipes)
+3. Ingests the documentation into a PostgreSQL database
+4. Commits the database container to a Docker image
+5. Optionally pushes the image to DockerHub under `bboygleb/openrewrite-recipes-db`
+
+## Triggering the Workflow
+
+### Manual Trigger
+
+```bash
+# Via GitHub CLI
+gh workflow run data-ingestion.yml \
+  --field image_tag=latest \
+  --field push_to_registry=true
+
+# Via GitHub UI
+Actions → OpenRewrite Recipe Data Ingestion Pipeline → Run workflow
+```
+
+**Parameters:**
+- `image_tag` (default: `latest`): Tag for the Docker image
+- `push_to_registry` (default: `true`): Whether to push to DockerHub
+
+### Scheduled Trigger
+
+Uncomment the schedule section in the workflow to enable weekly runs:
+
+```yaml
+schedule:
+  - cron: '0 2 * * 1'  # Every Monday at 2 AM UTC
+```
+
+## Required Secrets
+
+### DockerHub Token
+
+To push images to DockerHub, you must configure the `DOCKERHUB_TOKEN` secret:
+
+#### Step 1: Generate DockerHub Access Token
+
+1. Go to [DockerHub Account Settings](https://hub.docker.com/settings/security)
+2. Click **"New Access Token"**
+3. Set description: `GitHub Actions - OpenRewrite Recipe DB`
+4. Set permissions: **Read, Write, Delete**
+5. Click **"Generate"**
+6. **Copy the token** (you won't be able to see it again)
+
+#### Step 2: Add Secret to GitHub Repository
+
+1. Go to your repository on GitHub
+2. Navigate to **Settings** → **Secrets and variables** → **Actions**
+3. Click **"New repository secret"**
+4. Name: `DOCKERHUB_TOKEN`
+5. Value: Paste the token from Step 1
+6. Click **"Add secret"**
+
+#### Verification
+
+After adding the secret, the workflow will be able to push images to DockerHub. You can verify by:
+
+```bash
+# Run the workflow manually
+gh workflow run data-ingestion.yml
+
+# Check the workflow logs
+gh run list --workflow=data-ingestion.yml
+gh run view <run-id> --log
+```
+
+## Workflow Outputs
+
+### Docker Images
+
+When `push_to_registry=true`:
+- `bboygleb/openrewrite-recipes-db:latest` - Always points to most recent build
+- `bboygleb/openrewrite-recipes-db:YYYY-MM-DD` - Date-tagged version for rollback capability
+
+### Artifacts
+
+**`pipeline-logs-{run_number}`** (uploaded on failure):
+- `build/reports/` - Gradle build reports from generator
+- `*.log` - Pipeline execution logs
+
+### GitHub Step Summary
+
+The workflow generates a summary in the Actions UI showing:
+- ✅/❌ Pipeline completion status
+- Created Docker images with tags
+- Usage instructions for pulling and running the image
+
+## Using the Generated Image
+
+### Pull from DockerHub
+
+```bash
+docker pull bboygleb/openrewrite-recipes-db:latest
+```
+
+### Run Standalone
+
+```bash
+docker run -d \
+  --name openrewrite-db \
+  -p 5432:5432 \
+  -e POSTGRES_PASSWORD=changeme \
+  bboygleb/openrewrite-recipes-db:latest
+```
+
+### Use with MCP Server
+
+Update `mcp-server/docker-compose.yml`:
+
+```yaml
+services:
+  postgres:
+    image: bboygleb/openrewrite-recipes-db:latest
+    environment:
+      POSTGRES_DB: openrewrite_recipes
+      POSTGRES_USER: mcp_user
+      POSTGRES_PASSWORD: changeme
+    ports:
+      - "5432:5432"
+```
+
+## Pipeline Execution Time
+
+- **First run**: ~15-20 minutes (downloads ~1GB of recipe JARs)
+- **Subsequent runs**: ~12-15 minutes (uses cached dependencies)
+- **Database size**: ~150-200 MB
+- **Final image size**: ~500 MB (includes PostgreSQL + data)
+
+## Troubleshooting
+
+### Secret Not Found Error
+
+```
+Error: Input required and not supplied: password
+```
+
+**Solution**: Verify `DOCKERHUB_TOKEN` secret is configured correctly:
+```bash
+gh secret list
+# Should show: DOCKERHUB_TOKEN
+```
+
+### Push Permission Denied
+
+```
+Error: denied: requested access to the resource is denied
+```
+
+**Solution**:
+1. Verify token has **Write** permissions
+2. Confirm DockerHub username is `bboygleb` in workflow
+3. Regenerate token if needed
+
+### Pipeline Timeout
+
+If the workflow times out during documentation generation:
+1. Check [workflow logs](https://github.com/glebmish/rewrite-claude-assisted/actions)
+2. Re-run the failed job (uses cached dependencies)
+3. Consider increasing timeout in workflow (default: GitHub's 6 hour limit)
+
+## Maintenance
+
+### Weekly Updates
+
+For production use, enable the scheduled trigger to keep recipe data current:
+
+```yaml
+schedule:
+  - cron: '0 2 * * 1'  # Every Monday at 2 AM UTC
+```
+
+This ensures:
+- Latest recipe versions are included
+- New recipes are automatically discovered
+- Security updates are incorporated
+
+### Version Management
+
+Each run creates a date-tagged image for rollback:
+
+```bash
+# List available versions
+docker pull bboygleb/openrewrite-recipes-db:2025-11-09
+docker pull bboygleb/openrewrite-recipes-db:2025-11-02
+
+# Rollback if needed
+docker tag bboygleb/openrewrite-recipes-db:2025-11-02 \
+           bboygleb/openrewrite-recipes-db:latest
+```
