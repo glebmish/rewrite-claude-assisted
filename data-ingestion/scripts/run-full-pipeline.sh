@@ -65,7 +65,7 @@ STAGES_COMPLETED=()
 echo ""
 log_info "Stage 0/5: Initialize Database"
 echo "────────────────────────────────────────────────────────────"
-if "$SCRIPT_DIR/00-init-database.sh"; then
+if "$SCRIPT_DIR/00-init-database.sh" --reset; then
     STAGES_COMPLETED+=("Stage 0: Initialize Database")
     log_success "Stage 0 completed"
 else
@@ -159,11 +159,11 @@ log_info "Total execution time: ${MINUTES}m ${SECONDS}s"
 echo ""
 log_info "Next steps:"
 echo "  1. Test the image:"
-echo "     docker run -p 5432:5432 ${IMAGE_NAME:-openrewrite-recipes-db}:${IMAGE_TAG:-latest}"
+echo "     docker run -p 5432:5432 ${IMAGE_NAME:-bboygleb/openrewrite-recipes-db}:${IMAGE_TAG:-latest}"
 echo ""
 echo "  2. Use with MCP server:"
 echo "     Update mcp-server/docker-compose.yml to use:"
-echo "     image: ${IMAGE_NAME:-openrewrite-recipes-db}:${IMAGE_TAG:-latest}"
+echo "     image: ${IMAGE_NAME:-bboygleb/openrewrite-recipes-db}:${IMAGE_TAG:-latest}"
 echo ""
 echo "  3. Clean up temporary containers:"
 echo "     docker-compose down"
