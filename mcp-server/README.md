@@ -10,7 +10,7 @@ This is Phase 2 of the implementation, featuring:
 - ✅ PostgreSQL database with pgvector extension
 - ✅ Automated Docker container lifecycle management
 - ✅ Simplified database schema: recipe_name + full markdown documentation
-- ✅ Auto-seeding of initial recipe data
+- ✅ Pre-loaded Docker image with ~1000+ recipes (no initialization needed)
 - ✅ Claude Code integration ready
 
 **Database Design:** Simple single-table schema stores recipe name and full markdown documentation. This design is optimized for RAG-based semantic search (Phase 3) where embeddings will be generated from the full markdown text. Enhanced schema designs with structured metadata are documented in `docs/schema-design-research.md` for future consideration.
@@ -222,11 +222,7 @@ mcp-server/
 ├── scripts/
 │   ├── startup.sh             # Server startup script (manages Docker lifecycle)
 │   ├── setup.sh               # One-time setup (pull/build images, install deps)
-│   ├── rebuild-database.sh    # Rebuild pre-loaded database image
-│   └── seed_db.py             # Database seeding script (for testing)
-├── db-init/
-│   ├── 01-create-extensions.sql  # pgvector extension
-│   └── 02-create-schema.sql      # Database schema (simplified)
+│   └── rebuild-database.sh    # Rebuild pre-loaded database image
 ├── docs/
 │   └── schema-design-research.md # Enhanced schema research & future designs
 ├── docker-compose.yml         # PostgreSQL configuration
@@ -263,6 +259,12 @@ CREATE TABLE recipe_embeddings (
 - Optimized for RAG: embeddings generated from complete markdown
 - Simple to maintain and query
 - Future enhancements documented in `docs/schema-design-research.md`
+
+**Database Initialization:**
+- Schema and data are initialized by the `data-ingestion` pipeline
+- The MCP server uses a pre-built Docker image with all data already loaded
+- No initialization scripts run when the MCP server starts
+- To update recipes, rebuild the image using `./scripts/rebuild-database.sh`
 
 **Future Enhancement Options:**
 See `docs/schema-design-research.md` for:

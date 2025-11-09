@@ -11,8 +11,8 @@ services:
     ports:
       - "${DB_PORT:-5432}:5432"
     volumes:
-      # Mount schema initialization scripts from mcp-server
-      - ../mcp-server/db-init:/docker-entrypoint-initdb.d:ro
+      # Mount schema initialization scripts for database setup
+      - ./db-init:/docker-entrypoint-initdb.d:ro
       # NOTE: No volume mount for /var/lib/postgresql/data
       # Data is stored directly in container filesystem so it's included when we commit to image
     healthcheck:
