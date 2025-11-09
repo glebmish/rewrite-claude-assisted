@@ -61,9 +61,21 @@ START_TIME=$(date +%s)
 # Track which stages completed
 STAGES_COMPLETED=()
 
+# Stage 0: Initialize Database
+echo ""
+log_info "Stage 0/5: Initialize Database"
+echo "────────────────────────────────────────────────────────────"
+if "$SCRIPT_DIR/00-init-database.sh"; then
+    STAGES_COMPLETED+=("Stage 0: Initialize Database")
+    log_success "Stage 0 completed"
+else
+    log_error "Stage 0 failed"
+    exit 1
+fi
+
 # Stage 1: Setup Generator
 echo ""
-log_info "Stage 1/4: Setup Generator Repository"
+log_info "Stage 1/5: Setup Generator Repository"
 echo "────────────────────────────────────────────────────────────"
 if "$SCRIPT_DIR/01-setup-generator.sh"; then
     STAGES_COMPLETED+=("Stage 1: Setup")
@@ -75,7 +87,7 @@ fi
 
 # Stage 2: Generate Documentation
 echo ""
-log_info "Stage 2/4: Generate Recipe Documentation"
+log_info "Stage 2/5: Generate Recipe Documentation"
 echo "────────────────────────────────────────────────────────────"
 log_warning "This stage may take 10-15 minutes on first run"
 if "$SCRIPT_DIR/02-generate-docs.sh"; then
@@ -86,39 +98,9 @@ else
     exit 1
 fi
 
-# Start PostgreSQL before Stage 3
-echo ""
-log_info "Starting PostgreSQL container..."
-echo "────────────────────────────────────────────────────────────"
-cd "$PROJECT_DIR"
-if docker-compose up -d postgres; then
-    log_success "PostgreSQL started"
-
-    # Wait for database to be ready
-    log_info "Waiting for database to be ready..."
-    MAX_RETRIES=30
-    RETRY_COUNT=0
-    while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-        if docker-compose exec -T postgres pg_isready -U "${DB_USER:-mcp_user}" -d "${DB_NAME:-openrewrite_recipes}" >/dev/null 2>&1; then
-            log_success "Database is ready"
-            break
-        fi
-        RETRY_COUNT=$((RETRY_COUNT + 1))
-        if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
-            log_error "Database failed to start after ${MAX_RETRIES} seconds"
-            docker-compose logs postgres
-            exit 1
-        fi
-        sleep 1
-    done
-else
-    log_error "Failed to start PostgreSQL"
-    exit 1
-fi
-
 # Stage 3: Ingest to Database
 echo ""
-log_info "Stage 3/4: Ingest Documentation to Database"
+log_info "Stage 3/5: Ingest Documentation to Database"
 echo "────────────────────────────────────────────────────────────"
 
 # Check if Python venv exists, if not create it
@@ -146,7 +128,7 @@ deactivate
 
 # Stage 4: Create Docker Image
 echo ""
-log_info "Stage 4/4: Create Docker Image"
+log_info "Stage 4/5: Create Docker Image"
 echo "────────────────────────────────────────────────────────────"
 if "$SCRIPT_DIR/04-create-image.sh"; then
     STAGES_COMPLETED+=("Stage 4: Create Image")
