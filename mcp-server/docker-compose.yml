@@ -12,13 +12,10 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
     ports:
       - "${DB_PORT:-5432}:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
+    # NOTE: No volume mount - data is pre-loaded in the Docker image
+    # If we mount a volume here, it would overlay the pre-loaded data with an empty filesystem
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-mcp_user}"]
       interval: 5s
       timeout: 5s
       retries: 5
-
-volumes:
-  pgdata:
