@@ -11,8 +11,9 @@
  * - org.openrewrite:rewrite-kotlin
  * - And all other recipe modules
  *
- * This ensures Environment.builder().scanRuntimeClasspath() finds ALL recipes
- * (thousands), not just the ones in rewrite-core (~20).
+ * We use Environment.builder().scanJar() for each JAR in the runtimeClasspath
+ * (matching the approach used by rewrite-recipe-markdown-generator) to ensure
+ * we find ALL recipes (thousands), not just the ones in rewrite-core (~20).
  *
  * DEPENDENCIES:
  * =============
@@ -45,6 +46,9 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import org.openrewrite.config.Environment
 import java.io.File
+import java.net.URL
+import java.net.URLClassLoader
+import java.nio.file.Path
 
 // Helper data class for JSON serialization
 data class RecipeMetadata(
@@ -78,11 +82,30 @@ tasks.register("extractRecipeMetadata") {
         println()
 
         // Build the environment with all available recipes
-        // This will scan the runtime classpath which includes all the project dependencies
+        // We scan each JAR in the runtime classpath individually using scanJar()
+        // This matches the approach used by rewrite-recipe-markdown-generator
         println("→ Loading OpenRewrite environment...")
-        val env = Environment.builder()
-            .scanRuntimeClasspath()
-            .build()
+
+        // Get all runtime classpath JARs (this includes all recipe dependencies)
+        val runtimeJars = configurations.getByName("runtimeClasspath").files
+            .filter { it.name.endsWith(".jar") }
+            .map { it.toPath() }
+
+        println("  Found ${runtimeJars.size} JAR files in runtimeClasspath")
+
+        // Create a classloader from all the JARs
+        val classloader = URLClassLoader(
+            runtimeJars.map { it.toUri().toURL() }.toTypedArray(),
+            ClassLoader.getSystemClassLoader()
+        )
+
+        // Scan each JAR individually and collect all descriptors
+        // This matches the approach used by rewrite-recipe-markdown-generator
+        val envBuilder = Environment.builder()
+        runtimeJars.forEach { jarPath ->
+            envBuilder.scanJar(jarPath, runtimeJars, classloader)
+        }
+        val env = envBuilder.build()
 
         // Get all recipe descriptors
         val allDescriptors = env.listRecipeDescriptors()
