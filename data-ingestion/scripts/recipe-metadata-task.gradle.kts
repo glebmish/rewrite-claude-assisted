@@ -101,6 +101,11 @@ tasks.register("extractRecipeMetadata") {
         val allJarPaths = allJars.map { it.toPath() }
 
         println("  Found ${allJars.size} total JAR files in runtimeClasspath")
+        println()
+        println("  First 10 JARs in runtimeClasspath:")
+        allJars.take(10).forEach { println("    - ${it.name}") }
+        if (allJars.size > 10) println("    ... and ${allJars.size - 10} more")
+        println()
         println("  Filtering to ${recipeJars.size} recipe JARs to scan")
         recipeJars.take(10).forEach { println("    - ${it.fileName}") }
         if (recipeJars.size > 10) println("    ... and ${recipeJars.size - 10} more")
