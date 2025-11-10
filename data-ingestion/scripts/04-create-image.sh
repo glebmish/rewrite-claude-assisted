@@ -79,7 +79,6 @@ fi
 
 # Copy build context files
 echo "→ Preparing build context..."
-cp -r "$PROJECT_DIR/db-init" "$BUILD_DIR/"
 cp "$PROJECT_DIR/Dockerfile" "$BUILD_DIR/"
 echo "✓ Build context ready"
 
@@ -115,7 +114,7 @@ fi
 # Clean up build artifacts
 echo ""
 echo "→ Cleaning up build artifacts..."
-rm -rf "$BUILD_DIR"
+#rm -rf "$BUILD_DIR"
 echo "✓ Cleanup complete"
 
 echo ""

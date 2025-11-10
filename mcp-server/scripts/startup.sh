@@ -19,7 +19,7 @@ if [ -f .env ]; then
 fi
 
 # Set defaults for database configuration
-DB_IMAGE_NAME="${DB_IMAGE_NAME:-openrewrite-recipes-db}"
+DB_IMAGE_NAME="${DB_IMAGE_NAME:-bboygleb/openrewrite-recipes-db}"
 DB_IMAGE_TAG="${DB_IMAGE_TAG:-latest}"
 DB_IMAGE_REGISTRY="${DB_IMAGE_REGISTRY:-}"
 DB_HOST="${DB_HOST:-localhost}"
