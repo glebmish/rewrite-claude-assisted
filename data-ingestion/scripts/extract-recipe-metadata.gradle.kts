@@ -9,6 +9,16 @@
  *     -PoutputFile=/path/to/output.json
  */
 
+initscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.openrewrite:rewrite-core:8.37.1")
+        classpath("com.fasterxml.jackson.core:jackson-databind:2.18.0")
+    }
+}
+
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import org.openrewrite.config.Environment
