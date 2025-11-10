@@ -126,9 +126,11 @@ tasks.register("extractRecipeMetadata") {
         if (recipeJars.size > 10) println("    ... and ${recipeJars.size - 10} more")
 
         // Create a classloader from all the JARs (for dependencies)
+        // IMPORTANT: Pass null as parent to create an isolated classloader
+        // This prevents classloader conflicts between our URLClassLoader and Gradle's classloader
         val classloader = URLClassLoader(
             allJarPaths.map { it.toUri().toURL() }.toTypedArray(),
-            ClassLoader.getSystemClassLoader()
+            null  // No parent - isolated classloader like markdown generator
         )
 
         // Scan only recipe JARs individually and collect all descriptors
