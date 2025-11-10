@@ -77,9 +77,9 @@ mkdir -p "$WORKFLOWS_DIR"
 # Generate batch workflows
 echo "🔧 Generating batch workflows..."
 
-for batch_num in $(seq 1 "$num_batches"); do
-    start_idx=$(( (batch_num - 1) * BATCH_SIZE ))
-    end_idx=$(( batch_num * BATCH_SIZE ))
+for batch_num in $(seq 0 "$((num_batches - 1))"); do
+    start_idx=$(( batch_num * BATCH_SIZE ))
+    end_idx=$(( (batch_num) + 1 * BATCH_SIZE ))
 
     workflow_file="$WORKFLOWS_DIR/${SUITE_NAME}-batch-${batch_num}.yml"
 
@@ -195,7 +195,7 @@ echo "✅ Suite workflows generated successfully!"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 echo "📋 Generated workflows:"
-for batch_num in $(seq 1 "$num_batches"); do
+for batch_num in $(seq 0 "$((num_batches - 1))"); do
     echo "  • ${SUITE_NAME}-batch-${batch_num}.yml"
 done
 echo "  • ${SUITE_NAME}-aggregate.yml"
@@ -204,7 +204,7 @@ echo "📖 Next steps:"
 echo "  1. Review generated workflows in $WORKFLOWS_DIR/"
 echo "  2. Commit and push to GitHub"
 echo "  3. Run batches manually in GitHub Actions:"
-for batch_num in $(seq 1 "$num_batches"); do
+for batch_num in $(seq 0 "$((num_batches - 1))"); do
     echo "     ${batch_num}. Actions → '${SUITE_NAME} - Batch ${batch_num}' → Run workflow"
     [ $batch_num -lt $num_batches ] && echo "        ⏰ Wait 5 hours"
 done
