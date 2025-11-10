@@ -181,14 +181,15 @@ The script determines the fully qualified recipe name using:
 
 **What it does:**
 - Exports database using `pg_dump` to SQL file (~50-100MB)
-- Creates a Dockerfile with the dump and schema files
-- Builds a new image that loads data on first boot via `/docker-entrypoint-initdb.d/`
+- Copies dump file, schema files, and Dockerfile to build directory
+- Builds Docker image using `docker build`
+- Data is loaded on first container boot via PostgreSQL's `/docker-entrypoint-initdb.d/` mechanism
 - Tags with date and version
 - Optionally pushes to Docker registry
 
 **Why pg_dump instead of docker commit?**
 
-The `pgvector/pgvector:pg16` base image has `VOLUME ["/var/lib/postgresql/data"]` declared in its Dockerfile. This forces Docker to create an anonymous volume even without explicit volume mounts in docker-compose.yml. Since `docker commit` only captures the container's filesystem (not volumes), we use `pg_dump` to export the data and build an image that restores it using PostgreSQL's standard initialization mechanism.
+The `pgvector/pgvector:pg16` base image has `VOLUME ["/var/lib/postgresql/data"]` declared in its Dockerfile. This forces Docker to create an anonymous volume even without explicit volume mounts. Since `docker commit` only captures the container's filesystem (not volumes), we use `pg_dump` to export the data and let PostgreSQL's standard initialization mechanism load it on first boot.
 
 **Output:**
 - Docker image: `openrewrite-recipes-db:YYYY-MM-DD`
