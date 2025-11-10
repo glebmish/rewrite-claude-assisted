@@ -3,6 +3,21 @@ set -euo pipefail
 
 # Script: 02b-generate-structured-data.sh
 # Purpose: Generate structured recipe metadata JSON for embedding generation
+#
+# HOW IT WORKS:
+# =============
+# This script extracts metadata from ALL recipes in the generator project by:
+# 1. Temporarily modifying the generator's build.gradle.kts to apply our task
+# 2. Running the extractRecipeMetadata Gradle task
+# 3. Restoring the original build.gradle.kts
+#
+# KEY INSIGHT:
+# The task MUST be applied to the project (not run as init script) to access
+# the project's full classpath, which includes ALL recipe dependencies:
+#   - rewrite-java, rewrite-spring, rewrite-testing-frameworks, etc.
+#
+# This way, Environment.builder().scanRuntimeClasspath() finds thousands of
+# recipes, not just the ~20 recipes in rewrite-core.
 
 SCRIPT_DIR="$(pwd)/$(dirname "${BASH_SOURCE[0]}")"
 PROJECT_DIR="$SCRIPT_DIR/.."
@@ -52,13 +67,17 @@ if [ ! -f "$TASK_SCRIPT" ]; then
     exit 1
 fi
 
-# Backup the original build.gradle.kts
+# Step 1: Backup the original build.gradle.kts
 echo "→ Preparing project with metadata extraction task..."
 cp build.gradle.kts build.gradle.kts.backup
 
-# Add required dependencies and apply the task script to build.gradle.kts
+# Step 2: Temporarily modify build.gradle.kts to include our task
+# We append to the file rather than using --init-script because:
+# - apply(from = "...") makes the task part of the project
+# - This gives the task access to the project's full dependency classpath
+# - The classpath includes all recipe modules (java, spring, kotlin, etc.)
 {
-    # Add Jackson dependency if not present
+    # Add Jackson dependency if not already present (needed for JSON serialization)
     if ! grep -q "com.fasterxml.jackson.core:jackson-databind" build.gradle.kts; then
         echo ""
         echo "dependencies {"
@@ -66,13 +85,14 @@ cp build.gradle.kts build.gradle.kts.backup
         echo "}"
     fi
 
-    # Apply the task script
+    # Apply our task script to the project
     echo ""
     echo "// Temporarily applied for metadata extraction"
     echo "apply(from = \"$TASK_SCRIPT\")"
 } >> build.gradle.kts
 
-# Function to restore backup on exit
+# Step 3: Set up cleanup to restore original build.gradle.kts on script exit
+# This ensures restoration even if the gradle command fails
 cleanup() {
     if [ -f build.gradle.kts.backup ]; then
         mv build.gradle.kts.backup build.gradle.kts
@@ -80,7 +100,8 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# Run gradle with the task
+# Step 4: Run the extractRecipeMetadata task
+# Now it has access to ALL recipe dependencies via the project's classpath
 if ./gradlew extractRecipeMetadata \
     -PoutputFile="$METADATA_FILE" \
     --no-daemon \
@@ -94,7 +115,8 @@ else
     exit 1
 fi
 
-# Restore original build.gradle.kts (cleanup trap will also do this)
+# Step 5: Restore original build.gradle.kts
+# (The trap will also do this, but we do it explicitly for clarity)
 mv build.gradle.kts.backup build.gradle.kts
 
 # Verify output

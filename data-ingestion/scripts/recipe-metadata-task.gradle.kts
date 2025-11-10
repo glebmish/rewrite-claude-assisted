@@ -1,14 +1,29 @@
 /**
- * Gradle task file to extract structured recipe metadata for embedding generation
+ * Gradle task to extract structured recipe metadata for embedding generation
  *
- * This is NOT an init script - it should be applied to the generator project
- * so it has access to all the project's recipe dependencies.
+ * WHY THIS APPROACH:
+ * ==================
+ * This task is applied directly to the generator project using apply(from = "..."),
+ * giving it access to the project's FULL dependency classpath, including:
+ * - org.openrewrite:rewrite-java
+ * - org.openrewrite:rewrite-spring
+ * - org.openrewrite:rewrite-testing-frameworks
+ * - org.openrewrite:rewrite-kotlin
+ * - And all other recipe modules
  *
- * Usage in the generator project's build.gradle.kts:
- *   apply(from = "path/to/recipe-metadata-task.gradle.kts")
+ * This ensures Environment.builder().scanRuntimeClasspath() finds ALL recipes
+ * (thousands), not just the ones in rewrite-core (~20).
  *
- * Then run:
- *   ./gradlew extractRecipeMetadata -PoutputFile=/path/to/output.json
+ * HOW IT'S USED:
+ * ==============
+ * The 02b-generate-structured-data.sh script:
+ * 1. Backs up the generator's build.gradle.kts
+ * 2. Appends: apply(from = "path/to/this/file.gradle.kts")
+ * 3. Runs: ./gradlew extractRecipeMetadata -PoutputFile=/path/to/output.json
+ * 4. Restores the original build.gradle.kts
+ *
+ * This temporary modification ensures the task sees the same classpath as
+ * the documentation generation task (./gradlew run).
  */
 
 import com.fasterxml.jackson.databind.ObjectMapper
