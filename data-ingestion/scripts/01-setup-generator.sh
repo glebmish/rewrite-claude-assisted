@@ -117,7 +117,57 @@ else
     echo "  Note: rewrite-spring-to-quarkus already modified or not found"
 fi
 
-echo "✓ Build configuration workarounds applied"
+# Apply rewrite-gradle-plugin for proper classloader isolation
+echo ""
+echo "→ Configuring rewrite-gradle-plugin for metadata extraction..."
+
+# Add plugin to plugins block
+if ! grep -q 'id("org.openrewrite.rewrite")' "$BUILD_FILE"; then
+    sed -i '/id("org.owasp.dependencycheck")/a\    id("org.openrewrite.rewrite") version "6.28.2"' "$BUILD_FILE"
+    echo "✓ Added rewrite-gradle-plugin to plugins"
+else
+    echo "  Note: rewrite-gradle-plugin already configured"
+fi
+
+# Configure rewrite configuration to extend recipe configuration
+if ! grep -q 'configurations.getByName("rewrite").extendsFrom' "$BUILD_FILE"; then
+    # Find the line with closing brace after recipe dependencies and add configuration
+    sed -i '/^}$/,/^java {$/{
+        /^}$/{
+            a\
+\
+// Configure rewrite plugin to use all recipe dependencies\
+afterEvaluate {\
+    configurations.getByName("rewrite").extendsFrom(configurations.getByName("recipe"))\
+}
+        }
+    }' "$BUILD_FILE"
+    echo "✓ Configured rewrite to use recipe dependencies"
+else
+    echo "  Note: rewrite configuration already set up"
+fi
+
+# Apply custom metadata extraction task
+TASK_SCRIPT="$SCRIPT_DIR/extract-recipe-metadata.gradle.kts"
+if [ ! -f "$TASK_SCRIPT" ]; then
+    echo "✗ Error: Metadata extraction task not found: $TASK_SCRIPT"
+    exit 1
+fi
+
+if ! grep -q 'extract-recipe-metadata.gradle.kts' "$BUILD_FILE"; then
+    # Add apply statement after the rewrite configuration
+    sed -i '/afterEvaluate {$/,/^}$/{
+        /^}$/a\
+\
+// Apply custom metadata extraction task\
+apply(from = "../../../scripts/extract-recipe-metadata.gradle.kts")
+    }' "$BUILD_FILE"
+    echo "✓ Applied custom metadata extraction task"
+else
+    echo "  Note: metadata extraction task already applied"
+fi
+
+echo "✓ Build configuration workarounds and plugin setup complete"
 
 echo ""
 echo "========================================="

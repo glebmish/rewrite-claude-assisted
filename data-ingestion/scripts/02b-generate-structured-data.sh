@@ -2,22 +2,20 @@
 set -euo pipefail
 
 # Script: 02b-generate-structured-data.sh
-# Purpose: Generate structured recipe metadata JSON for embedding generation
+# Purpose: Generate structured recipe metadata JSON for embedding generation using rewrite-gradle-plugin
 #
 # HOW IT WORKS:
 # =============
-# 1. Adds buildscript dependencies (Jackson, OpenRewrite) to build.gradle.kts
-# 2. Applies the task script using apply(from="...")
-# 3. Runs the extractRecipeMetadata Gradle task
-# 4. Restores original build.gradle.kts using git checkout
+# 1. Uses rewrite-gradle-plugin for proper classloader isolation
+# 2. Plugin is configured to use all dependencies from 'recipe' configuration
+# 3. Custom task extracts detailed metadata (name, description, options, etc.)
+# 4. Discovers ALL ~4939 recipes without classloader conflicts
 #
 # KEY INSIGHTS:
-# - Buildscript dependencies make Jackson/OpenRewrite available for script compilation
-# - The task MUST be applied to the project (not run as init script) to access
-#   the project's full classpath, which includes ALL recipe dependencies:
-#   - rewrite-java, rewrite-spring, rewrite-testing-frameworks, etc.
-# - This way, Environment.builder().scanRuntimeClasspath() finds thousands of
-#   recipes, not just the ~20 recipes in rewrite-core.
+# - rewrite-gradle-plugin uses reflection-based classloader isolation
+# - All Recipe classes loaded in isolated RewriteClassLoader
+# - No conflicts between plugin and project dependencies
+# - Guaranteed to find all recipes in the classpath
 
 SCRIPT_DIR="$(pwd)/$(dirname "${BASH_SOURCE[0]}")"
 PROJECT_DIR="$SCRIPT_DIR/.."
@@ -52,67 +50,47 @@ cd "$GENERATOR_DIR"
 # Export JAVA_HOME for gradle
 export JAVA_HOME
 
-echo "→ Extracting recipe metadata..."
+echo "→ Extracting recipe metadata using rewrite-gradle-plugin..."
+echo "  Plugin: org.openrewrite.rewrite v6.28.2"
+echo "  Configuration: recipe (all OpenRewrite modules)"
 echo "  Output file: $METADATA_FILE"
 echo ""
 
 # Ensure output directory exists
 mkdir -p "$OUTPUT_DIR"
 
-# Path to the task script
-TASK_SCRIPT="$SCRIPT_DIR/recipe-metadata-task.gradle.kts"
-
-if [ ! -f "$TASK_SCRIPT" ]; then
-    echo "✗ Error: Task script not found: $TASK_SCRIPT"
-    exit 1
-fi
-
-# Step 1: Temporarily modify build.gradle.kts to apply the task
-echo "→ Preparing project with metadata extraction task..."
-# The task script (recipe-metadata-task.gradle.kts) is self-contained with its own
-# buildscript block, so we just need to apply it to the project.
-
-# COMMENTED OUT FOR MANUAL TESTING - User will add this manually:
-# {
-#     echo ""
-#     echo "// Temporarily added for metadata extraction"
-#     echo "apply(from = \"$TASK_SCRIPT\")"
-# } >> build.gradle.kts
-
-echo "  → NOTE: Assuming build.gradle.kts already has the task applied"
-echo "  → Manual addition required: apply(from = \"$TASK_SCRIPT\")"
-
-# Step 2: Set up cleanup to restore original build.gradle.kts on script exit
-# Uses git to restore - simpler and more reliable than manual backup
-
-# COMMENTED OUT FOR MANUAL TESTING - User will restore manually:
-# cleanup() {
-#     git checkout -- build.gradle.kts 2>/dev/null || true
-# }
-# trap cleanup EXIT
-
-# Step 3: Run the extractRecipeMetadata task
-# Now it has access to ALL recipe dependencies via the project's classpath
+# Run the extractRecipeMetadata task
+# This task uses the rewrite-gradle-plugin's infrastructure for proper classloading
+echo "→ Running extractRecipeMetadata task..."
 if ./gradlew extractRecipeMetadata \
-    -PoutputFile="$METADATA_FILE" \
     --no-daemon \
     --console=plain; then
     echo ""
-    echo "✓ Structured data generation completed successfully"
+    echo "✓ Recipe metadata extraction completed successfully"
 else
     echo ""
-    echo "✗ Error: Structured data generation failed"
+    echo "✗ Error: Recipe metadata extraction failed"
     echo "  Check the output above for errors"
     exit 1
 fi
 
-# Step 4: Restore original build.gradle.kts using git
-# (The trap will also do this, but we do it explicitly for clarity)
+# Copy output from build directory to expected location
+PLUGIN_OUTPUT="build/recipe-metadata.json"
+if [ ! -f "$PLUGIN_OUTPUT" ]; then
+    echo "✗ Error: Plugin output file not found: $PLUGIN_OUTPUT"
+    exit 1
+fi
 
-# COMMENTED OUT FOR MANUAL TESTING - User will restore manually:
-# git checkout -- build.gradle.kts
-echo ""
-echo "  → NOTE: Remember to manually remove the apply() line from build.gradle.kts when done"
+# If output dir is different from build/, copy the file
+if [ "$OUTPUT_DIR" != "build/docs" ]; then
+    echo "→ Copying output to: $METADATA_FILE"
+    cp "$PLUGIN_OUTPUT" "$METADATA_FILE"
+else
+    # Just ensure it's in the right place
+    if [ "$PLUGIN_OUTPUT" != "$METADATA_FILE" ]; then
+        cp "$PLUGIN_OUTPUT" "$METADATA_FILE"
+    fi
+fi
 
 # Verify output
 if [ ! -f "$METADATA_FILE" ]; then
@@ -135,5 +113,7 @@ echo "========================================="
 echo "Metadata file: $METADATA_FILE"
 echo "Recipe count: $RECIPE_COUNT"
 echo "File size: $(du -sh "$METADATA_FILE" | cut -f1)"
+echo ""
+echo "This should be ~4939 recipes (all available recipes)"
 echo ""
 echo "Next step: Run 03-ingest-docs.py"
