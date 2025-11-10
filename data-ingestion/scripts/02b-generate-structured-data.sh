@@ -67,39 +67,29 @@ if [ ! -f "$TASK_SCRIPT" ]; then
     exit 1
 fi
 
-# Step 1: Temporarily modify build.gradle.kts to add buildscript dependencies and task
+# Step 1: Temporarily modify build.gradle.kts to apply the task
 echo "→ Preparing project with metadata extraction task..."
-# We need to:
-# 1. Add buildscript dependencies (Jackson, OpenRewrite) for script compilation
-# 2. Apply the task script which uses those dependencies
-# This gives the task access to the project's full dependency classpath
-#
-# IMPORTANT: buildscript block MUST be at the TOP of the file for dependencies to be
-# available during script compilation. We prepend it to the original content.
-ORIGINAL_BUILD_FILE=$(cat build.gradle.kts)
-{
-    echo "// Temporarily added for metadata extraction"
-    echo "buildscript {"
-    echo "    repositories {"
-    echo "        mavenCentral()"
-    echo "    }"
-    echo "    dependencies {"
-    echo "        classpath(\"org.openrewrite:rewrite-core:8.37.1\")"
-    echo "        classpath(\"com.fasterxml.jackson.core:jackson-databind:2.18.0\")"
-    echo "    }"
-    echo "}"
-    echo ""
-    echo "$ORIGINAL_BUILD_FILE"
-    echo ""
-    echo "apply(from = \"$TASK_SCRIPT\")"
-} > build.gradle.kts
+# The task script (recipe-metadata-task.gradle.kts) is self-contained with its own
+# buildscript block, so we just need to apply it to the project.
+
+# COMMENTED OUT FOR MANUAL TESTING - User will add this manually:
+# {
+#     echo ""
+#     echo "// Temporarily added for metadata extraction"
+#     echo "apply(from = \"$TASK_SCRIPT\")"
+# } >> build.gradle.kts
+
+echo "  → NOTE: Assuming build.gradle.kts already has the task applied"
+echo "  → Manual addition required: apply(from = \"$TASK_SCRIPT\")"
 
 # Step 2: Set up cleanup to restore original build.gradle.kts on script exit
 # Uses git to restore - simpler and more reliable than manual backup
-cleanup() {
-    git checkout -- build.gradle.kts 2>/dev/null || true
-}
-trap cleanup EXIT
+
+# COMMENTED OUT FOR MANUAL TESTING - User will restore manually:
+# cleanup() {
+#     git checkout -- build.gradle.kts 2>/dev/null || true
+# }
+# trap cleanup EXIT
 
 # Step 3: Run the extractRecipeMetadata task
 # Now it has access to ALL recipe dependencies via the project's classpath
@@ -118,7 +108,11 @@ fi
 
 # Step 4: Restore original build.gradle.kts using git
 # (The trap will also do this, but we do it explicitly for clarity)
-git checkout -- build.gradle.kts
+
+# COMMENTED OUT FOR MANUAL TESTING - User will restore manually:
+# git checkout -- build.gradle.kts
+echo ""
+echo "  → NOTE: Remember to manually remove the apply() line from build.gradle.kts when done"
 
 # Verify output
 if [ ! -f "$METADATA_FILE" ]; then

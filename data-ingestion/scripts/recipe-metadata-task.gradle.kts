@@ -16,20 +16,30 @@
  *
  * DEPENDENCIES:
  * =============
- * This script requires Jackson and OpenRewrite to be available in the buildscript
- * classpath. The calling bash script adds these before applying this task.
+ * This script defines its own buildscript dependencies for Jackson and OpenRewrite.
+ * Scripts applied with apply(from = "...") need their own buildscript block to use
+ * external dependencies during compilation.
  *
  * HOW IT'S USED:
  * ==============
  * The 02b-generate-structured-data.sh script:
- * 1. Adds buildscript dependencies (Jackson, OpenRewrite)
- * 2. Appends: apply(from = "path/to/this/file.gradle.kts") to build.gradle.kts
- * 3. Runs: ./gradlew extractRecipeMetadata -PoutputFile=/path/to/output.json
- * 4. Restores original build.gradle.kts using: git checkout -- build.gradle.kts
+ * 1. Appends: apply(from = "path/to/this/file.gradle.kts") to build.gradle.kts
+ * 2. Runs: ./gradlew extractRecipeMetadata -PoutputFile=/path/to/output.json
+ * 3. Restores original build.gradle.kts using: git checkout -- build.gradle.kts
  *
  * This temporary modification ensures the task sees the same classpath as
  * the documentation generation task (./gradlew run).
  */
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.openrewrite:rewrite-core:8.37.1")
+        classpath("com.fasterxml.jackson.core:jackson-databind:2.18.0")
+    }
+}
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
