@@ -130,31 +130,9 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
             except ValueError as e:
                 return [TextContent(type="text", text=f"Error: {str(e)}")]
 
-            # Format recipe documentation
-            output = f"# {recipe['name']}\n\n"
-            output += f"**Recipe ID:** `{recipe['recipe_id']}`\n\n"
-            output += f"**Description:** {recipe['description']}\n\n"
-
-            if recipe['full_documentation']:
-                output += f"{recipe['full_documentation']}\n\n"
-
-            output += f"## Usage\n\n{recipe['usage_instructions']}\n\n"
-
-            if recipe['examples']:
-                output += "## Examples\n\n"
-                for example in recipe['examples']:
-                    output += f"### {example['title']}\n\n"
-                    output += f"**Before:**\n```java\n{example['before']}\n```\n\n"
-                    output += f"**After:**\n```java\n{example['after']}\n```\n\n"
-
-            if recipe['options']:
-                output += "## Configuration Options\n\n"
-                for option in recipe['options']:
-                    output += f"- **{option['name']}** ({option['type']}): {option['description']}\n"
-                    output += f"  Default: `{option['default']}`\n"
-
-            output += f"\n**Tags:** {', '.join(recipe['tags'])}\n"
-            output += f"\n**Documentation:** {recipe['source_url']}\n"
+            # Return the markdown documentation directly
+            output = f"**Recipe ID:** `{recipe['recipe_id']}`\n\n"
+            output += recipe['markdown_documentation']
 
             return [TextContent(type="text", text=output)]
 

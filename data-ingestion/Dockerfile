@@ -1,10 +1,5 @@
 FROM pgvector/pgvector:pg16
 
-# Copy schema initialization scripts (run in alphabetical order)
-COPY db-init/01-create-extensions.sql /docker-entrypoint-initdb.d/01-create-extensions.sql
-COPY db-init/02-create-schema.sql /docker-entrypoint-initdb.d/02-create-schema.sql
-
-# Copy database dump (loaded after schema)
 COPY recipes-dump.sql /docker-entrypoint-initdb.d/03-load-data.sql
 
 # Set default environment variables
