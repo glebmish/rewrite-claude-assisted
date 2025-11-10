@@ -4,7 +4,7 @@ set -euo pipefail
 # Script: 02b-generate-structured-data.sh
 # Purpose: Generate structured recipe metadata JSON for embedding generation
 
-SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
+SCRIPT_DIR="$(pwd)/$(dirname "${BASH_SOURCE[0]}")"
 PROJECT_DIR="$SCRIPT_DIR/.."
 
 # Load environment variables
