@@ -101,20 +101,27 @@ tasks.register("extractRecipeMetadata") {
             "runtimeClasspath"
         }
 
-        // Get all JARs from the selected configuration
-        val allJars = configurations.getByName(configName).files
+        // Get FIRST-LEVEL dependencies only (matching markdown generator approach)
+        // They use: recipeConf.resolvedConfiguration.firstLevelModuleDependencies
+        // This gets only direct dependencies, not transitive ones
+        val config = configurations.getByName(configName)
+        val firstLevelJars = config.resolvedConfiguration.firstLevelModuleDependencies
+            .flatMap { dep -> dep.moduleArtifacts }
+            .map { it.file }
             .filter { it.name.endsWith(".jar") }
 
-        // Use ALL JARs, not just filtered ones (matching markdown generator)
+        // Also get ALL jars for the classloader (dependencies)
+        val allJars = config.files.filter { it.name.endsWith(".jar") }
         val allJarPaths = allJars.map { it.toPath() }
 
-        println("  Found ${allJars.size} total JAR files in configuration '$configName'")
+        println("  Total JAR files in configuration: ${allJars.size}")
+        println("  First-level recipe JARs to scan: ${firstLevelJars.size}")
         println()
-        println("  First 10 JARs:")
-        allJars.take(10).forEach { println("    - ${it.name}") }
-        if (allJars.size > 10) println("    ... and ${allJars.size - 10} more")
+        println("  First 10 first-level JARs:")
+        firstLevelJars.take(10).forEach { println("    - ${it.name}") }
+        if (firstLevelJars.size > 10) println("    ... and ${firstLevelJars.size - 10} more")
 
-        // Create a classloader from all the JARs (for dependencies)
+        // Create a classloader from ALL JARs (for dependencies)
         // IMPORTANT: Pass null as parent to create an isolated classloader
         // This prevents classloader conflicts between our URLClassLoader and Gradle's classloader
         val classloader = URLClassLoader(
@@ -122,19 +129,17 @@ tasks.register("extractRecipeMetadata") {
             null  // No parent - isolated classloader like markdown generator
         )
 
-        // Scan each JAR individually (matching markdown generator approach)
-        // Use thread context classloader trick to avoid classloader conflicts
+        // Use scanRuntimeClasspath() with thread context classloader
+        // (scanJar() causes classloader conflicts even with thread context classloader trick)
         println()
-        println("→ Scanning ${allJarPaths.size} JARs individually...")
+        println("→ Scanning runtime classpath with thread context classloader...")
 
         val originalClassLoader = Thread.currentThread().contextClassLoader
         val env = try {
             Thread.currentThread().contextClassLoader = classloader
-            val envBuilder = Environment.builder()
-            allJarPaths.forEach { jarPath ->
-                envBuilder.scanJar(jarPath, allJarPaths, classloader)
-            }
-            envBuilder.build()
+            Environment.builder()
+                .scanRuntimeClasspath()
+                .build()
         } finally {
             Thread.currentThread().contextClassLoader = originalClassLoader
         }
