@@ -14,17 +14,18 @@
  * This ensures Environment.builder().scanRuntimeClasspath() finds ALL recipes
  * (thousands), not just the ones in rewrite-core (~20).
  *
- * SELF-CONTAINED:
- * ===============
- * This script includes its own Jackson dependency, making it fully self-contained.
- * No manual dependency management needed in the calling script.
+ * DEPENDENCIES:
+ * =============
+ * This script requires Jackson and OpenRewrite to be available in the buildscript
+ * classpath. The calling bash script adds these before applying this task.
  *
  * HOW IT'S USED:
  * ==============
  * The 02b-generate-structured-data.sh script:
- * 1. Appends: apply(from = "path/to/this/file.gradle.kts") to build.gradle.kts
- * 2. Runs: ./gradlew extractRecipeMetadata -PoutputFile=/path/to/output.json
- * 3. Restores original build.gradle.kts using: git checkout -- build.gradle.kts
+ * 1. Adds buildscript dependencies (Jackson, OpenRewrite)
+ * 2. Appends: apply(from = "path/to/this/file.gradle.kts") to build.gradle.kts
+ * 3. Runs: ./gradlew extractRecipeMetadata -PoutputFile=/path/to/output.json
+ * 4. Restores original build.gradle.kts using: git checkout -- build.gradle.kts
  *
  * This temporary modification ensures the task sees the same classpath as
  * the documentation generation task (./gradlew run).
@@ -34,17 +35,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import org.openrewrite.config.Environment
 import java.io.File
-
-// Add Jackson dependency if not already present
-// This makes the task self-contained
-dependencies {
-    // Check if already added to avoid duplicates
-    if (!configurations.getByName("implementation").dependencies.any {
-        it.group == "com.fasterxml.jackson.core" && it.name == "jackson-databind"
-    }) {
-        implementation("com.fasterxml.jackson.core:jackson-databind:2.18.0")
-    }
-}
 
 // Helper data class for JSON serialization
 data class RecipeMetadata(

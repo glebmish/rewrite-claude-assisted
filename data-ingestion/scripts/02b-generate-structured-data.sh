@@ -6,19 +6,18 @@ set -euo pipefail
 #
 # HOW IT WORKS:
 # =============
-# 1. Temporarily appends apply(from="...") to build.gradle.kts
-# 2. Runs the extractRecipeMetadata Gradle task
-# 3. Restores original build.gradle.kts using git checkout
+# 1. Adds buildscript dependencies (Jackson, OpenRewrite) to build.gradle.kts
+# 2. Applies the task script using apply(from="...")
+# 3. Runs the extractRecipeMetadata Gradle task
+# 4. Restores original build.gradle.kts using git checkout
 #
-# KEY INSIGHT:
-# The task MUST be applied to the project (not run as init script) to access
-# the project's full classpath, which includes ALL recipe dependencies:
+# KEY INSIGHTS:
+# - Buildscript dependencies make Jackson/OpenRewrite available for script compilation
+# - The task MUST be applied to the project (not run as init script) to access
+#   the project's full classpath, which includes ALL recipe dependencies:
 #   - rewrite-java, rewrite-spring, rewrite-testing-frameworks, etc.
-#
-# This way, Environment.builder().scanRuntimeClasspath() finds thousands of
-# recipes, not just the ~20 recipes in rewrite-core.
-#
-# The task script is self-contained and includes its own Jackson dependency.
+# - This way, Environment.builder().scanRuntimeClasspath() finds thousands of
+#   recipes, not just the ~20 recipes in rewrite-core.
 
 SCRIPT_DIR="$(pwd)/$(dirname "${BASH_SOURCE[0]}")"
 PROJECT_DIR="$SCRIPT_DIR/.."
@@ -68,15 +67,25 @@ if [ ! -f "$TASK_SCRIPT" ]; then
     exit 1
 fi
 
-# Step 1: Temporarily modify build.gradle.kts to include our task
+# Step 1: Temporarily modify build.gradle.kts to add buildscript dependencies and task
 echo "→ Preparing project with metadata extraction task..."
-# We append to the file rather than using --init-script because:
-# - apply(from = "...") makes the task part of the project
-# - This gives the task access to the project's full dependency classpath
-# - The classpath includes all recipe modules (java, spring, kotlin, etc.)
+# We need to:
+# 1. Add buildscript dependencies (Jackson, OpenRewrite) for script compilation
+# 2. Apply the task script which uses those dependencies
+# This gives the task access to the project's full dependency classpath
 {
     echo ""
-    echo "// Temporarily applied for metadata extraction"
+    echo "// Temporarily added for metadata extraction"
+    echo "buildscript {"
+    echo "    repositories {"
+    echo "        mavenCentral()"
+    echo "    }"
+    echo "    dependencies {"
+    echo "        classpath(\"org.openrewrite:rewrite-core:8.37.1\")"
+    echo "        classpath(\"com.fasterxml.jackson.core:jackson-databind:2.18.0\")"
+    echo "    }"
+    echo "}"
+    echo ""
     echo "apply(from = \"$TASK_SCRIPT\")"
 } >> build.gradle.kts
 
@@ -89,7 +98,6 @@ trap cleanup EXIT
 
 # Step 3: Run the extractRecipeMetadata task
 # Now it has access to ALL recipe dependencies via the project's classpath
-# The Jackson dependency is added by the task script itself
 if ./gradlew extractRecipeMetadata \
     -PoutputFile="$METADATA_FILE" \
     --no-daemon \
