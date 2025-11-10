@@ -78,7 +78,7 @@ async def get_recipe_details(recipe_name: str) -> Optional[Dict]:
         recipe_name: Unique recipe name (fully qualified)
 
     Returns:
-        Dictionary with recipe name and full markdown documentation, or None if not found
+        Dictionary with recipe_id and markdown_documentation, or None if not found
     """
     async with get_connection() as conn:
         recipe = await conn.fetchrow("""
@@ -92,7 +92,6 @@ async def get_recipe_details(recipe_name: str) -> Optional[Dict]:
 
         return {
             'recipe_id': recipe['recipe_name'],
-            'name': extract_title_from_markdown(recipe['markdown_doc']),
             'markdown_documentation': recipe['markdown_doc']
         }
 
