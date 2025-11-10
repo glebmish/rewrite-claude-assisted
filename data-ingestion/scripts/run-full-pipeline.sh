@@ -63,7 +63,7 @@ STAGES_COMPLETED=()
 
 # Stage 0: Initialize Database
 echo ""
-log_info "Stage 0/5: Initialize Database"
+log_info "Stage 0/7: Initialize Database"
 echo "────────────────────────────────────────────────────────────"
 if "$SCRIPT_DIR/00-init-database.sh" --reset; then
     STAGES_COMPLETED+=("Stage 0: Initialize Database")
@@ -75,7 +75,7 @@ fi
 
 # Stage 1: Setup Generator
 echo ""
-log_info "Stage 1/5: Setup Generator Repository"
+log_info "Stage 1/7: Setup Generator Repository"
 echo "────────────────────────────────────────────────────────────"
 if "$SCRIPT_DIR/01-setup-generator.sh"; then
     STAGES_COMPLETED+=("Stage 1: Setup")
@@ -87,7 +87,7 @@ fi
 
 # Stage 2: Generate Documentation
 echo ""
-log_info "Stage 2/5: Generate Recipe Documentation"
+log_info "Stage 2/7: Generate Recipe Documentation"
 echo "────────────────────────────────────────────────────────────"
 log_warning "This stage may take 10-15 minutes on first run"
 if "$SCRIPT_DIR/02-generate-docs.sh"; then
@@ -98,9 +98,21 @@ else
     exit 1
 fi
 
+# Stage 2b: Generate Structured Metadata (Phase 3)
+echo ""
+log_info "Stage 2b/7: Generate Structured Recipe Metadata"
+echo "────────────────────────────────────────────────────────────"
+if "$SCRIPT_DIR/02b-generate-structured-data.sh"; then
+    STAGES_COMPLETED+=("Stage 2b: Generate Metadata")
+    log_success "Stage 2b completed"
+else
+    log_error "Stage 2b failed"
+    exit 1
+fi
+
 # Stage 3: Ingest to Database
 echo ""
-log_info "Stage 3/5: Ingest Documentation to Database"
+log_info "Stage 3/7: Ingest Documentation to Database"
 echo "────────────────────────────────────────────────────────────"
 
 # Check if Python venv exists, if not create it
@@ -124,11 +136,26 @@ else
     exit 1
 fi
 
+# Stage 3b: Generate Embeddings (Phase 3)
+echo ""
+log_info "Stage 3b/7: Generate Recipe Embeddings"
+echo "────────────────────────────────────────────────────────────"
+log_warning "First run will download embedding model (~90MB)"
+
+if python3 "$SCRIPT_DIR/03b-generate-embeddings.py"; then
+    STAGES_COMPLETED+=("Stage 3b: Generate Embeddings")
+    log_success "Stage 3b completed"
+else
+    log_error "Stage 3b failed"
+    deactivate
+    exit 1
+fi
+
 deactivate
 
 # Stage 4: Create Docker Image
 echo ""
-log_info "Stage 4/5: Create Docker Image"
+log_info "Stage 4/7: Create Docker Image"
 echo "────────────────────────────────────────────────────────────"
 if "$SCRIPT_DIR/04-create-image.sh"; then
     STAGES_COMPLETED+=("Stage 4: Create Image")
