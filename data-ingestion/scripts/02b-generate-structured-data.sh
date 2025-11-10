@@ -44,16 +44,44 @@ echo ""
 # Ensure output directory exists
 mkdir -p "$OUTPUT_DIR"
 
-# Path to the init script
-INIT_SCRIPT="$SCRIPT_DIR/extract-recipe-metadata.gradle.kts"
+# Path to the task script
+TASK_SCRIPT="$SCRIPT_DIR/recipe-metadata-task.gradle.kts"
 
-if [ ! -f "$INIT_SCRIPT" ]; then
-    echo "✗ Error: Init script not found: $INIT_SCRIPT"
+if [ ! -f "$TASK_SCRIPT" ]; then
+    echo "✗ Error: Task script not found: $TASK_SCRIPT"
     exit 1
 fi
 
-# Run gradle with the init script
-if ./gradlew --init-script "$INIT_SCRIPT" extractRecipeMetadata \
+# Backup the original build.gradle.kts
+echo "→ Preparing project with metadata extraction task..."
+cp build.gradle.kts build.gradle.kts.backup
+
+# Add required dependencies and apply the task script to build.gradle.kts
+{
+    # Add Jackson dependency if not present
+    if ! grep -q "com.fasterxml.jackson.core:jackson-databind" build.gradle.kts; then
+        echo ""
+        echo "dependencies {"
+        echo "    implementation(\"com.fasterxml.jackson.core:jackson-databind:2.18.0\")"
+        echo "}"
+    fi
+
+    # Apply the task script
+    echo ""
+    echo "// Temporarily applied for metadata extraction"
+    echo "apply(from = \"$TASK_SCRIPT\")"
+} >> build.gradle.kts
+
+# Function to restore backup on exit
+cleanup() {
+    if [ -f build.gradle.kts.backup ]; then
+        mv build.gradle.kts.backup build.gradle.kts
+    fi
+}
+trap cleanup EXIT
+
+# Run gradle with the task
+if ./gradlew extractRecipeMetadata \
     -PoutputFile="$METADATA_FILE" \
     --no-daemon \
     --console=plain; then
@@ -65,6 +93,9 @@ else
     echo "  Check the output above for errors"
     exit 1
 fi
+
+# Restore original build.gradle.kts (cleanup trap will also do this)
+mv build.gradle.kts.backup build.gradle.kts
 
 # Verify output
 if [ ! -f "$METADATA_FILE" ]; then
