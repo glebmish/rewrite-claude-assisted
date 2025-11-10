@@ -105,25 +105,14 @@ tasks.register("extractRecipeMetadata") {
         val allJars = configurations.getByName(configName).files
             .filter { it.name.endsWith(".jar") }
 
-        // Filter to only OpenRewrite recipe JARs (those that likely contain recipes)
-        // Look for JARs with "rewrite" in the name
-        val recipeJars = allJars.filter { jar ->
-            jar.name.contains("rewrite", ignoreCase = true) ||
-            jar.name.contains("moderne", ignoreCase = true)
-        }.map { it.toPath() }
-
-        // Keep all JARs for the classpath (needed for dependencies)
+        // Use ALL JARs, not just filtered ones (matching markdown generator)
         val allJarPaths = allJars.map { it.toPath() }
 
-        println("  Found ${allJars.size} total JAR files in runtimeClasspath")
+        println("  Found ${allJars.size} total JAR files in configuration '$configName'")
         println()
-        println("  First 10 JARs in runtimeClasspath:")
+        println("  First 10 JARs:")
         allJars.take(10).forEach { println("    - ${it.name}") }
         if (allJars.size > 10) println("    ... and ${allJars.size - 10} more")
-        println()
-        println("  Filtering to ${recipeJars.size} recipe JARs to scan")
-        recipeJars.take(10).forEach { println("    - ${it.fileName}") }
-        if (recipeJars.size > 10) println("    ... and ${recipeJars.size - 10} more")
 
         // Create a classloader from all the JARs (for dependencies)
         // IMPORTANT: Pass null as parent to create an isolated classloader
@@ -133,17 +122,19 @@ tasks.register("extractRecipeMetadata") {
             null  // No parent - isolated classloader like markdown generator
         )
 
-        // Use scanRuntimeClasspath() instead of scanJar() to avoid classloader conflicts
-        // Set the thread context classloader so scanRuntimeClasspath() sees our recipe JARs
+        // Scan each JAR individually (matching markdown generator approach)
+        // Use thread context classloader trick to avoid classloader conflicts
         println()
-        println("→ Scanning runtime classpath with isolated classloader...")
+        println("→ Scanning ${allJarPaths.size} JARs individually...")
 
         val originalClassLoader = Thread.currentThread().contextClassLoader
         val env = try {
             Thread.currentThread().contextClassLoader = classloader
-            Environment.builder()
-                .scanRuntimeClasspath()
-                .build()
+            val envBuilder = Environment.builder()
+            allJarPaths.forEach { jarPath ->
+                envBuilder.scanJar(jarPath, allJarPaths, classloader)
+            }
+            envBuilder.build()
         } finally {
             Thread.currentThread().contextClassLoader = originalClassLoader
         }
