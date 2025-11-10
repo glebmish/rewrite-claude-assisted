@@ -1,6 +1,9 @@
 # Workspace directory - created by pipeline, contains cloned repos
 workspace/
 
+# Build directory - temporary files for image creation
+build/
+
 # Python virtual environment (if created)
 venv/
 
