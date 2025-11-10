@@ -53,7 +53,6 @@ tasks.register("extractRecipeMetadata") {
                     "description" to option.description,
                     "example" to option.example,
                     "valid" to option.valid,
-                    "required" to option.required,
                     "value" to option.value
                 )
             }
@@ -66,7 +65,6 @@ tasks.register("extractRecipeMetadata") {
                 "description" to descriptor.description,
                 "tags" to descriptor.tags,
                 "estimatedEffortPerOccurrence" to descriptor.estimatedEffortPerOccurrence?.toString(),
-                "causesAnotherCycle" to descriptor.causesAnotherCycle,
                 "options" to options,
                 "recipeList" to recipeList
             )
