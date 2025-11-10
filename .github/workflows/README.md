@@ -176,3 +176,44 @@ Percentage of runs that completed successfully (exit_code=0)
 - **Mapping Effectiveness**: Recipe selection appropriateness
 - **Validation Correctness**: Validation metrics match claims
 - **Overall**: Combined session effectiveness score
+
+---
+
+# Data Ingestion Pipeline Workflow
+
+The `data-ingestion.yml` workflow automates the OpenRewrite recipe database ingestion pipeline in GitHub Actions. For detailed information about the pipeline stages and local execution, see [data-ingestion/README.md](../../data-ingestion/README.md).
+
+## Quick Start
+
+**Trigger manually:**
+```bash
+gh workflow run data-ingestion.yml
+```
+
+**Trigger on schedule:** Uncomment the `schedule` section in the workflow.
+
+## Required Secret: DOCKERHUB_TOKEN
+
+To push images to DockerHub:
+
+1. Generate token at [DockerHub Security Settings](https://hub.docker.com/settings/security)
+   - Permissions: **Read, Write, Delete**
+2. Add to repository: **Settings** → **Secrets and variables** → **Actions**
+   - Name: `DOCKERHUB_TOKEN`
+   - Value: Your token
+
+## Workflow Behavior
+
+- **Checks out:** `mcp` branch
+- **Runs:** Complete 5-stage ingestion pipeline
+- **Produces:** `bboygleb/openrewrite-recipes-db:latest` and date-tagged images
+- **Uploads:** Pipeline logs as artifacts on failure
+
+## Image Usage
+
+```bash
+docker pull bboygleb/openrewrite-recipes-db:latest
+docker run -d -p 5432:5432 bboygleb/openrewrite-recipes-db:latest
+```
+
+See [data-ingestion/README.md](../../data-ingestion/README.md) for complete pipeline documentation.
