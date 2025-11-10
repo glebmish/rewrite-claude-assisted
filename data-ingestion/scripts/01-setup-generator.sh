@@ -139,7 +139,7 @@ afterEvaluate {
 }
 
 // Apply custom metadata extraction task
-apply(from = "../../../scripts/extract-recipe-metadata.gradle.kts")
+apply(from = "../../scripts/extract-recipe-metadata.gradle.kts")
 EOF
     echo "✓ Configured rewrite to use recipe dependencies"
     echo "✓ Applied custom metadata extraction task"
