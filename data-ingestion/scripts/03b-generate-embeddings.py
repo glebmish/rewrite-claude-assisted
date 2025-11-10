@@ -357,6 +357,8 @@ async def main():
     log("", force=True)
     log("✓ Stage 3b Complete", force=True)
     log("", force=True)
+    log("Next step: Run 04-create-image.sh", force=True)
+    log("", force=True)
 
 
 if __name__ == '__main__':
