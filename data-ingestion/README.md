@@ -180,10 +180,15 @@ The script determines the fully qualified recipe name using:
 ```
 
 **What it does:**
-- Commits the PostgreSQL container to a new image
+- Exports database using `pg_dump` to SQL file (~50-100MB)
+- Creates a Dockerfile with the dump and schema files
+- Builds a new image that loads data on first boot via `/docker-entrypoint-initdb.d/`
 - Tags with date and version
 - Optionally pushes to Docker registry
-- Preserves all recipe data in the image
+
+**Why pg_dump instead of docker commit?**
+
+The `pgvector/pgvector:pg16` base image has `VOLUME ["/var/lib/postgresql/data"]` declared in its Dockerfile. This forces Docker to create an anonymous volume even without explicit volume mounts in docker-compose.yml. Since `docker commit` only captures the container's filesystem (not volumes), we use `pg_dump` to export the data and build an image that restores it using PostgreSQL's standard initialization mechanism.
 
 **Output:**
 - Docker image: `openrewrite-recipes-db:YYYY-MM-DD`
@@ -351,6 +356,48 @@ ls -R build/docs/recipes/ | head -20
 
 # Re-run generation
 ./gradlew clean run
+```
+
+### Docker Image is Empty / No Data
+
+**Error:** Image created but contains no recipe data when started
+
+**Symptoms:**
+- Image size similar to base pgvector (~350-400MB instead of ~500-600MB with data)
+- Starting the image shows 0 recipes in database
+- Recipe count looks correct during image creation
+
+**Root Cause:**
+The PostgreSQL official images (including pgvector) have `VOLUME ["/var/lib/postgresql/data"]` declared in their Dockerfile. This forces Docker to create an anonymous volume even without explicit volume mounts. The `docker commit` command only captures the container's filesystem, NOT volumes.
+
+**Current Solution:**
+The pipeline (as of Stage 4 rewrite) now uses `pg_dump` to export data:
+
+1. Exports database to `build/recipes-dump.sql`
+2. Creates Dockerfile with the dump file
+3. Builds image using `docker build` (not `docker commit`)
+4. Data loads on first boot via `/docker-entrypoint-initdb.d/`
+
+**Verification:**
+```bash
+# Check image has recipe metadata
+docker inspect bboygleb/openrewrite-recipes-db:latest \
+  --format='{{index .Config.Labels "org.openrewrite.recipes.count"}}'
+
+# Start and verify data
+docker run -d --name test-db -p 5433:5432 \
+  -e POSTGRES_PASSWORD=changeme \
+  bboygleb/openrewrite-recipes-db:latest
+
+# Wait for initialization (first boot loads data)
+sleep 20
+
+# Check recipe count
+docker exec test-db psql -U mcp_user -d openrewrite_recipes \
+  -c "SELECT COUNT(*) FROM recipes;"
+
+# Cleanup
+docker stop test-db && docker rm test-db
 ```
 
 ## Data Statistics
