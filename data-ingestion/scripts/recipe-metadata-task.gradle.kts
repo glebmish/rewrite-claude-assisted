@@ -86,8 +86,23 @@ tasks.register("extractRecipeMetadata") {
         // This matches the approach used by rewrite-recipe-markdown-generator
         println("→ Loading OpenRewrite environment...")
 
-        // Get all runtime classpath JARs (this includes all recipe dependencies)
-        val allJars = configurations.getByName("runtimeClasspath").files
+        // Debug: Check what configurations are available
+        println("  Available configurations:")
+        configurations.names.filter { it.contains("recipe", ignoreCase = true) || it == "runtimeClasspath" }
+            .forEach { println("    - $it") }
+        println()
+
+        // Try to use the "recipe" configuration if it exists, otherwise fall back to runtimeClasspath
+        val configName = if (configurations.findByName("recipe") != null) {
+            println("  Using 'recipe' configuration (matches markdown generator approach)")
+            "recipe"
+        } else {
+            println("  'recipe' configuration not found, using 'runtimeClasspath'")
+            "runtimeClasspath"
+        }
+
+        // Get all JARs from the selected configuration
+        val allJars = configurations.getByName(configName).files
             .filter { it.name.endsWith(".jar") }
 
         // Filter to only OpenRewrite recipe JARs (those that likely contain recipes)
