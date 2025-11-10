@@ -1,4 +1,4 @@
-name: 'java-upgrade-suite - Batch 9'
+name: 'java-upgrade-suite - Batch 0'
 
 on:
   workflow_dispatch:
@@ -13,9 +13,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - pr_url: "https://github.com/openrewrite-assist-testing-dataset/inventory-tracking-system/pull/2"
+          - pr_url: "https://github.com/openrewrite-assist-testing-dataset/ecommerce-catalog/pull/2"
             pr_num: "2"
-            pr_index: 8
+            pr_index: 0
             run: 1
             total_runs: 1
       max-parallel: 1

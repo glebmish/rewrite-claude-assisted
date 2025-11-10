@@ -13,9 +13,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - pr_url: "https://github.com/openrewrite-assist-testing-dataset/weather-monitoring-service/pull/2"
-            pr_num: "2"
-            pr_index: 3
+          - pr_url: "https://github.com/openrewrite-assist-testing-dataset/simple-blog-platform/pull/3"
+            pr_num: "3"
+            pr_index: 4
             run: 1
             total_runs: 1
       max-parallel: 1
