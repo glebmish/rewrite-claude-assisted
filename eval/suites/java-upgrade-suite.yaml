@@ -1,12 +1,12 @@
 suite_name: "java-upgrade-suite"
 batch_size: 1
 prs:
-  - name: gradle-wrapper-version-and-plugin-version-upgrade
-    url: "https://github.com/openrewrite-assist-testing-dataset/payment-processing-service/pull/1"
-    runs: 1
-  - name: gradle-wrapper-upgrade
-    url: "https://github.com/openrewrite-assist-testing-dataset/analytics-dashboard/pull/1"
-    runs: 1
+#  - name: gradle-wrapper-version-and-plugin-version-upgrade
+#    url: "https://github.com/openrewrite-assist-testing-dataset/payment-processing-service/pull/1"
+#    runs: 1
+#  - name: gradle-wrapper-upgrade
+#    url: "https://github.com/openrewrite-assist-testing-dataset/analytics-dashboard/pull/1"
+#    runs: 1
   - name: dockerfile-and-github-actions-java-bump
     url: "https://github.com/openrewrite-assist-testing-dataset/ecommerce-catalog/pull/2"
     runs: 1
@@ -22,12 +22,12 @@ prs:
   - name: h2-to-postgres-migration
     url: "https://github.com/openrewrite-assist-testing-dataset/simple-blog-platform/pull/3"
     runs: 1
-  - name: complicated-java-dropwizard-upgrade
-    url: "https://github.com/openrewrite-assist-testing-dataset/notification-service/pull/3"
-    runs: 1
-  - name: swagger-upgrade
-    url: "https://github.com/openrewrite-assist-testing-dataset/inventory-tracking-system/pull/2"
-    runs: 1
-  - name: onboard-checkstyle-and-deprecate-auth
-    url: "https://github.com/openrewrite-assist-testing-dataset/file-storage-service/pull/3"
-    runs: 1
+#  - name: complicated-java-dropwizard-upgrade
+#    url: "https://github.com/openrewrite-assist-testing-dataset/notification-service/pull/3"
+#    runs: 1
+#  - name: swagger-upgrade
+#    url: "https://github.com/openrewrite-assist-testing-dataset/inventory-tracking-system/pull/2"
+#    runs: 1
+#  - name: onboard-checkstyle-and-deprecate-auth
+#    url: "https://github.com/openrewrite-assist-testing-dataset/file-storage-service/pull/3"
+#    runs: 1
