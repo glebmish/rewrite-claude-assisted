@@ -133,15 +133,20 @@ tasks.register("extractRecipeMetadata") {
             null  // No parent - isolated classloader like markdown generator
         )
 
-        // Scan only recipe JARs individually and collect all descriptors
-        // This matches the approach used by rewrite-recipe-markdown-generator
+        // Use scanRuntimeClasspath() instead of scanJar() to avoid classloader conflicts
+        // Set the thread context classloader so scanRuntimeClasspath() sees our recipe JARs
         println()
-        println("→ Scanning recipe JARs...")
-        val envBuilder = Environment.builder()
-        recipeJars.forEach { jarPath ->
-            envBuilder.scanJar(jarPath, allJarPaths, classloader)
+        println("→ Scanning runtime classpath with isolated classloader...")
+
+        val originalClassLoader = Thread.currentThread().contextClassLoader
+        val env = try {
+            Thread.currentThread().contextClassLoader = classloader
+            Environment.builder()
+                .scanRuntimeClasspath()
+                .build()
+        } finally {
+            Thread.currentThread().contextClassLoader = originalClassLoader
         }
-        val env = envBuilder.build()
 
         // Get all recipe descriptors
         val allDescriptors = env.listRecipeDescriptors()
