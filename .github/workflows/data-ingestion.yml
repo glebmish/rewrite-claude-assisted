@@ -1,0 +1,166 @@
+name: 'OpenRewrite Recipe Data Ingestion Pipeline'
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Docker image tag (in addition to date tag)'
+        required: false
+        default: 'latest'
+        type: string
+      push_to_registry:
+        description: 'Push image to DockerHub'
+        required: false
+        default: true
+        type: boolean
+  # Optionally run on schedule (weekly on Monday at 2 AM UTC)
+  # schedule:
+  #   - cron: '0 2 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    name: 'Build Recipe Database Image'
+
+    steps:
+      - name: 'Checkout repository'
+        uses: actions/checkout@v4
+        with:
+          ref: mcp
+
+      - name: 'Set up Java 17'
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: 'Set up Python 3.11'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 'Install Python dependencies'
+        working-directory: data-ingestion
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 'Set up Docker Buildx'
+        uses: docker/setup-buildx-action@v3
+
+      - name: 'Log in to DockerHub'
+        if: inputs.push_to_registry == true || github.event_name == 'schedule'
+        uses: docker/login-action@v3
+        with:
+          username: bboygleb
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: 'Configure pipeline environment'
+        working-directory: data-ingestion
+        run: |
+          cp .env.example .env
+
+          # Set image name and registry for pushing to DockerHub
+          echo "IMAGE_NAME=openrewrite-recipes-db" >> .env
+          echo "IMAGE_TAG=${{ inputs.image_tag || 'latest' }}" >> .env
+
+          # Configure registry URL only if pushing
+          if [ "${{ inputs.push_to_registry }}" == "true" ] || [ "${{ github.event_name }}" == "schedule" ]; then
+            echo "REGISTRY_URL=bboygleb" >> .env
+          else
+            echo "REGISTRY_URL=" >> .env
+          fi
+
+          # Use Java 17 from setup-java action
+          echo "JAVA_HOME=$JAVA_HOME" >> .env
+
+      - name: 'Run full ingestion pipeline'
+        working-directory: data-ingestion
+        run: |
+          # Activate Python virtual environment
+          source venv/bin/activate
+
+          # Run the full pipeline
+          ./scripts/run-full-pipeline.sh
+
+          deactivate
+
+      - name: 'Verify image creation'
+        run: |
+          docker images openrewrite-recipes-db
+
+          # Get image details
+          IMAGE_SIZE=$(docker images openrewrite-recipes-db:${{ inputs.image_tag || 'latest' }} --format "{{.Size}}")
+          echo "Created image size: $IMAGE_SIZE"
+
+          # Verify image can start
+          echo "Testing image..."
+          docker run -d --name test-db -p 5433:5432 openrewrite-recipes-db:${{ inputs.image_tag || 'latest' }}
+          sleep 10
+
+          # Check if container is healthy
+          docker ps -a --filter name=test-db
+
+          # Cleanup test container
+          docker stop test-db
+          docker rm test-db
+
+      - name: 'Tag and push to DockerHub'
+        if: inputs.push_to_registry == true || github.event_name == 'schedule'
+        run: |
+          DATE_TAG=$(date +%Y-%m-%d)
+
+          # Tag images for DockerHub
+          docker tag openrewrite-recipes-db:latest bboygleb/openrewrite-recipes-db:latest
+          docker tag openrewrite-recipes-db:latest bboygleb/openrewrite-recipes-db:$DATE_TAG
+
+          # Push both tags
+          docker push bboygleb/openrewrite-recipes-db:latest
+          docker push bboygleb/openrewrite-recipes-db:$DATE_TAG
+
+          echo "Pushed images:"
+          echo "  - bboygleb/openrewrite-recipes-db:latest"
+          echo "  - bboygleb/openrewrite-recipes-db:$DATE_TAG"
+
+      - name: 'Upload pipeline logs'
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pipeline-logs-${{ github.run_number }}
+          path: |
+            data-ingestion/workspace/rewrite-recipe-markdown-generator/build/reports/
+            data-ingestion/*.log
+          if-no-files-found: ignore
+
+      - name: 'Summary'
+        if: always()
+        run: |
+          echo "## Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ Data ingestion pipeline completed successfully!" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Created Images" >> $GITHUB_STEP_SUMMARY
+
+            if [ "${{ inputs.push_to_registry }}" == "true" ] || [ "${{ github.event_name }}" == "schedule" ]; then
+              DATE_TAG=$(date +%Y-%m-%d)
+              echo "- \`bboygleb/openrewrite-recipes-db:latest\`" >> $GITHUB_STEP_SUMMARY
+              echo "- \`bboygleb/openrewrite-recipes-db:$DATE_TAG\`" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "### Usage" >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+              echo "docker pull bboygleb/openrewrite-recipes-db:latest" >> $GITHUB_STEP_SUMMARY
+              echo "docker run -p 5432:5432 bboygleb/openrewrite-recipes-db:latest" >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- \`openrewrite-recipes-db:${{ inputs.image_tag || 'latest' }}\` (local only)" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "❌ Pipeline failed. Check logs for details." >> $GITHUB_STEP_SUMMARY
+          fi
