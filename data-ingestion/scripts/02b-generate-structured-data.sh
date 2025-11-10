@@ -73,8 +73,11 @@ echo "→ Preparing project with metadata extraction task..."
 # 1. Add buildscript dependencies (Jackson, OpenRewrite) for script compilation
 # 2. Apply the task script which uses those dependencies
 # This gives the task access to the project's full dependency classpath
+#
+# IMPORTANT: buildscript block MUST be at the TOP of the file for dependencies to be
+# available during script compilation. We prepend it to the original content.
+ORIGINAL_BUILD_FILE=$(cat build.gradle.kts)
 {
-    echo ""
     echo "// Temporarily added for metadata extraction"
     echo "buildscript {"
     echo "    repositories {"
@@ -86,8 +89,10 @@ echo "→ Preparing project with metadata extraction task..."
     echo "    }"
     echo "}"
     echo ""
+    echo "$ORIGINAL_BUILD_FILE"
+    echo ""
     echo "apply(from = \"$TASK_SCRIPT\")"
-} >> build.gradle.kts
+} > build.gradle.kts
 
 # Step 2: Set up cleanup to restore original build.gradle.kts on script exit
 # Uses git to restore - simpler and more reliable than manual backup
