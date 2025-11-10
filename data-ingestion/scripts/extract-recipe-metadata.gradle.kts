@@ -34,12 +34,18 @@ tasks.register("extractRecipeMetadata") {
         val rewriteDiscoverTask = tasks.getByName("rewriteDiscover")
         val projectParserGetter = rewriteDiscoverTask.javaClass.getDeclaredMethod("getProjectParser")
         projectParserGetter.isAccessible = true
-        val projectParser = projectParserGetter.invoke(rewriteDiscoverTask)
+        val delegatingParser = projectParserGetter.invoke(rewriteDiscoverTask)
+
+        // DelegatingProjectParser wraps the actual DefaultProjectParser in a 'gpp' field
+        // We need to access the wrapped parser to call listRecipeDescriptors()
+        val gppField = delegatingParser.javaClass.getDeclaredField("gpp")
+        gppField.isAccessible = true
+        val actualParser = gppField.get(delegatingParser)
 
         // Get recipe descriptors using the plugin's infrastructure
-        val listRecipeDescriptorsMethod = projectParser.javaClass.getMethod("listRecipeDescriptors")
+        val listRecipeDescriptorsMethod = actualParser.javaClass.getMethod("listRecipeDescriptors")
         @Suppress("UNCHECKED_CAST")
-        val recipeDescriptors = listRecipeDescriptorsMethod.invoke(projectParser) as Collection<RecipeDescriptor>
+        val recipeDescriptors = listRecipeDescriptorsMethod.invoke(actualParser) as Collection<RecipeDescriptor>
 
         println("✓ Found ${recipeDescriptors.size} recipe descriptors")
 
