@@ -87,23 +87,37 @@ tasks.register("extractRecipeMetadata") {
         println("→ Loading OpenRewrite environment...")
 
         // Get all runtime classpath JARs (this includes all recipe dependencies)
-        val runtimeJars = configurations.getByName("runtimeClasspath").files
+        val allJars = configurations.getByName("runtimeClasspath").files
             .filter { it.name.endsWith(".jar") }
-            .map { it.toPath() }
 
-        println("  Found ${runtimeJars.size} JAR files in runtimeClasspath")
+        // Filter to only OpenRewrite recipe JARs (those that likely contain recipes)
+        // Look for JARs with "rewrite" in the name
+        val recipeJars = allJars.filter { jar ->
+            jar.name.contains("rewrite", ignoreCase = true) ||
+            jar.name.contains("moderne", ignoreCase = true)
+        }.map { it.toPath() }
 
-        // Create a classloader from all the JARs
+        // Keep all JARs for the classpath (needed for dependencies)
+        val allJarPaths = allJars.map { it.toPath() }
+
+        println("  Found ${allJars.size} total JAR files in runtimeClasspath")
+        println("  Filtering to ${recipeJars.size} recipe JARs to scan")
+        recipeJars.take(10).forEach { println("    - ${it.fileName}") }
+        if (recipeJars.size > 10) println("    ... and ${recipeJars.size - 10} more")
+
+        // Create a classloader from all the JARs (for dependencies)
         val classloader = URLClassLoader(
-            runtimeJars.map { it.toUri().toURL() }.toTypedArray(),
+            allJarPaths.map { it.toUri().toURL() }.toTypedArray(),
             ClassLoader.getSystemClassLoader()
         )
 
-        // Scan each JAR individually and collect all descriptors
+        // Scan only recipe JARs individually and collect all descriptors
         // This matches the approach used by rewrite-recipe-markdown-generator
+        println()
+        println("→ Scanning recipe JARs...")
         val envBuilder = Environment.builder()
-        runtimeJars.forEach { jarPath ->
-            envBuilder.scanJar(jarPath, runtimeJars, classloader)
+        recipeJars.forEach { jarPath ->
+            envBuilder.scanJar(jarPath, allJarPaths, classloader)
         }
         val env = envBuilder.build()
 
