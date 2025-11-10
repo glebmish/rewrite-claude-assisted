@@ -3,74 +3,88 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath("org.openrewrite:rewrite-core:8.64.0")
+        // Only Jackson for JSON serialization - NO OpenRewrite dependencies!
         classpath("com.fasterxml.jackson.core:jackson-databind:2.18.0")
     }
 }
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.openrewrite.config.RecipeDescriptor
-import org.gradle.internal.service.ServiceRegistry
 
 /**
- * Custom task that leverages rewrite-gradle-plugin's infrastructure
- * to discover all recipes and extract their metadata.
+ * Custom task that extracts recipe metadata using rewrite-gradle-plugin.
  *
- * This task uses the plugin's proper classloader isolation to avoid
- * conflicts and discover all ~4939 recipes.
+ * KEY INSIGHT: We CANNOT import RecipeDescriptor because that would load it
+ * in the wrong classloader. We must use pure reflection to extract data as
+ * primitives (String, List, Map) that can cross the classloader boundary.
  */
 tasks.register("extractRecipeMetadata") {
     group = "rewrite"
     description = "Extract detailed metadata for all discovered recipes"
 
-    // Depend on rewrite configuration to ensure all dependencies are resolved
     dependsOn(configurations.getByName("rewrite"))
 
     doLast {
         println("Extracting recipe metadata using rewrite-gradle-plugin infrastructure...")
 
-        // Get the project parser from the rewrite plugin
-        // This uses the plugin's proper classloader isolation
+        // Get the wrapped parser from the plugin (it's in the isolated classloader)
         val rewriteDiscoverTask = tasks.getByName("rewriteDiscover")
         val projectParserGetter = rewriteDiscoverTask.javaClass.getDeclaredMethod("getProjectParser")
         projectParserGetter.isAccessible = true
         val delegatingParser = projectParserGetter.invoke(rewriteDiscoverTask)
 
-        // DelegatingProjectParser wraps the actual DefaultProjectParser in a 'gpp' field
-        // We need to access the wrapped parser to call listRecipeDescriptors()
         val gppField = delegatingParser.javaClass.getDeclaredField("gpp")
         gppField.isAccessible = true
         val actualParser = gppField.get(delegatingParser)
 
-        // Get recipe descriptors using the plugin's infrastructure
+        // Get recipe descriptors - they are in the isolated classloader!
         val listRecipeDescriptorsMethod = actualParser.javaClass.getMethod("listRecipeDescriptors")
-        @Suppress("UNCHECKED_CAST")
-        val recipeDescriptors = listRecipeDescriptorsMethod.invoke(actualParser) as Collection<RecipeDescriptor>
+        val recipeDescriptors = listRecipeDescriptorsMethod.invoke(actualParser) as Collection<*>
 
         println("✓ Found ${recipeDescriptors.size} recipe descriptors")
 
-        // Convert to JSON-friendly format
-        val recipes = recipeDescriptors.map { descriptor ->
-            val options = descriptor.options.map { option ->
+        // Extract data using pure reflection - never cast to RecipeDescriptor!
+        val recipes = recipeDescriptors.map { descriptorObj ->
+            // Use reflection to access fields
+            val descriptorClass = descriptorObj!!.javaClass
+
+            // Extract basic fields
+            val name = descriptorClass.getMethod("getName").invoke(descriptorObj) as String
+            val displayName = descriptorClass.getMethod("getDisplayName").invoke(descriptorObj) as String
+            val description = descriptorClass.getMethod("getDescription").invoke(descriptorObj) as String
+            val tags = descriptorClass.getMethod("getTags").invoke(descriptorObj) as Set<*>
+            val estimatedEffort = descriptorClass.getMethod("getEstimatedEffortPerOccurrence").invoke(descriptorObj)
+
+            // Extract options list
+            val optionsList = descriptorClass.getMethod("getOptions").invoke(descriptorObj) as List<*>
+            val options = optionsList.map { optionObj ->
+                if (optionObj == null) return@map emptyMap<String, Any?>()
+
+                val optionClass = optionObj.javaClass
                 mapOf(
-                    "name" to option.name,
-                    "type" to option.type,
-                    "displayName" to option.displayName,
-                    "description" to option.description,
-                    "example" to option.example,
-                    "valid" to option.valid,
-                    "value" to option.value
+                    "name" to optionClass.getMethod("getName").invoke(optionObj),
+                    "type" to optionClass.getMethod("getType").invoke(optionObj),
+                    "displayName" to optionClass.getMethod("getDisplayName").invoke(optionObj),
+                    "description" to optionClass.getMethod("getDescription").invoke(optionObj),
+                    "example" to optionClass.getMethod("getExample").invoke(optionObj),
+                    "valid" to optionClass.getMethod("getValid").invoke(optionObj),
+                    "value" to optionClass.getMethod("getValue").invoke(optionObj)
                 )
             }
 
-            val recipeList = descriptor.recipeList.map { it.name }
+            // Extract recipe list
+            val recipeListObjs = descriptorClass.getMethod("getRecipeList").invoke(descriptorObj) as List<*>
+            val recipeList = recipeListObjs.map { recipeDescObj ->
+                if (recipeDescObj == null) return@map null
+                recipeDescObj.javaClass.getMethod("getName").invoke(recipeDescObj) as String
+            }.filterNotNull()
 
+            // Build map with primitives only - safe to cross classloader boundary
             mapOf(
-                "name" to descriptor.name,
-                "displayName" to descriptor.displayName,
-                "description" to descriptor.description,
-                "tags" to descriptor.tags,
-                "estimatedEffortPerOccurrence" to descriptor.estimatedEffortPerOccurrence?.toString(),
+                "name" to name,
+                "displayName" to displayName,
+                "description" to description,
+                "tags" to tags.map { it.toString() },
+                "estimatedEffortPerOccurrence" to estimatedEffort?.toString(),
                 "options" to options,
                 "recipeList" to recipeList
             )
@@ -84,7 +98,7 @@ tasks.register("extractRecipeMetadata") {
         println("Composite recipes: ${compositeRecipes.size}")
         println("Leaf recipes: ${leafRecipes.size}")
 
-        // Write to JSON file
+        // Write to JSON
         val outputFile = project.layout.buildDirectory.file("recipe-metadata.json").get().asFile
         outputFile.parentFile.mkdirs()
 
