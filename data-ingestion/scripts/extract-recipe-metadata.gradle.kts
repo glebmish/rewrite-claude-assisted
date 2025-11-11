@@ -89,11 +89,16 @@ tasks.register("extractRecipeMetadata") {
         }
         println()
 
-        // Create isolated URLClassLoader with all JARs
-        // This matches RecipeLoader.kt from the markdown generator
+        // Create URLClassLoader with all JARs
+        // IMPORTANT: Use buildscript classloader as parent!
+        // In Gradle task context, buildscript classes (Recipe, Environment, etc.)
+        // must be shared between our classloader and recipe classloader.
+        // The markdown generator uses null parent because it runs standalone,
+        // but in Gradle we need to share buildscript classes.
+        val buildscriptClassLoader = org.openrewrite.config.Environment::class.java.classLoader
         val classloader = URLClassLoader(
             allJars.map { it.toURI().toURL() }.toTypedArray(),
-            null  // No parent classloader - fully isolated
+            buildscriptClassLoader  // Use buildscript classloader as parent
         )
 
         println("→ Scanning JARs for recipes...")
