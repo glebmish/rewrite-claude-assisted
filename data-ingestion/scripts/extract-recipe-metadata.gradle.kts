@@ -60,29 +60,12 @@ tasks.register("extractRecipeMetadata") {
             // Debug logging for first few recipes
             if (index < 3) {
                 println("DEBUG Recipe #$index: $name")
-                println("  All available methods:")
-                descriptorClass.methods.sortedBy { it.name }.forEach { method ->
-                    if (method.name.startsWith("get") && method.parameterCount == 0) {
-                        try {
-                            val result = method.invoke(descriptorObj)
-                            println("    ${method.name}() -> ${result?.javaClass?.simpleName}: $result")
-                            if (result is Collection<*>) {
-                                println("      Collection size: ${result.size}")
-                                if (result.isNotEmpty()) {
-                                    println("      First element: ${result.first()}")
-                                }
-                            }
-                        } catch (e: Exception) {
-                            println("    ${method.name}() -> ERROR: ${e.message}")
-                        }
-                    }
-                }
-                println("  Tags raw: $tags (class: ${tags.javaClass})")
-                println("  Tags size: ${tags.size}")
-                println("  Tags contents: ${tags.toList()}")
-                println("  RecipeList size: ${recipeListObjs.size}")
+                println("  Tags: ${tags.size} items -> ${tags.toList()}")
+                println("  RecipeList: ${recipeListObjs.size} items")
                 if (recipeListObjs.isNotEmpty()) {
-                    println("  First recipe in list: ${recipeListObjs.first()}")
+                    val firstRecipe = recipeListObjs.first()
+                    val recipeName = firstRecipe?.javaClass?.getMethod("getName")?.invoke(firstRecipe)
+                    println("    First: $recipeName")
                 }
             }
 
