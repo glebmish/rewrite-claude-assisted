@@ -9,42 +9,21 @@ initialized with the schema. Run 00-init-database.sh first if not already done.
 
 import asyncio
 import asyncpg
-import os
 import sys
 import re
 from pathlib import Path
 from typing import Optional
-from dotenv import load_dotenv
 from tqdm import tqdm
 
-# Configuration
-SCRIPT_DIR = Path(__file__).parent
-PROJECT_DIR = SCRIPT_DIR.parent
+# Import common utilities
+from common import ScriptConfig, Logger, test_db_connection
 
-# Load environment variables
-load_dotenv(PROJECT_DIR / '.env')
+# Initialize configuration
+config = ScriptConfig()
+logger = Logger(verbose=config.VERBOSE)
 
-# Database configuration
-DB_HOST = os.getenv('DB_HOST', 'localhost')
-DB_PORT = int(os.getenv('DB_PORT', '5432'))
-DB_NAME = os.getenv('DB_NAME', 'openrewrite_recipes')
-DB_USER = os.getenv('DB_USER', 'mcp_user')
-DB_PASSWORD = os.getenv('DB_PASSWORD', 'changeme')
-
-# Generator configuration
-GENERATOR_WORKSPACE = str(PROJECT_DIR / 'workspace')
-GENERATOR_OUTPUT_DIR = 'build/docs'
-GENERATOR_DIR = Path(GENERATOR_WORKSPACE) / 'rewrite-recipe-markdown-generator'
-RECIPES_DIR = GENERATOR_DIR / GENERATOR_OUTPUT_DIR / 'recipes'
-
-# Verbose mode
-VERBOSE = os.getenv('VERBOSE', 'false').lower() == 'true'
-
-
-def log(message: str, force: bool = False):
-    """Log message if verbose mode is enabled or force is True."""
-    if VERBOSE or force:
-        print(message, file=sys.stderr)
+# Get paths
+RECIPES_DIR = config.get_recipes_dir()
 
 
 def extract_recipe_name_from_markdown(markdown: str, normalized_path: str) -> Optional[str]:
@@ -143,69 +122,49 @@ def extract_recipe_name(file_path: Path, markdown: str, recipes_base: Path) -> s
     )
 
 
-async def test_connection() -> bool:
-    """Test database connection."""
-    try:
-        conn = await asyncpg.connect(
-            host=DB_HOST,
-            port=DB_PORT,
-            database=DB_NAME,
-            user=DB_USER,
-            password=DB_PASSWORD,
-            timeout=10
-        )
-        await conn.close()
-        return True
-    except Exception as e:
-        log(f"✗ Database connection failed: {e}", force=True)
-        return False
-
-
 async def ingest_recipes():
     """Main ingestion function."""
-    log(f"=========================================", force=True)
-    log(f"Stage 3: Ingest Documentation to Database", force=True)
-    log(f"=========================================", force=True)
+    logger.print_stage_header("Stage 3: Ingest Documentation to Database")
 
     # Verify recipes directory exists
     if not RECIPES_DIR.exists():
-        log(f"✗ Error: Recipes directory not found: {RECIPES_DIR}", force=True)
-        log(f"  Run 02-generate-docs.sh first", force=True)
+        logger.log(f"✗ Error: Recipes directory not found: {RECIPES_DIR}", force=True)
+        logger.log(f"  Run 02-generate-docs.sh first", force=True)
         sys.exit(1)
 
     # Test database connection
-    log(f"→ Testing database connection...", force=True)
-    if not await test_connection():
-        log(f"  Database is not running or not initialized.", force=True)
-        log(f"  Run 00-init-database.sh first to initialize the database.", force=True)
+    logger.log(f"→ Testing database connection...", force=True)
+    if not await test_db_connection(config, logger):
+        logger.log(f"  Database is not running or not initialized.", force=True)
+        logger.log(f"  Run 00-init-database.sh first to initialize the database.", force=True)
         sys.exit(1)
-    log(f"✓ Database connection successful", force=True)
+    logger.log(f"✓ Database connection successful", force=True)
 
     # Connect to database
-    log(f"→ Connecting to database...", force=True)
+    logger.log(f"→ Connecting to database...", force=True)
     conn = await asyncpg.connect(
-        host=DB_HOST,
-        port=DB_PORT,
-        database=DB_NAME,
-        user=DB_USER,
-        password=DB_PASSWORD
+        host=config.DB_HOST,
+        port=config.DB_PORT,
+        database=config.DB_NAME,
+        user=config.DB_USER,
+        password=config.DB_PASSWORD
     )
 
     try:
         # Collect all markdown files (excluding README.md files)
-        log(f"→ Scanning for markdown files...", force=True)
+        logger.log(f"→ Scanning for markdown files...", force=True)
         all_markdown_files = list(RECIPES_DIR.rglob('*.md'))
         markdown_files = [f for f in all_markdown_files if f.name != 'README.md']
         total_files = len(markdown_files)
         excluded_count = len(all_markdown_files) - total_files
-        log(f"✓ Found {total_files} markdown files (excluded {excluded_count} README.md files)", force=True)
+        logger.log(f"✓ Found {total_files} markdown files (excluded {excluded_count} README.md files)", force=True)
 
         if total_files == 0:
-            log(f"✗ Error: No markdown files found in {RECIPES_DIR}", force=True)
+            logger.log(f"✗ Error: No markdown files found in {RECIPES_DIR}", force=True)
             sys.exit(1)
 
         # Process files with progress bar
-        log(f"→ Ingesting recipes...", force=True)
+        logger.log(f"→ Ingesting recipes...", force=True)
         ingested = 0
         skipped = 0
         errors = []
@@ -233,37 +192,33 @@ async def ingest_recipes():
                 """, recipe_name, markdown_content)
 
                 ingested += 1
-                log(f"  ✓ {recipe_name}")
+                logger.log(f"  ✓ {recipe_name}")
 
             except Exception as e:
                 errors.append((md_file.name, str(e)))
                 skipped += 1
-                log(f"  ✗ Error processing {md_file.name}: {e}")
+                logger.log(f"  ✗ Error processing {md_file.name}: {e}")
 
         progress_bar.close()
 
         # Get final count from database
         total_in_db = await conn.fetchval("SELECT COUNT(*) FROM recipes")
 
-        log(f"", force=True)
-        log(f"=========================================", force=True)
-        log(f"✓ Stage 3 Complete", force=True)
-        log(f"=========================================", force=True)
-        log(f"Processed: {total_files} files", force=True)
-        log(f"Ingested successfully: {ingested}", force=True)
-        log(f"Skipped (errors): {skipped}", force=True)
-        log(f"Total recipes in database: {total_in_db}", force=True)
+        logger.log(f"", force=True)
+        logger.log(f"Processed: {total_files} files", force=True)
+        logger.log(f"Ingested successfully: {ingested}", force=True)
+        logger.log(f"Skipped (errors): {skipped}", force=True)
+        logger.log(f"Total recipes in database: {total_in_db}", force=True)
 
         if errors:
-            log(f"", force=True)
-            log(f"Errors encountered:", force=True)
+            logger.log(f"", force=True)
+            logger.log(f"Errors encountered:", force=True)
             for filename, error in errors[:10]:  # Show first 10 errors
-                log(f"  - {filename}: {error}", force=True)
+                logger.log(f"  - {filename}: {error}", force=True)
             if len(errors) > 10:
-                log(f"  ... and {len(errors) - 10} more", force=True)
+                logger.log(f"  ... and {len(errors) - 10} more", force=True)
 
-        log(f"", force=True)
-        log(f"Next step: Run 03b-generate-embeddings.py", force=True)
+        logger.print_stage_footer("3", "Run 03b-generate-embeddings.py")
 
     finally:
         await conn.close()
