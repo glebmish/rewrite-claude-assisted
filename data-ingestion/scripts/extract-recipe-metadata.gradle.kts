@@ -43,7 +43,7 @@ tasks.register("extractRecipeMetadata") {
         println("✓ Found ${recipeDescriptors.size} recipe descriptors")
 
         // Extract data using pure reflection - never cast to RecipeDescriptor!
-        val recipes = recipeDescriptors.map { descriptorObj ->
+        val recipes = recipeDescriptors.mapIndexed { index, descriptorObj ->
             // Use reflection to access fields
             val descriptorClass = descriptorObj!!.javaClass
 
@@ -53,6 +53,38 @@ tasks.register("extractRecipeMetadata") {
             val description = descriptorClass.getMethod("getDescription").invoke(descriptorObj) as String
             val tags = descriptorClass.getMethod("getTags").invoke(descriptorObj) as Set<*>
             val estimatedEffort = descriptorClass.getMethod("getEstimatedEffortPerOccurrence").invoke(descriptorObj)
+
+            // Extract recipe list early for debugging
+            val recipeListObjs = descriptorClass.getMethod("getRecipeList").invoke(descriptorObj) as List<*>
+
+            // Debug logging for first few recipes
+            if (index < 3) {
+                println("DEBUG Recipe #$index: $name")
+                println("  All available methods:")
+                descriptorClass.methods.sortedBy { it.name }.forEach { method ->
+                    if (method.name.startsWith("get") && method.parameterCount == 0) {
+                        try {
+                            val result = method.invoke(descriptorObj)
+                            println("    ${method.name}() -> ${result?.javaClass?.simpleName}: $result")
+                            if (result is Collection<*>) {
+                                println("      Collection size: ${result.size}")
+                                if (result.isNotEmpty()) {
+                                    println("      First element: ${result.first()}")
+                                }
+                            }
+                        } catch (e: Exception) {
+                            println("    ${method.name}() -> ERROR: ${e.message}")
+                        }
+                    }
+                }
+                println("  Tags raw: $tags (class: ${tags.javaClass})")
+                println("  Tags size: ${tags.size}")
+                println("  Tags contents: ${tags.toList()}")
+                println("  RecipeList size: ${recipeListObjs.size}")
+                if (recipeListObjs.isNotEmpty()) {
+                    println("  First recipe in list: ${recipeListObjs.first()}")
+                }
+            }
 
             // Extract options list
             val optionsList = descriptorClass.getMethod("getOptions").invoke(descriptorObj) as List<*>
@@ -71,8 +103,7 @@ tasks.register("extractRecipeMetadata") {
                 )
             }
 
-            // Extract recipe list
-            val recipeListObjs = descriptorClass.getMethod("getRecipeList").invoke(descriptorObj) as List<*>
+            // Convert recipe list to names
             val recipeList = recipeListObjs.mapNotNull { recipeDescObj ->
                 if (recipeDescObj == null) return@mapNotNull null
                 recipeDescObj.javaClass.getMethod("getName").invoke(recipeDescObj) as String
