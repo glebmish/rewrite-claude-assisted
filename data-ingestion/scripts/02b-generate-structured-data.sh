@@ -2,19 +2,21 @@
 set -euo pipefail
 
 # Script: 02b-generate-structured-data.sh
-# Purpose: Generate structured recipe metadata JSON for embedding generation using rewrite-gradle-plugin
+# Purpose: Generate structured recipe metadata JSON for embedding generation
 #
 # HOW IT WORKS:
 # =============
-# 1. Uses rewrite-gradle-plugin for proper classloader isolation
-# 2. Plugin is configured to use all dependencies from 'recipe' configuration
-# 3. Custom task extracts detailed metadata (name, description, options, etc.)
-# 4. Discovers ALL ~4939 recipes without classloader conflicts
+# 1. Uses the markdown generator's approach (NO rewrite-gradle-plugin dependency)
+# 2. Creates isolated URLClassLoader with all JARs from 'recipe' configuration
+# 3. Uses Environment.scanJar() to discover recipes from each first-level JAR
+# 4. Custom task extracts detailed metadata (name, description, options, etc.)
+# 5. Discovers ALL ~4939 recipes without classloader conflicts
 #
 # KEY INSIGHTS:
-# - rewrite-gradle-plugin uses reflection-based classloader isolation
-# - All Recipe classes loaded in isolated RewriteClassLoader
-# - No conflicts between plugin and project dependencies
+# - Follows rewrite-recipe-markdown-generator's official approach
+# - Isolated URLClassLoader prevents dependency conflicts
+# - Uses public Environment.scanJar() API (stable, documented)
+# - No dependency on rewrite-gradle-plugin internals
 # - Guaranteed to find all recipes in the classpath
 
 SCRIPT_DIR="$(pwd)/$(dirname "${BASH_SOURCE[0]}")"
@@ -50,8 +52,8 @@ cd "$GENERATOR_DIR"
 # Export JAVA_HOME for gradle
 export JAVA_HOME
 
-echo "→ Extracting recipe metadata using rewrite-gradle-plugin..."
-echo "  Plugin: org.openrewrite.rewrite v6.28.2"
+echo "→ Extracting recipe metadata using isolated classloader approach..."
+echo "  Approach: Markdown generator's recipe discovery method"
 echo "  Configuration: recipe (all OpenRewrite modules)"
 echo "  Output file: $METADATA_FILE"
 echo ""
@@ -60,7 +62,7 @@ echo ""
 mkdir -p "$OUTPUT_DIR"
 
 # Run the extractRecipeMetadata task
-# This task uses the rewrite-gradle-plugin's infrastructure for proper classloading
+# This task creates an isolated URLClassLoader and uses Environment.scanJar()
 echo "→ Running extractRecipeMetadata task..."
 if ./gradlew extractRecipeMetadata \
     --no-daemon \
@@ -77,7 +79,7 @@ fi
 # Copy output from build directory to expected location
 PLUGIN_OUTPUT="build/recipe-metadata.json"
 if [ ! -f "$PLUGIN_OUTPUT" ]; then
-    echo "✗ Error: Plugin output file not found: $PLUGIN_OUTPUT"
+    echo "✗ Error: Output file not found: $PLUGIN_OUTPUT"
     exit 1
 fi
 

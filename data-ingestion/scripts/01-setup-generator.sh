@@ -117,37 +117,21 @@ else
     echo "  Note: rewrite-spring-to-quarkus already modified or not found"
 fi
 
-# Apply rewrite-gradle-plugin for proper classloader isolation
+# Apply custom metadata extraction task
 echo ""
-echo "→ Configuring rewrite-gradle-plugin for metadata extraction..."
+echo "→ Configuring custom metadata extraction task..."
 
-# Add plugin to plugins block (idempotent)
-if ! grep -q 'id("org.openrewrite.rewrite")' "$BUILD_FILE"; then
-    sed -i '/id("org.owasp.dependencycheck")/a\    id("org.openrewrite.rewrite") version "6.28.2"' "$BUILD_FILE"
-    echo "✓ Added rewrite-gradle-plugin to plugins"
-else
-    echo "  Note: rewrite-gradle-plugin already configured"
-fi
-
-# Add configuration after dependencies block (idempotent - add only once at end of file)
-if ! grep -q 'configurations.getByName("rewrite").extendsFrom' "$BUILD_FILE"; then
-    cat >> "$BUILD_FILE" << 'EOF'
-
-// Configure rewrite plugin to use all recipe dependencies
-afterEvaluate {
-    configurations.getByName("rewrite").extendsFrom(configurations.getByName("recipe"))
-}
-
-// Apply custom metadata extraction task
-apply(from = "../../scripts/extract-recipe-metadata.gradle.kts")
-EOF
-    echo "✓ Configured rewrite to use recipe dependencies"
+# Add apply statement at the end of build.gradle.kts (idempotent - check if already exists)
+if ! grep -q 'apply.*extract-recipe-metadata.gradle.kts' "$BUILD_FILE"; then
+    echo "" >> "$BUILD_FILE"
+    echo "// Apply custom metadata extraction task" >> "$BUILD_FILE"
+    echo "apply(from = \"../../scripts/extract-recipe-metadata.gradle.kts\")" >> "$BUILD_FILE"
     echo "✓ Applied custom metadata extraction task"
 else
-    echo "  Note: rewrite configuration already set up"
+    echo "  Note: Metadata extraction task already applied"
 fi
 
-echo "✓ Build configuration workarounds and plugin setup complete"
+echo "✓ Build configuration workarounds complete"
 
 echo ""
 echo "========================================="
@@ -155,5 +139,11 @@ echo "✓ Stage 1 Complete"
 echo "========================================="
 echo "Generator location: $GENERATOR_DIR"
 echo "Java version: $("$JAVA_HOME/bin/java" -version 2>&1 | head -n 1)"
+echo ""
+echo "NOTE: This setup NO LONGER uses rewrite-gradle-plugin"
+echo "      Instead, we use the markdown generator's approach:"
+echo "      - Isolated URLClassLoader with recipe JARs"
+echo "      - Environment.scanJar() for recipe discovery"
+echo "      - No dependency on plugin internals"
 echo ""
 echo "Next step: Run 02-generate-docs.sh"
