@@ -35,7 +35,9 @@ buildscript {
     }
     dependencies {
         // OpenRewrite core for Environment and RecipeDescriptor
-        classpath("org.openrewrite:rewrite-core:8.37.1")
+        // IMPORTANT: Must match the version used by the markdown generator (8.64.0)
+        // Version mismatch causes recipe validation errors
+        classpath("org.openrewrite:rewrite-core:8.64.0")
         // Jackson for JSON serialization
         classpath("com.fasterxml.jackson.core:jackson-databind:2.18.0")
     }
