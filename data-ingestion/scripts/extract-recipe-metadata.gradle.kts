@@ -56,8 +56,8 @@ tasks.register("extractRecipeMetadata") {
 
             // Extract options list
             val optionsList = descriptorClass.getMethod("getOptions").invoke(descriptorObj) as List<*>
-            val options = optionsList.map { optionObj ->
-                if (optionObj == null) return@map emptyMap<String, Any?>()
+            val options = optionsList.mapNotNull { optionObj ->
+                if (optionObj == null) return@mapNotNull null
 
                 val optionClass = optionObj.javaClass
                 mapOf(
@@ -73,10 +73,10 @@ tasks.register("extractRecipeMetadata") {
 
             // Extract recipe list
             val recipeListObjs = descriptorClass.getMethod("getRecipeList").invoke(descriptorObj) as List<*>
-            val recipeList = recipeListObjs.map { recipeDescObj ->
-                if (recipeDescObj == null) return@map null
+            val recipeList = recipeListObjs.mapNotNull { recipeDescObj ->
+                if (recipeDescObj == null) return@mapNotNull null
                 recipeDescObj.javaClass.getMethod("getName").invoke(recipeDescObj) as String
-            }.filterNotNull()
+            }
 
             // Build map with primitives only - safe to cross classloader boundary
             mapOf(
