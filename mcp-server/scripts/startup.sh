@@ -119,6 +119,27 @@ while [ $INIT_RETRY_COUNT -lt $MAX_INIT_RETRIES ]; do
     sleep 1
 done
 
+# After init scripts complete, database restarts. Wait a bit for it to be ready for external connections
+echo "Waiting for database to be ready for external connections..." >&2
+sleep 3
+
+# Verify database is accepting connections on the exposed port
+EXTERNAL_RETRY_COUNT=0
+MAX_EXTERNAL_RETRIES=10
+while [ $EXTERNAL_RETRY_COUNT -lt $MAX_EXTERNAL_RETRIES ]; do
+    if docker-compose exec -T postgres pg_isready -U "$DB_USER" -d "$DB_NAME" -h localhost < /dev/null 2>/dev/null; then
+        echo "✅ Database ready for external connections" >&2
+        break
+    fi
+    EXTERNAL_RETRY_COUNT=$((EXTERNAL_RETRY_COUNT + 1))
+    if [ $EXTERNAL_RETRY_COUNT -eq $MAX_EXTERNAL_RETRIES ]; then
+        echo "Error: Database not ready for external connections after ${MAX_EXTERNAL_RETRIES} attempts" >&2
+        docker-compose logs postgres < /dev/null >&2
+        exit 1
+    fi
+    sleep 1
+done
+
 # Test database connection from Python
 echo "Testing database connection..." >&2
 if ! "$PROJECT_DIR/venv/bin/python" -c "
