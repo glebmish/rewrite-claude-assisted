@@ -8,7 +8,7 @@ When upgrading OpenRewrite to a new version, update these **2 locations**:
 
 ### 1. Update `scripts/01-setup-generator.sh`
 
-At the top of the file, update the version variables (lines 17-20):
+At the top of the file, update the version variables (lines 14-16):
 
 ```bash
 # Version configuration - UPDATE THESE when bumping OpenRewrite versions
@@ -19,17 +19,26 @@ SPRING_QUARKUS_VERSION="${SPRING_QUARKUS_VERSION:-0.2.0}"  # ← Update this if 
 
 ### 2. Update `scripts/extract-recipe-metadata.gradle.kts`
 
-At the top of the file, update the version variable (line 34):
+In the buildscript block, update the rewrite-core version (line 43):
 
 ```kotlin
-// Version configuration - UPDATE THIS when bumping OpenRewrite versions
-// MUST match the version pinned in 01-setup-generator.sh
-val rewriteVersion = "8.64.0"  // ← Update this
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        // UPDATE THIS VERSION when bumping OpenRewrite: currently 8.64.0
+        classpath("org.openrewrite:rewrite-core:8.64.0")  // ← Update this
+        classpath("com.fasterxml.jackson.core:jackson-databind:2.18.0")
+    }
+}
 ```
+
+**Note**: The version must be hardcoded in the buildscript block due to Gradle's evaluation order. Variables defined outside buildscript blocks cannot be accessed inside them.
 
 ## Important Notes
 
-- The `rewriteVersion` in **both files MUST match** to avoid API compatibility issues
+- The `rewrite-core` version in **both files MUST match** to avoid API compatibility issues
 - The versions can be overridden via environment variables if needed:
   ```bash
   export REWRITE_VERSION=8.70.0

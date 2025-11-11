@@ -31,8 +31,7 @@
 
 // Version configuration - UPDATE THIS when bumping OpenRewrite versions
 // MUST match the version pinned in 01-setup-generator.sh
-val rewriteVersion = "8.64.0"
-
+// Note: This must be hardcoded in buildscript block due to Gradle evaluation order
 buildscript {
     repositories {
         mavenCentral()
@@ -40,7 +39,8 @@ buildscript {
     dependencies {
         // OpenRewrite core for Environment and RecipeDescriptor
         // IMPORTANT: Version must match what's pinned in the generator's build.gradle.kts
-        classpath("org.openrewrite:rewrite-core:$rewriteVersion")
+        // UPDATE THIS VERSION when bumping OpenRewrite: currently 8.64.0
+        classpath("org.openrewrite:rewrite-core:8.64.0")
         // Jackson for JSON serialization
         classpath("com.fasterxml.jackson.core:jackson-databind:2.18.0")
     }
