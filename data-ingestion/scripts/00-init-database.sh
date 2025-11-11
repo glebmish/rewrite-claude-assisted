@@ -1,34 +1,14 @@
 #!/usr/bin/env bash
-set -euo pipefail
 
 # Script: 00-init-database.sh
 # Purpose: Initialize PostgreSQL database and apply schema
 
-SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
-PROJECT_DIR="$SCRIPT_DIR/.."
+# Load common utilities
+COMMON_LIB="$(dirname "${BASH_SOURCE[0]}")/common.sh"
+source "$COMMON_LIB"
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
-log_info() {
-    echo -e "${BLUE}ℹ${NC}  $1"
-}
-
-log_success() {
-    echo -e "${GREEN}✓${NC}  $1"
-}
-
-log_error() {
-    echo -e "${RED}✗${NC}  $1"
-}
-
-log_warning() {
-    echo -e "${YELLOW}⚠${NC}  $1"
-}
+# Initialize script environment
+init_script
 
 # Parse command line arguments
 RESET_DB=false
@@ -47,27 +27,13 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Load environment variables
-if [ -f "$PROJECT_DIR/.env" ]; then
-    set -a
-    source "$PROJECT_DIR/.env"
-    set +a
-fi
-
-# Database configuration with defaults
-DB_HOST="${DB_HOST:-localhost}"
-DB_PORT="${DB_PORT:-5432}"
-DB_NAME="${DB_NAME:-openrewrite_recipes}"
-DB_USER="${DB_USER:-mcp_user}"
-DB_PASSWORD="${DB_PASSWORD:-changeme}"
-POSTGRES_CONTAINER_NAME="${POSTGRES_CONTAINER_NAME:-openrewrite-postgres}"
+# Setup database configuration
+setup_database_config
 
 # Schema files location
 SCHEMA_DIR="$PROJECT_DIR/db-init"
 
-echo "========================================="
-echo "Stage 0: Initialize Database"
-echo "========================================="
+print_stage_header "Stage 0: Initialize Database"
 
 # Verify schema directory exists
 if [ ! -d "$SCHEMA_DIR" ]; then
@@ -181,12 +147,7 @@ else
     exit 1
 fi
 
-echo ""
-echo "========================================="
-echo "✓ Stage 0 Complete"
-echo "========================================="
 log_success "Database initialized successfully"
 log_info "Database is ready for data ingestion"
-echo ""
-echo "Next step: Run 01-setup-generator.sh"
-echo ""
+
+print_stage_footer "0" "01-setup-generator.sh"

@@ -1,34 +1,14 @@
 #!/usr/bin/env bash
-set -euo pipefail
 
 # Script: run-full-pipeline.sh
 # Purpose: Orchestrate the complete data ingestion pipeline
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+# Load common utilities
+COMMON_LIB="$(dirname "${BASH_SOURCE[0]}")/common.sh"
+source "$COMMON_LIB"
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
-log_info() {
-    echo -e "${BLUE}ℹ${NC}  $1"
-}
-
-log_success() {
-    echo -e "${GREEN}✓${NC}  $1"
-}
-
-log_error() {
-    echo -e "${RED}✗${NC}  $1"
-}
-
-log_warning() {
-    echo -e "${YELLOW}⚠${NC}  $1"
-}
+# Initialize script environment
+init_script
 
 # Check if .env exists, if not copy from .env.example
 if [ ! -f "$PROJECT_DIR/.env" ]; then
@@ -36,16 +16,13 @@ if [ ! -f "$PROJECT_DIR/.env" ]; then
         log_info "Creating .env from .env.example"
         cp "$PROJECT_DIR/.env.example" "$PROJECT_DIR/.env"
         log_success ".env created - you may want to review and customize it"
+        # Reload environment variables
+        set -a
+        source "$PROJECT_DIR/.env"
+        set +a
     else
         log_warning "No .env file found, using defaults"
     fi
-fi
-
-# Load environment variables
-if [ -f "$PROJECT_DIR/.env" ]; then
-    set -a
-    source "$PROJECT_DIR/.env"
-    set +a
 fi
 
 echo ""
