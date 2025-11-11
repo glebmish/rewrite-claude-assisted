@@ -103,6 +103,27 @@ chmod 600 /root/.ssh/id_rsa
 ssh-keyscan github.com >> /root/.ssh/known_hosts
 log "SSH key configured successfully"
 
+# Setup MCP server environment
+log "Setting up MCP server environment"
+MCP_DIR="/workspace/mcp-server"
+if [[ -d "$MCP_DIR" ]]; then
+    # Create symlink to pre-installed venv if it doesn't exist
+    if [[ ! -d "$MCP_DIR/venv" ]] && [[ -d "/opt/mcp-venv" ]]; then
+        log "Creating symlink to pre-installed MCP venv"
+        ln -s /opt/mcp-venv "$MCP_DIR/venv"
+    fi
+
+    # Make scripts executable
+    chmod +x "$MCP_DIR/scripts"/*.sh 2>/dev/null || true
+
+    # Pre-pull PostgreSQL image to avoid delay on first MCP call
+    log "Pre-pulling PostgreSQL image for MCP server (this may take a minute)..."
+    docker pull bboygleb/openrewrite-recipes-db:latest 2>&1 | grep -E "(Pulling|Downloaded|Status:|Digest:)" || true
+    log "MCP PostgreSQL image ready"
+else
+    log "Warning: MCP server directory not found at $MCP_DIR"
+fi
+
 # Source shared settings parser
 source "$(dirname "$0")/parse-settings.sh"
 
