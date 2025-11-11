@@ -14,6 +14,11 @@ if [ -f "$PROJECT_DIR/.env" ]; then
     set +a
 fi
 
+# Version configuration - UPDATE THESE when bumping OpenRewrite versions
+REWRITE_VERSION="${REWRITE_VERSION:-8.64.0}"
+MODERNE_BOM_VERSION="${MODERNE_BOM_VERSION:-0.21.0}"
+SPRING_QUARKUS_VERSION="${SPRING_QUARKUS_VERSION:-0.2.0}"
+
 # Configuration with defaults
 GENERATOR_REPO_URL="${GENERATOR_REPO_URL:-https://github.com/openrewrite/rewrite-recipe-markdown-generator.git}"
 GENERATOR_WORKSPACE="${GENERATOR_WORKSPACE:-$PROJECT_DIR/workspace}"
@@ -95,24 +100,24 @@ fi
 
 # Pin rewriteVersion to stable version for reproducibility
 if grep -q 'val rewriteVersion = "latest.release"' "$BUILD_FILE"; then
-    sed -i 's/val rewriteVersion = "latest.release"/val rewriteVersion = "8.64.0"/' "$BUILD_FILE"
-    echo "✓ Pinned rewriteVersion to 8.64.0"
+    sed -i "s/val rewriteVersion = \"latest.release\"/val rewriteVersion = \"$REWRITE_VERSION\"/" "$BUILD_FILE"
+    echo "✓ Pinned rewriteVersion to $REWRITE_VERSION"
 else
     echo "  Note: rewriteVersion already modified or not found"
 fi
 
 # Pin moderne-recipe-bom version for reproducibility
 if grep -q '"io.moderne.recipe:moderne-recipe-bom:$rewriteVersion"' "$BUILD_FILE"; then
-    sed -i 's/"io.moderne.recipe:moderne-recipe-bom:$rewriteVersion"/"io.moderne.recipe:moderne-recipe-bom:0.21.0"/' "$BUILD_FILE"
-    echo "✓ Pinned moderne-recipe-bom to 0.21.0"
+    sed -i "s/\"io.moderne.recipe:moderne-recipe-bom:\$rewriteVersion\"/\"io.moderne.recipe:moderne-recipe-bom:$MODERNE_BOM_VERSION\"/" "$BUILD_FILE"
+    echo "✓ Pinned moderne-recipe-bom to $MODERNE_BOM_VERSION"
 else
     echo "  Note: moderne-recipe-bom already modified or not found"
 fi
 
 # Pin rewrite-spring-to-quarkus version for reproducibility
 if grep -q '"org.openrewrite.recipe:rewrite-spring-to-quarkus:$rewriteVersion"' "$BUILD_FILE"; then
-    sed -i 's/"org.openrewrite.recipe:rewrite-spring-to-quarkus:$rewriteVersion"/"org.openrewrite.recipe:rewrite-spring-to-quarkus:0.2.0"/' "$BUILD_FILE"
-    echo "✓ Pinned rewrite-spring-to-quarkus to 0.2.0"
+    sed -i "s/\"org.openrewrite.recipe:rewrite-spring-to-quarkus:\$rewriteVersion\"/\"org.openrewrite.recipe:rewrite-spring-to-quarkus:$SPRING_QUARKUS_VERSION\"/" "$BUILD_FILE"
+    echo "✓ Pinned rewrite-spring-to-quarkus to $SPRING_QUARKUS_VERSION"
 else
     echo "  Note: rewrite-spring-to-quarkus already modified or not found"
 fi

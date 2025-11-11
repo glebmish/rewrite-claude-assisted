@@ -10,7 +10,7 @@ set -euo pipefail
 # 2. Creates isolated URLClassLoader with all JARs from 'recipe' configuration
 # 3. Uses Environment.scanJar() to discover recipes from each first-level JAR
 # 4. Custom task extracts detailed metadata (name, description, options, etc.)
-# 5. Discovers ALL ~4942 recipes without classloader conflicts
+# 5. Discovers all available recipes without classloader conflicts
 #
 # KEY INSIGHTS:
 # - Follows rewrite-recipe-markdown-generator's official approach
@@ -115,7 +115,5 @@ echo "========================================="
 echo "Metadata file: $METADATA_FILE"
 echo "Recipe count: $RECIPE_COUNT"
 echo "File size: $(du -sh "$METADATA_FILE" | cut -f1)"
-echo ""
-echo "This should be ~4942 recipes (all available recipes)"
 echo ""
 echo "Next step: Run 03-ingest-docs.py"

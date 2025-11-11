@@ -29,15 +29,18 @@
  * The task reads from "recipe" configuration and outputs JSON to build/recipe-metadata.json
  */
 
+// Version configuration - UPDATE THIS when bumping OpenRewrite versions
+// MUST match the version pinned in 01-setup-generator.sh
+val rewriteVersion = "8.64.0"
+
 buildscript {
     repositories {
         mavenCentral()
     }
     dependencies {
         // OpenRewrite core for Environment and RecipeDescriptor
-        // IMPORTANT: Must match the version used by the markdown generator (8.64.0)
-        // Version mismatch causes recipe validation errors
-        classpath("org.openrewrite:rewrite-core:8.64.0")
+        // IMPORTANT: Version must match what's pinned in the generator's build.gradle.kts
+        classpath("org.openrewrite:rewrite-core:$rewriteVersion")
         // Jackson for JSON serialization
         classpath("com.fasterxml.jackson.core:jackson-databind:2.18.0")
     }
