@@ -99,7 +99,7 @@ if [ ! -f "$METADATA_FILE" ]; then
 fi
 
 # Count recipes in JSON
-RECIPE_COUNT=$(grep -c '"name"' "$METADATA_FILE" 2>/dev/null || echo "0")
+RECIPE_COUNT=$(jq '. | length' "$METADATA_FILE" 2>/dev/null || echo "0")
 
 if [ "$RECIPE_COUNT" -eq 0 ]; then
     echo "✗ Error: No recipes found in metadata file"
