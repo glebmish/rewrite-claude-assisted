@@ -84,12 +84,35 @@ RETRY_COUNT=0
 
 while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
     if docker-compose exec -T postgres pg_isready -U "$DB_USER" -d "$DB_NAME" < /dev/null 2>/dev/null; then
-        echo "✅ Database is ready!" >&2
+        echo "✅ PostgreSQL is accepting connections" >&2
         break
     fi
     RETRY_COUNT=$((RETRY_COUNT + 1))
     if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
         echo "Error: Database failed to start after ${MAX_RETRIES} seconds" >&2
+        docker-compose logs postgres < /dev/null >&2
+        exit 1
+    fi
+    sleep 1
+done
+
+# Wait for initialization scripts to complete
+# The database might be accepting connections but init scripts may still be running
+echo "Waiting for database initialization to complete..." >&2
+MAX_INIT_RETRIES=60
+INIT_RETRY_COUNT=0
+
+while [ $INIT_RETRY_COUNT -lt $MAX_INIT_RETRIES ]; do
+    # Check if the recipes table exists (means init scripts completed)
+    if docker-compose exec -T postgres psql -U "$DB_USER" -d "$DB_NAME" -tAc \
+        "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'recipes');" < /dev/null 2>/dev/null | grep -q "t"; then
+        echo "✅ Database initialization complete!" >&2
+        break
+    fi
+    INIT_RETRY_COUNT=$((INIT_RETRY_COUNT + 1))
+    if [ $INIT_RETRY_COUNT -eq $MAX_INIT_RETRIES ]; then
+        echo "Error: Database initialization failed after ${MAX_INIT_RETRIES} seconds" >&2
+        echo "Container logs:" >&2
         docker-compose logs postgres < /dev/null >&2
         exit 1
     fi
@@ -121,6 +144,7 @@ async def test():
 
 asyncio.run(test())
 " < /dev/null; then
+  docker-compose logs
     echo "Error: Cannot connect to database" >&2
     exit 1
 fi
