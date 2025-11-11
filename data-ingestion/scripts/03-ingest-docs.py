@@ -263,7 +263,7 @@ async def ingest_recipes():
                 log(f"  ... and {len(errors) - 10} more", force=True)
 
         log(f"", force=True)
-        log(f"Next step: Run 04-create-image.sh", force=True)
+        log(f"Next step: Run 03b-generate-embeddings.py", force=True)
 
     finally:
         await conn.close()
