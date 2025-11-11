@@ -12,10 +12,10 @@
  *
  * KEY DIFFERENCES FROM OLD IMPLEMENTATION:
  * ========================================
- * OLD: Used reflection to hack into rewrite-gradle-plugin's internal classloader
+ * OLD: Used reflection to access rewrite-gradle-plugin's internal classloader
  * NEW: Creates our own isolated classloader and uses public Environment API
  *
- * This matches how the markdown generator works (see RecipeLoader.kt in that repo)
+ * This matches the markdown generator approach (see RecipeLoader.kt in that repo)
  *
  * DEPENDENCIES:
  * =============
