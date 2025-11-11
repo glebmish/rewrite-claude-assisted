@@ -4,7 +4,7 @@ set -euo pipefail
 # Script: 01-setup-generator.sh
 # Purpose: Clone and set up the rewrite-recipe-markdown-generator repository
 
-SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$SCRIPT_DIR/.."
 
 # Load environment variables
@@ -112,12 +112,42 @@ fi
 # Pin rewrite-spring-to-quarkus version for reproducibility
 if grep -q '"org.openrewrite.recipe:rewrite-spring-to-quarkus:$rewriteVersion"' "$BUILD_FILE"; then
     sed -i 's/"org.openrewrite.recipe:rewrite-spring-to-quarkus:$rewriteVersion"/"org.openrewrite.recipe:rewrite-spring-to-quarkus:0.2.0"/' "$BUILD_FILE"
-    echo "✓ rewrite-spring-to-quarkus to 0.2.0"
+    echo "✓ Pinned rewrite-spring-to-quarkus to 0.2.0"
 else
     echo "  Note: rewrite-spring-to-quarkus already modified or not found"
 fi
 
-echo "✓ Build configuration workarounds applied"
+# Apply rewrite-gradle-plugin for proper classloader isolation
+echo ""
+echo "→ Configuring rewrite-gradle-plugin for metadata extraction..."
+
+# Add plugin to plugins block (idempotent)
+if ! grep -q 'id("org.openrewrite.rewrite")' "$BUILD_FILE"; then
+    sed -i '/id("org.owasp.dependencycheck")/a\    id("org.openrewrite.rewrite") version "6.28.2"' "$BUILD_FILE"
+    echo "✓ Added rewrite-gradle-plugin to plugins"
+else
+    echo "  Note: rewrite-gradle-plugin already configured"
+fi
+
+# Add configuration after dependencies block (idempotent - add only once at end of file)
+if ! grep -q 'configurations.getByName("rewrite").extendsFrom' "$BUILD_FILE"; then
+    cat >> "$BUILD_FILE" << 'EOF'
+
+// Configure rewrite plugin to use all recipe dependencies
+afterEvaluate {
+    configurations.getByName("rewrite").extendsFrom(configurations.getByName("recipe"))
+}
+
+// Apply custom metadata extraction task
+apply(from = "../../scripts/extract-recipe-metadata.gradle.kts")
+EOF
+    echo "✓ Configured rewrite to use recipe dependencies"
+    echo "✓ Applied custom metadata extraction task"
+else
+    echo "  Note: rewrite configuration already set up"
+fi
+
+echo "✓ Build configuration workarounds and plugin setup complete"
 
 echo ""
 echo "========================================="

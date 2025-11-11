@@ -209,6 +209,21 @@ async def process_recipes(metadata_list: List[Dict], model: SentenceTransformer)
 
     try:
         log(f"✓ Connected to database", force=True)
+
+        # Verify pgvector extension is installed
+        log(f"→ Verifying pgvector extension...", force=True)
+        try:
+            vector_version = await conn.fetchval("SELECT extversion FROM pg_extension WHERE extname = 'vector'")
+            if vector_version:
+                log(f"✓ pgvector extension installed (version: {vector_version})", force=True)
+            else:
+                log(f"✗ ERROR: pgvector extension not found!", force=True)
+                log(f"  Run 00-init-database.sh to initialize the database with pgvector", force=True)
+                return
+        except Exception as e:
+            log(f"✗ ERROR checking pgvector extension: {e}", force=True)
+            return
+
         log("", force=True)
 
         # Statistics
@@ -237,7 +252,11 @@ async def process_recipes(metadata_list: List[Dict], model: SentenceTransformer)
                         continue
 
                     # Store metadata
-                    await upsert_recipe_metadata(conn, recipe_id, metadata)
+                    try:
+                        await upsert_recipe_metadata(conn, recipe_id, metadata)
+                    except Exception as e:
+                        log(f"  ✗ Error storing metadata for {recipe_name}: {e}", force=True)
+                        raise
 
                     # Create embedding text
                     embedding_text = create_embedding_text(metadata)
@@ -245,19 +264,30 @@ async def process_recipes(metadata_list: List[Dict], model: SentenceTransformer)
                     # Generate embedding
                     embedding = model.encode(embedding_text, show_progress_bar=False)
 
-                    # Store embedding
-                    await upsert_recipe_embedding(
-                        conn,
-                        recipe_id,
-                        embedding.tolist(),
-                        EMBEDDING_MODEL
-                    )
+                    # Verify embedding dimension matches expected dimension
+                    if len(embedding) != EMBEDDING_DIMENSION:
+                        raise ValueError(f"Embedding dimension mismatch: expected {EMBEDDING_DIMENSION}, got {len(embedding)}")
+
+                    # Store embedding with better error handling
+                    try:
+                        await upsert_recipe_embedding(
+                            conn,
+                            recipe_id,
+                            embedding.tolist(),
+                            EMBEDDING_MODEL
+                        )
+                        log(f"  ✓ Stored embedding for: {recipe_name}", force=VERBOSE)
+                    except Exception as e:
+                        log(f"  ✗ Error storing embedding for {recipe_name}: {type(e).__name__}: {e}", force=True)
+                        raise
 
                     processed += 1
                     log(f"  ✓ Processed: {recipe_name}", force=VERBOSE)
 
                 except Exception as e:
-                    log(f"  ✗ Error processing {recipe_name}: {e}", force=True)
+                    log(f"  ✗ Error processing {recipe_name}: {type(e).__name__}: {e}", force=True)
+                    import traceback
+                    log(f"  Traceback: {traceback.format_exc()}", force=VERBOSE)
                     errors += 1
 
                 pbar.update(1)
@@ -270,6 +300,22 @@ async def process_recipes(metadata_list: List[Dict], model: SentenceTransformer)
         log(f"Skipped (not in DB): {skipped}", force=True)
         log(f"Errors: {errors}", force=True)
         log(f"Total: {len(metadata_list)}", force=True)
+
+        # Verify embeddings were inserted
+        log("", force=True)
+        log("→ Verifying embeddings in database...", force=True)
+        try:
+            embedding_count = await conn.fetchval(
+                "SELECT COUNT(*) FROM recipe_embeddings WHERE embedding_model = $1",
+                EMBEDDING_MODEL
+            )
+            log(f"✓ Embeddings in database for model '{EMBEDDING_MODEL}': {embedding_count}", force=True)
+
+            if embedding_count == 0 and processed > 0:
+                log(f"⚠ WARNING: Processed {processed} recipes but no embeddings found in database!", force=True)
+                log(f"  This suggests embeddings are not being inserted properly.", force=True)
+        except Exception as e:
+            log(f"✗ Error verifying embeddings: {e}", force=True)
 
     finally:
         await conn.close()
@@ -310,6 +356,8 @@ async def main():
 
     log("", force=True)
     log("✓ Stage 3b Complete", force=True)
+    log("", force=True)
+    log("Next step: Run 04-create-image.sh", force=True)
     log("", force=True)
 
 

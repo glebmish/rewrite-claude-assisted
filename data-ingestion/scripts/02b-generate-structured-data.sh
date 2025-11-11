@@ -2,9 +2,22 @@
 set -euo pipefail
 
 # Script: 02b-generate-structured-data.sh
-# Purpose: Generate structured recipe metadata JSON for embedding generation
+# Purpose: Generate structured recipe metadata JSON for embedding generation using rewrite-gradle-plugin
+#
+# HOW IT WORKS:
+# =============
+# 1. Uses rewrite-gradle-plugin for proper classloader isolation
+# 2. Plugin is configured to use all dependencies from 'recipe' configuration
+# 3. Custom task extracts detailed metadata (name, description, options, etc.)
+# 4. Discovers ALL ~4939 recipes without classloader conflicts
+#
+# KEY INSIGHTS:
+# - rewrite-gradle-plugin uses reflection-based classloader isolation
+# - All Recipe classes loaded in isolated RewriteClassLoader
+# - No conflicts between plugin and project dependencies
+# - Guaranteed to find all recipes in the classpath
 
-SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
+SCRIPT_DIR="$(pwd)/$(dirname "${BASH_SOURCE[0]}")"
 PROJECT_DIR="$SCRIPT_DIR/.."
 
 # Load environment variables
@@ -37,33 +50,46 @@ cd "$GENERATOR_DIR"
 # Export JAVA_HOME for gradle
 export JAVA_HOME
 
-echo "→ Extracting recipe metadata..."
+echo "→ Extracting recipe metadata using rewrite-gradle-plugin..."
+echo "  Plugin: org.openrewrite.rewrite v6.28.2"
+echo "  Configuration: recipe (all OpenRewrite modules)"
 echo "  Output file: $METADATA_FILE"
 echo ""
 
 # Ensure output directory exists
 mkdir -p "$OUTPUT_DIR"
 
-# Path to the init script
-INIT_SCRIPT="$SCRIPT_DIR/extract-recipe-metadata.gradle.kts"
-
-if [ ! -f "$INIT_SCRIPT" ]; then
-    echo "✗ Error: Init script not found: $INIT_SCRIPT"
-    exit 1
-fi
-
-# Run gradle with the init script
-if ./gradlew --init-script "$INIT_SCRIPT" extractRecipeMetadata \
-    -PoutputFile="$METADATA_FILE" \
+# Run the extractRecipeMetadata task
+# This task uses the rewrite-gradle-plugin's infrastructure for proper classloading
+echo "→ Running extractRecipeMetadata task..."
+if ./gradlew extractRecipeMetadata \
     --no-daemon \
     --console=plain; then
     echo ""
-    echo "✓ Structured data generation completed successfully"
+    echo "✓ Recipe metadata extraction completed successfully"
 else
     echo ""
-    echo "✗ Error: Structured data generation failed"
+    echo "✗ Error: Recipe metadata extraction failed"
     echo "  Check the output above for errors"
     exit 1
+fi
+
+# Copy output from build directory to expected location
+PLUGIN_OUTPUT="build/recipe-metadata.json"
+if [ ! -f "$PLUGIN_OUTPUT" ]; then
+    echo "✗ Error: Plugin output file not found: $PLUGIN_OUTPUT"
+    exit 1
+fi
+
+# If output dir is different from build/, copy the file
+if [ "$OUTPUT_DIR" != "build/docs" ]; then
+    echo "→ Copying output to: $METADATA_FILE"
+    cp "$PLUGIN_OUTPUT" "$METADATA_FILE"
+else
+    # Just ensure it's in the right place
+    if [ "$PLUGIN_OUTPUT" != "$METADATA_FILE" ]; then
+        cp "$PLUGIN_OUTPUT" "$METADATA_FILE"
+    fi
 fi
 
 # Verify output
@@ -73,7 +99,7 @@ if [ ! -f "$METADATA_FILE" ]; then
 fi
 
 # Count recipes in JSON
-RECIPE_COUNT=$(grep -c '"name"' "$METADATA_FILE" || echo "0")
+RECIPE_COUNT=$(jq '. | length' "$METADATA_FILE" 2>/dev/null || echo "0")
 
 if [ "$RECIPE_COUNT" -eq 0 ]; then
     echo "✗ Error: No recipes found in metadata file"
@@ -88,4 +114,6 @@ echo "Metadata file: $METADATA_FILE"
 echo "Recipe count: $RECIPE_COUNT"
 echo "File size: $(du -sh "$METADATA_FILE" | cut -f1)"
 echo ""
-echo "Next step: Run 03b-generate-embeddings.py"
+echo "This should be ~4939 recipes (all available recipes)"
+echo ""
+echo "Next step: Run 03-ingest-docs.py"
