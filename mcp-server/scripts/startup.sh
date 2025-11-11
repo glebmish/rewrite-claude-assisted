@@ -144,6 +144,7 @@ async def test():
 
 asyncio.run(test())
 " < /dev/null; then
+  docker-compose logs
     echo "Error: Cannot connect to database" >&2
     exit 1
 fi
