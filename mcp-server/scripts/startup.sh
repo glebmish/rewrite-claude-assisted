@@ -31,10 +31,10 @@ DB_PASSWORD="${DB_PASSWORD}"
 export DB_IMAGE_NAME DB_IMAGE_TAG
 export DB_HOST DB_PORT DB_NAME DB_USER DB_PASSWORD
 
-# Cleanup function to stop Docker container
+# Cleanup function to stop Docker container (only for local mode)
 cleanup() {
     echo "Shutting down MCP server..." >&2
-    if command -v docker-compose &> /dev/null; then
+    if [[ "$USE_EXTERNAL_DB" != "true" ]] && command -v docker-compose &> /dev/null; then
         echo "Stopping PostgreSQL container..." >&2
         docker-compose down >&2 2>&1 || true
     fi
@@ -51,34 +51,43 @@ if [ ! -d "venv" ]; then
     exit 1
 fi
 
-# Check if Docker is available
-if ! command -v docker &> /dev/null; then
-    echo "Error: Docker not found. Please install Docker." >&2
-    exit 1
+# Check if using external database (GitHub Actions mode)
+if [[ "$USE_EXTERNAL_DB" == "true" ]]; then
+    echo "Using external PostgreSQL database at $DB_HOST:$DB_PORT" >&2
+    echo "Skipping docker-compose (external database mode)" >&2
+else
+    # Local mode: Start PostgreSQL via docker-compose
+    echo "Using local docker-compose mode" >&2
+
+    # Check if Docker is available
+    if ! command -v docker &> /dev/null; then
+        echo "Error: Docker not found. Please install Docker." >&2
+        exit 1
+    fi
+
+    if ! command -v docker-compose &> /dev/null; then
+        echo "Error: docker-compose not found. Please install docker-compose." >&2
+        exit 1
+    fi
+
+    # Check if required image exists
+    FULL_IMAGE="${DB_IMAGE_REGISTRY:+${DB_IMAGE_REGISTRY}/}${DB_IMAGE_NAME}:${DB_IMAGE_TAG}"
+    if ! docker image inspect "$FULL_IMAGE" &> /dev/null; then
+        echo "Error: Database image not found: $FULL_IMAGE" >&2
+        echo "Please run the setup script first: ./scripts/setup.sh" >&2
+        exit 1
+    fi
+
+    echo "Using database image: $FULL_IMAGE" >&2
+
+    # Start PostgreSQL container
+    echo "Starting PostgreSQL container..." >&2
+    docker-compose up -d postgres < /dev/null
 fi
 
-if ! command -v docker-compose &> /dev/null; then
-    echo "Error: docker-compose not found. Please install docker-compose." >&2
-    exit 1
-fi
-
-# Check if required image exists
-FULL_IMAGE="${DB_IMAGE_NAME}:${DB_IMAGE_TAG}"
-if ! docker image inspect "$FULL_IMAGE" &> /dev/null; then
-    echo "Error: Database image not found: $FULL_IMAGE" >&2
-    echo "Please run the setup script first: ./scripts/setup.sh" >&2
-    exit 1
-fi
-
-echo "Using database image: $FULL_IMAGE" >&2
-
-# Start PostgreSQL container
-echo "Starting PostgreSQL container..." >&2
-docker-compose up -d postgres < /dev/null
-
-# Wait for database to be ready
+# Wait for database to be ready (works for both local and external mode)
 echo "Waiting for database to be ready..." >&2
-MAX_RETRIES=30
+MAX_RETRIES=60
 RETRY_COUNT=0
 
 while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do

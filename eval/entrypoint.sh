@@ -116,10 +116,32 @@ if [[ -d "$MCP_DIR" ]]; then
     # Make scripts executable
     chmod +x "$MCP_DIR/scripts"/*.sh 2>/dev/null || true
 
-    # Pre-pull PostgreSQL image to avoid delay on first MCP call
-    log "Pre-pulling PostgreSQL image for MCP server (this may take a minute)..."
-    docker pull bboygleb/openrewrite-recipes-db:latest 2>&1 | grep -E "(Pulling|Downloaded|Status:|Digest:)" || true
-    log "MCP PostgreSQL image ready"
+    # Configure MCP database connection
+    if [[ "${MCP_USE_EXTERNAL_DB:-false}" == "true" ]]; then
+        log "Using external PostgreSQL service (GitHub Actions mode)"
+        log "Database host: ${MCP_DB_HOST:-postgres}"
+
+        # Create .env file for MCP server with external database config
+        cat > "$MCP_DIR/.env" << EOF
+DB_HOST=${MCP_DB_HOST:-postgres}
+DB_PORT=${MCP_DB_PORT:-5432}
+DB_NAME=${MCP_DB_NAME:-openrewrite_recipes}
+DB_USER=${MCP_DB_USER:-mcp_user}
+DB_PASSWORD=${MCP_DB_PASSWORD:-changeme}
+USE_EXTERNAL_DB=true
+EOF
+        log "MCP configured to use external PostgreSQL"
+    else
+        log "Using local Docker mode (will start PostgreSQL via docker-compose)"
+        # Pre-pull PostgreSQL image to avoid delay on first MCP call
+        if command -v docker &> /dev/null; then
+            log "Pre-pulling PostgreSQL image for MCP server..."
+            docker pull bboygleb/openrewrite-recipes-db:latest 2>&1 | grep -E "(Pulling|Downloaded|Status:|Digest:)" || true
+            log "MCP PostgreSQL image ready"
+        else
+            log "Warning: Docker not available, assuming PostgreSQL will be started externally"
+        fi
+    fi
 else
     log "Warning: MCP server directory not found at $MCP_DIR"
 fi
