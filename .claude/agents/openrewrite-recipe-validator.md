@@ -42,8 +42,9 @@ IMPORTANT: save this file before doing any validations.
 
 ```bash
 # Save original PR diff for comparison
+# IMPORTANT: Exclude Gradle wrapper files to match result/pr.diff format
 cd <repo-directory>
-git diff <default-branch> pr-<PR_NUMBER> --output=pr-<PR_NUMBER>.diff
+git diff <default-branch> pr-<PR_NUMBER> --output=pr-<PR_NUMBER>.diff -- . ':!gradle/wrapper/gradle-wrapper.jar' ':!gradlew' ':!gradlew.bat'
 git checkout <default-branch>
 ```
 
