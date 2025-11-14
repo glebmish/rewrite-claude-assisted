@@ -36,7 +36,7 @@ NEVER validate recipes concurrently. Shared workspace is used and concurrent val
 Based on the results, choose the final recommended recipe and generate result artifacts.
 
 **Output Directory**: Create `result/` subdirectory in the scratchpad directory. Make sure it is created before any
-attempts to use it for `git diff` or other commands.
+attempts to use it.
 
 **CRITICAL**: The following 3 files MUST be generated in EXACTLY the specified formats. These files are parsed by automated analysis scripts.
 For the recommended recipe, you MUST only use yml and diff files saved to the scratchpad by subagents. If the files are not there,
@@ -62,14 +62,14 @@ git diff <default-branch> <pr-branch> --output=.scratchpad/<yyyy-mm-dd-hh-MM>/re
 - Must be syntactically valid and executable
 
 **3. `.scratchpad/<yyyy-mm-dd-hh-MM>/result/recommended-recipe.diff`** - Recipe output from main branch
-MUST be a result of `git diff` command execution
+MUST be copied from the subagent's validated recipe diff file (e.g., `option-1-recipe.diff`, `recipe-option-2.diff`, etc.)
 ```bash
-cd .workspace/<repo-name>
-git diff <default-branch> <recipe-branch> --output=.scratchpad/<yyyy-mm-dd-hh-MM>/result/recommended-recipe.diff -- . ':!gradle/wrapper/gradle-wrapper.jar' ':!gradlew' ':!gradlew.bat'
+cp .scratchpad/<yyyy-mm-dd-hh-MM>/<subagent-recipe-diff-file> .scratchpad/<yyyy-mm-dd-hh-MM>/result/recommended-recipe.diff
 ```
-- Format: Unified diff format (output of `git diff`)
+- Format: Unified diff format (from OpenRewrite rewrite.patch)
 - Purpose: Result of OpenRewrite recipe execution for empirical validation
-- Note: Excludes generated/binary Gradle wrapper files (gradle-wrapper.jar, gradlew, gradlew.bat)
+- Source: Must be the exact file produced by the validator subagent that validated the chosen recipe
+- **CRITICAL**: Copy the subagent's output file directly. Do NOT generate this with git diff.
 
 **4. other output files**
 **Human-Readable Analysis**: Any comparison summaries, assessments, or detailed analysis should go in:
@@ -108,3 +108,9 @@ git diff <default-branch> <recipe-branch> --output=.scratchpad/<yyyy-mm-dd-hh-MM
 * PR diff saved
 * Recipe yaml and diff files saved for each evaluated recipe
 * Actionable recommendations for recipe deployment or refinement
+* **CRITICAL**: Before reporting success, verify ALL 3 required files exist in result/ directory:
+  - `.scratchpad/<yyyy-mm-dd-hh-MM>/result/pr.diff`
+  - `.scratchpad/<yyyy-mm-dd-hh-MM>/result/recommended-recipe.yaml`
+  - `.scratchpad/<yyyy-mm-dd-hh-MM>/result/recommended-recipe.diff`
+
+  If ANY file is missing, the workflow has FAILED. Do NOT report success.
