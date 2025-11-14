@@ -12,9 +12,31 @@ NEVER UNDER ANY CIRCUMSTANCES use `>` or `>>` redirects for writing files. Prefe
 If such argument is not available, use Write or Edit tools. Example: "Read(input_file) -> Write(input_file)" is GOOD, "Bash(cat input_file > output_file)" is BAD.
 !I REPEAT AND REMEMBER IT AS IF YOU LIFE DEPENDS ON IT: NEVER UNDER ANY CIRCUMSTANCES use `>` or `>>` redirects for writing files!
 
-Be mindful of what pattern you use in Edit tool. If a string like `---\n\n` used to separate parts of document,
-appending to the end of the document by replacing `---\n\n` with a text won't work since there will be multiple
-occurrences of such pattern. Use a unique pattern that signifies "end of document".
+### Using Edit tool
+
+**CRITICAL**: The Edit tool requires the `old_string` to be UNIQUE in the file. If the string appears multiple times, the edit will FAIL.
+
+**Best practices for reliable edits:**
+1. **Use unique strings**: Include enough surrounding context to make the pattern unique
+   - BAD: `---\n\n` (common separator, likely appears multiple times)
+   - GOOD: `### Phase 5\n\nSome unique content\n---\n\n` (includes unique context)
+
+2. **Verify uniqueness**: Before editing, check how many times the pattern appears:
+   ```bash
+   grep -c "pattern" file.md
+   ```
+   If count > 1, expand the pattern to include more unique context.
+
+3. **Use structural markers**: For appending to end of file, use unique end-of-file markers:
+   - Look for unique last lines (e.g., final section heading, signature, specific content)
+   - Do NOT use generic separators or empty lines
+
+4. **When appending to files**: Find a truly unique string at the end, such as:
+   - Last section with specific content
+   - Unique closing statement
+   - Specific final line that won't be duplicated
+
+5. **If pattern is still ambiguous**: Use Write tool to rewrite the entire file instead of Edit
 
 ### Changing directory
 ALWAYS use full path whenever you use `cd` command.
