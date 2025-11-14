@@ -346,7 +346,7 @@ json_file="$OUTPUT_DIR/suite-results.json"
     first=true
     for run_data in "${all_runs[@]}"; do
 #        IFS='|' read -r run_pr run_pr_url run_num run_status run_dur run_dur_min run_cost run_truth run_extract run_mapping run_valid run_overall run_msg run_tools run_succ_tools run_tool_rate unnecessary_changes missing_changes precision recall f1_score is_perfect_match <<< "$run_data"
-        IFS='|' read -r run_pr_key run_pr run_pr_url run_repo run_num run_status run_dur run_dur_min run_cost run_msg run_tools run_succ_tools run_tool_rate unnecessary_changes missing_changes precision recall f1_score is_perfect_match <<< "$run_data"
+        IFS='|' read -r run_pr_key run_pr run_pr_url run_repo run_commit_hash run_num run_status run_dur run_dur_min run_cost run_msg run_tools run_succ_tools run_tool_rate unnecessary_changes missing_changes precision recall f1_score is_perfect_match <<< "$run_data"
 
         [ "$first" = false ] && echo "    ,"
         first=false

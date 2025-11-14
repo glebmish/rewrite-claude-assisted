@@ -42,13 +42,23 @@ IMPORTANT: save this file before doing any validations.
 
 ```bash
 # Save original PR diff for comparison
+# IMPORTANT: Exclude Gradle wrapper files to match result/pr.diff format
 cd <repo-directory>
-git diff <default-branch> pr-<PR_NUMBER> --output=pr-<PR_NUMBER>.diff
+git diff <default-branch> pr-<PR_NUMBER> --output=pr-<PR_NUMBER>.diff -- . ':!gradle/wrapper/gradle-wrapper.jar' ':!gradlew' ':!gradlew.bat'
 git checkout <default-branch>
 ```
 
 ## Phase 1: Environment Preparation
 Must be repeated for EVERY recipe under test
+
+**CRITICAL**: Clean repository state BEFORE testing each recipe to prevent file collisions:
+```bash
+cd <repo-directory>
+git checkout <default-branch>
+git reset --hard HEAD
+git clean -fd
+rm -f rewrite.yml rewrite.gradle pr-*.diff *.diff 2>/dev/null || true
+```
 
 * Make sure current working directory is the repository directory
 * Make sure current branch is the default repository branch
@@ -131,7 +141,21 @@ When recipes miss changes, identify:
 4. **Semantic gaps**: Changes requiring business logic understanding
 
 ## Phase 5: Clean up
-Delete `rewrite.yml` and `rewrite.gradle` files, and execute `git checkout .` and `git clean -f` to reset the state of the repository
+**CRITICAL**: After validating each recipe, clean the repository completely to prevent file collisions with subsequent validations:
+```bash
+cd <repo-directory>
+git checkout <default-branch>
+git reset --hard HEAD
+git clean -fd
+rm -f rewrite.yml rewrite.gradle pr-*.diff *.diff 2>/dev/null || true
+rm -rf build/ .gradle/ 2>/dev/null || true
+```
+
+This ensures:
+- No leftover recipe files (rewrite.yml, rewrite.gradle)
+- No leftover diff files (pr-*.diff, *.diff)
+- No build artifacts
+- Repository is in pristine state for next validation
 
 ## Response Protocol
 
