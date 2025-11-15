@@ -121,18 +121,28 @@ if [[ -d "$MCP_DIR" ]]; then
         log "Using external PostgreSQL service (GitHub Actions mode)"
         log "Database host: ${MCP_DB_HOST:-postgres}"
 
-        # Create .env file for MCP server with external database config
-        cat > "$MCP_DIR/.env" << EOF
-DB_HOST=${MCP_DB_HOST:-postgres}
-DB_PORT=${MCP_DB_PORT:-5432}
-DB_NAME=${MCP_DB_NAME:-openrewrite_recipes}
-DB_USER=${MCP_DB_USER:-mcp_user}
-DB_PASSWORD=${MCP_DB_PASSWORD:-changeme}
-USE_EXTERNAL_DB=true
-EOF
-        log "MCP configured to use external PostgreSQL"
+        # Copy .env.example and override for external database
+        if [[ -f "$MCP_DIR/.env.example" ]]; then
+            cp "$MCP_DIR/.env.example" "$MCP_DIR/.env"
+            # Override connection settings for external database
+            sed -i "s/^DB_HOST=.*/DB_HOST=${MCP_DB_HOST:-postgres}/" "$MCP_DIR/.env"
+            sed -i "s/^DB_PORT=.*/DB_PORT=${MCP_DB_PORT:-5432}/" "$MCP_DIR/.env"
+            sed -i "s/^DB_NAME=.*/DB_NAME=${MCP_DB_NAME:-openrewrite_recipes}/" "$MCP_DIR/.env"
+            sed -i "s/^DB_USER=.*/DB_USER=${MCP_DB_USER:-mcp_user}/" "$MCP_DIR/.env"
+            sed -i "s/^DB_PASSWORD=.*/DB_PASSWORD=${MCP_DB_PASSWORD:-changeme}/" "$MCP_DIR/.env"
+            # Add external DB flag
+            echo "USE_EXTERNAL_DB=true" >> "$MCP_DIR/.env"
+            log "MCP configured to use external PostgreSQL"
+        else
+            log "Warning: .env.example not found at $MCP_DIR/.env.example"
+        fi
     else
         log "Using local Docker mode (will start PostgreSQL via docker-compose)"
+        # Copy .env.example if .env doesn't exist
+        if [[ ! -f "$MCP_DIR/.env" ]] && [[ -f "$MCP_DIR/.env.example" ]]; then
+            log "Creating .env from .env.example"
+            cp "$MCP_DIR/.env.example" "$MCP_DIR/.env"
+        fi
         # Pre-pull PostgreSQL image to avoid delay on first MCP call
         if command -v docker &> /dev/null; then
             log "Pre-pulling PostgreSQL image for MCP server..."
