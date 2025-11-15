@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 # Script: 02-generate-docs.sh
 # Purpose: Run the gradle task to generate all recipe markdown documentation
@@ -19,7 +20,7 @@ print_stage_header "Stage 2: Generate Recipe Documentation"
 # Verify generator exists
 verify_generator || exit 1
 
-cd "$GENERATOR_DIR"
+cd "$GENERATOR_DIR_FULL"
 
 log_info "Starting documentation generation..."
 log_info "This may take 10-15 minutes on first run (downloads ~1GB of JARs)"
@@ -42,8 +43,8 @@ else
 fi
 
 # Verify output
-OUTPUT_PATH="$GENERATOR_OUTPUT_DIR"
-RECIPES_PATH="$OUTPUT_PATH/recipes"
+GENERATOR_OUTPUT_DIR="$GENERATOR_OUTPUT_DIR"
+RECIPES_PATH="$GENERATOR_OUTPUT_DIR/recipes"
 
 if [ ! -d "$RECIPES_PATH" ]; then
     log_error "Expected output directory not found: $RECIPES_PATH"
@@ -61,6 +62,6 @@ fi
 echo ""
 log_info "Output directory: $RECIPES_PATH"
 log_info "Total markdown files: $RECIPE_COUNT"
-log_info "Disk usage: $(du -sh "$OUTPUT_PATH" | cut -f1)"
+log_info "Disk usage: $(du -sh "$GENERATOR_OUTPUT_DIR" | cut -f1)"
 
 print_stage_footer "2" "02b-generate-structured-data.sh"

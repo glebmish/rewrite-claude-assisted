@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 # Script: 04-create-image.sh
 # Purpose: Create Docker image with pre-loaded recipe data using pg_dump
@@ -18,8 +19,9 @@ init_script
 setup_database_config
 
 # Configuration with defaults
-IMAGE_NAME="${IMAGE_NAME:-bboygleb/openrewrite-recipes-db}"
-IMAGE_TAG="${IMAGE_TAG:-latest}"
+REGISTRY_PUSH=${REGISTRY_PUSH:-false}
+IMAGE_NAME="${IMAGE_NAME}"
+IMAGE_TAG="${IMAGE_TAG}"
 REGISTRY_URL="${REGISTRY_URL:-}"
 
 # Generate date-based tag
@@ -80,9 +82,6 @@ log_success "Build context ready"
 echo ""
 log_info "Building Docker image..."
 if docker build \
-    --build-arg RECIPE_COUNT="$RECIPE_COUNT" \
-    --build-arg BUILD_DATE="$DATE_TAG" \
-    --build-arg DB_SIZE="$DB_SIZE" \
     -t "${IMAGE_NAME}:${DATE_TAG}" \
     -t "${IMAGE_NAME}:${IMAGE_TAG}" \
     "$BUILD_DIR"; then
@@ -94,7 +93,7 @@ else
 fi
 
 # Push to registry if configured
-if [ -n "$REGISTRY_URL" ]; then
+if [[ "$REGISTRY_PUSH" == "true" ]]; then
     echo ""
     log_info "Pushing to registry..."
     if docker push "${IMAGE_NAME}:${DATE_TAG}" && \
@@ -108,7 +107,7 @@ fi
 # Clean up build artifacts
 echo ""
 log_info "Cleaning up build artifacts..."
-#rm -rf "$BUILD_DIR"
+rm -rf "$BUILD_DIR"
 log_success "Cleanup complete"
 
 echo ""

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 # Script: run-full-pipeline.sh
 # Purpose: Orchestrate the complete data ingestion pipeline

@@ -204,8 +204,8 @@ To push images to DockerHub:
 
 ## Workflow Behavior
 
-- **Checks out:** `mcp` branch
-- **Runs:** Complete 5-stage ingestion pipeline
+- **Checks out:** `main` branch
+- **Runs:** Execute ingestion pipeline
 - **Produces:** `bboygleb/openrewrite-recipes-db:latest` and date-tagged images
 - **Uploads:** Pipeline logs as artifacts on failure
 

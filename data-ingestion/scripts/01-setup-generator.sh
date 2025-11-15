@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 # Script: 01-setup-generator.sh
 # Purpose: Clone and set up the rewrite-recipe-markdown-generator repository
@@ -16,7 +17,8 @@ MODERNE_BOM_VERSION="${MODERNE_BOM_VERSION:-0.21.0}"
 SPRING_QUARKUS_VERSION="${SPRING_QUARKUS_VERSION:-0.2.0}"
 
 # Configuration with defaults
-GENERATOR_REPO_URL="${GENERATOR_REPO_URL:-https://github.com/openrewrite/rewrite-recipe-markdown-generator.git}"
+GENERATOR_REPO_URL="https://github.com/openrewrite/rewrite-recipe-markdown-generator.git"
+GENERATOR_REPO_COMMIT="171ed7c4"
 
 # Setup paths and Java
 setup_generator_paths
@@ -27,8 +29,6 @@ print_stage_header "Stage 1: Setup Generator Repository"
 # Create workspace directory
 mkdir -p "$GENERATOR_WORKSPACE"
 cd "$GENERATOR_WORKSPACE"
-
-GENERATOR_DIR="rewrite-recipe-markdown-generator"
 
 # Check if generator already exists
 if [ -d "$GENERATOR_DIR" ]; then
@@ -41,11 +41,11 @@ else
 
     # Checkout to specific commit for reproducibility
     echo ""
-    log_info "Checking out to commit 171ed7c4 for stable version..."
+    log_info "Checking out to commit ${GENERATOR_REPO_COMMIT} for stable version..."
     cd "$GENERATOR_DIR"
-    git checkout 171ed7c4
+    git checkout ${GENERATOR_REPO_COMMIT}
     cd -
-    log_success "Checked out to commit 171ed7c4"
+    log_success "Checked out to commit ${GENERATOR_REPO_COMMIT}"
 fi
 cd "$GENERATOR_DIR"
 
@@ -117,7 +117,7 @@ fi
 log_success "Build configuration workarounds complete"
 
 echo ""
-log_info "Generator location: $GENERATOR_DIR"
+log_info "Generator location: $GENERATOR_DIR_FULL"
 log_info "Java version: $("$JAVA_HOME/bin/java" -version 2>&1 | head -n 1)"
 echo ""
 log_info "NOTE: This setup NO LONGER uses rewrite-gradle-plugin"
