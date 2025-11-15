@@ -103,6 +103,59 @@ chmod 600 /root/.ssh/id_rsa
 ssh-keyscan github.com >> /root/.ssh/known_hosts
 log "SSH key configured successfully"
 
+# Setup MCP server environment
+log "Setting up MCP server environment"
+MCP_DIR="/workspace/mcp-server"
+if [[ -d "$MCP_DIR" ]]; then
+    # Create symlink to pre-installed venv if it doesn't exist
+    if [[ ! -d "$MCP_DIR/venv" ]] && [[ -d "/opt/mcp-venv" ]]; then
+        log "Creating symlink to pre-installed MCP venv"
+        ln -s /opt/mcp-venv "$MCP_DIR/venv"
+    fi
+
+    # Make scripts executable
+    chmod +x "$MCP_DIR/scripts"/*.sh 2>/dev/null || true
+
+    # Configure MCP database connection
+    if [[ "${MCP_USE_EXTERNAL_DB:-false}" == "true" ]]; then
+        log "Using external PostgreSQL service (GitHub Actions mode)"
+        log "Database host: ${MCP_DB_HOST:-postgres}"
+
+        # Copy .env.example and override for external database
+        if [[ -f "$MCP_DIR/.env.example" ]]; then
+            cp "$MCP_DIR/.env.example" "$MCP_DIR/.env"
+            # Override connection settings for external database
+            sed -i "s/^DB_HOST=.*/DB_HOST=${MCP_DB_HOST:-postgres}/" "$MCP_DIR/.env"
+            sed -i "s/^DB_PORT=.*/DB_PORT=${MCP_DB_PORT:-5432}/" "$MCP_DIR/.env"
+            sed -i "s/^DB_NAME=.*/DB_NAME=${MCP_DB_NAME:-openrewrite_recipes}/" "$MCP_DIR/.env"
+            sed -i "s/^DB_USER=.*/DB_USER=${MCP_DB_USER:-mcp_user}/" "$MCP_DIR/.env"
+            sed -i "s/^DB_PASSWORD=.*/DB_PASSWORD=${MCP_DB_PASSWORD:-changeme}/" "$MCP_DIR/.env"
+            # Add external DB flag
+            echo "USE_EXTERNAL_DB=true" >> "$MCP_DIR/.env"
+            log "MCP configured to use external PostgreSQL"
+        else
+            log "Warning: .env.example not found at $MCP_DIR/.env.example"
+        fi
+    else
+        log "Using local Docker mode (will start PostgreSQL via docker-compose)"
+        # Copy .env.example if .env doesn't exist
+        if [[ ! -f "$MCP_DIR/.env" ]] && [[ -f "$MCP_DIR/.env.example" ]]; then
+            log "Creating .env from .env.example"
+            cp "$MCP_DIR/.env.example" "$MCP_DIR/.env"
+        fi
+        # Pre-pull PostgreSQL image to avoid delay on first MCP call
+        if command -v docker &> /dev/null; then
+            log "Pre-pulling PostgreSQL image for MCP server..."
+            docker pull bboygleb/openrewrite-recipes-db:latest 2>&1 | grep -E "(Pulling|Downloaded|Status:|Digest:)" || true
+            log "MCP PostgreSQL image ready"
+        else
+            log "Warning: Docker not available, assuming PostgreSQL will be started externally"
+        fi
+    fi
+else
+    log "Warning: MCP server directory not found at $MCP_DIR"
+fi
+
 # Source shared settings parser
 source "$(dirname "$0")/parse-settings.sh"
 
