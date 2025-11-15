@@ -32,32 +32,33 @@ class ScriptConfig:
         load_dotenv(self.PROJECT_DIR / '.env')
 
         # Database configuration
-        self.DB_HOST = os.getenv('DB_HOST', 'localhost')
-        self.DB_PORT = int(os.getenv('DB_PORT', '5432'))
-        self.DB_NAME = os.getenv('DB_NAME', 'openrewrite_recipes')
-        self.DB_USER = os.getenv('DB_USER', 'mcp_user')
-        self.DB_PASSWORD = os.getenv('DB_PASSWORD', 'changeme')
-        self.POSTGRES_CONTAINER_NAME = os.getenv('POSTGRES_CONTAINER_NAME', 'openrewrite-postgres')
+        self.DB_HOST = os.environ['DB_HOST']
+        self.DB_PORT = int(os.environ['DB_PORT'])
+        self.DB_NAME = os.environ['DB_NAME']
+        self.DB_USER = os.environ['DB_USER']
+        self.DB_PASSWORD = os.environ['DB_PASSWORD']
+        self.POSTGRES_CONTAINER_NAME = os.environ['POSTGRES_CONTAINER_NAME']
 
         # Generator configuration
-        self.GENERATOR_WORKSPACE = os.getenv('GENERATOR_WORKSPACE', str(self.PROJECT_DIR / 'workspace'))
-        self.GENERATOR_OUTPUT_DIR = os.getenv('GENERATOR_OUTPUT_DIR', 'build/docs')
-        self.GENERATOR_DIR = Path(self.GENERATOR_WORKSPACE) / 'rewrite-recipe-markdown-generator'
+        self.GENERATOR_WORKSPACE = os.environ['GENERATOR_WORKSPACE']
+        self.GENERATOR_OUTPUT_DIR = os.environ['GENERATOR_OUTPUT_DIR']
+        self.GENERATOR_DIR = os.environ['GENERATOR_DIR']
+        self.GENERATOR_DIR_FULL = Path(self.GENERATOR_WORKSPACE) / self.GENERATOR_DIR
 
         # Embedding configuration
-        self.EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL', 'all-MiniLM-L6-v2')
-        self.EMBEDDING_DIMENSION = int(os.getenv('EMBEDDING_DIMENSION', '384'))
+        self.EMBEDDING_MODEL = os.environ['EMBEDDING_MODEL']
+        self.EMBEDDING_DIMENSION = int(os.environ['EMBEDDING_DIMENSION'])
 
         # Logging
-        self.VERBOSE = os.getenv('VERBOSE', 'false').lower() == 'true'
+        self.VERBOSE = os.environ['VERBOSE'].lower() == 'true'
 
     def get_metadata_file(self) -> Path:
         """Get path to recipe metadata JSON file"""
-        return self.GENERATOR_DIR / self.GENERATOR_OUTPUT_DIR / 'recipe-metadata.json'
+        return self.GENERATOR_DIR_FULL / self.GENERATOR_OUTPUT_DIR / 'recipe-metadata.json'
 
     def get_recipes_dir(self) -> Path:
         """Get path to recipes markdown directory"""
-        return self.GENERATOR_DIR / self.GENERATOR_OUTPUT_DIR / 'recipes'
+        return self.GENERATOR_DIR_FULL / self.GENERATOR_OUTPUT_DIR / 'recipes'
 
 
 class Logger:

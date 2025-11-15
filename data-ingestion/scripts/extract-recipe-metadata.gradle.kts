@@ -1,22 +1,6 @@
 /**
  * Gradle task to extract structured recipe metadata using the markdown generator's approach
  *
- * WHY THIS APPROACH:
- * ==================
- * This implementation follows the official rewrite-recipe-markdown-generator approach:
- * - Creates an isolated URLClassLoader with all recipe JARs
- * - Uses Environment.scanJar() to discover recipes from each first-level JAR
- * - Extracts metadata using RecipeDescriptor.listRecipeDescriptors()
- * - NO dependency on rewrite-gradle-plugin internals
- * - Stable, documented, and officially supported approach
- *
- * KEY DIFFERENCES FROM OLD IMPLEMENTATION:
- * ========================================
- * OLD: Used reflection to access rewrite-gradle-plugin's internal classloader
- * NEW: Creates our own isolated classloader and uses public Environment API
- *
- * This matches the markdown generator approach (see RecipeLoader.kt in that repo)
- *
  * DEPENDENCIES:
  * =============
  * Requires rewrite-core for Environment and RecipeDescriptor classes
@@ -64,7 +48,7 @@ tasks.register("extractRecipeMetadata") {
     dependsOn(recipeConfig)
 
     doLast {
-        val outputFile = project.layout.buildDirectory.file("recipe-metadata.json").get().asFile
+        val outputFile = project.layout.buildDirectory.file("docs/recipe-metadata.json").get().asFile
         outputFile.parentFile?.mkdirs()
 
         println("========================================")

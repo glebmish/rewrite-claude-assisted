@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 # Script: 02b-generate-structured-data.sh
 # Purpose: Generate structured recipe metadata JSON for embedding generation
@@ -29,15 +30,15 @@ init_script
 setup_generator_paths
 setup_java
 
-OUTPUT_DIR="${GENERATOR_OUTPUT_DIR:-build/docs}"
-METADATA_FILE="$OUTPUT_DIR/recipe-metadata.json"
+GENERATOR_OUTPUT_DIR="${GENERATOR_OUTPUT_DIR}"
+METADATA_FILE="$GENERATOR_OUTPUT_DIR/recipe-metadata.json"
 
 print_stage_header "Stage 2b: Generate Structured Recipe Data"
 
 # Verify generator exists
 verify_generator || exit 1
 
-cd "$GENERATOR_DIR"
+cd "$GENERATOR_DIR_FULL"
 
 log_info "Extracting recipe metadata using isolated classloader approach..."
 log_info "Approach: Markdown generator's recipe discovery method"
@@ -46,7 +47,7 @@ log_info "Output file: $METADATA_FILE"
 echo ""
 
 # Ensure output directory exists
-mkdir -p "$OUTPUT_DIR"
+mkdir -p "$GENERATOR_OUTPUT_DIR"
 
 # Run the extractRecipeMetadata task
 # This task creates an isolated URLClassLoader and uses Environment.scanJar()
@@ -68,17 +69,6 @@ PLUGIN_OUTPUT="build/recipe-metadata.json"
 if [ ! -f "$PLUGIN_OUTPUT" ]; then
     log_error "Output file not found: $PLUGIN_OUTPUT"
     exit 1
-fi
-
-# If output dir is different from build/, copy the file
-if [ "$OUTPUT_DIR" != "build/docs" ]; then
-    log_info "Copying output to: $METADATA_FILE"
-    cp "$PLUGIN_OUTPUT" "$METADATA_FILE"
-else
-    # Just ensure it's in the right place
-    if [ "$PLUGIN_OUTPUT" != "$METADATA_FILE" ]; then
-        cp "$PLUGIN_OUTPUT" "$METADATA_FILE"
-    fi
 fi
 
 # Verify output

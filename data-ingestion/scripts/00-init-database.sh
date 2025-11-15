@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 # Script: 00-init-database.sh
 # Purpose: Initialize PostgreSQL database and apply schema
@@ -41,23 +42,25 @@ if [ ! -d "$SCHEMA_DIR" ]; then
     exit 1
 fi
 
-# Verify schema files exist
-if [ ! -f "$SCHEMA_DIR/01-create-extensions.sql" ]; then
-    log_error "Schema file not found: $SCHEMA_DIR/01-create-extensions.sql"
-    exit 1
-fi
-
-if [ ! -f "$SCHEMA_DIR/02-create-schema.sql" ]; then
-    log_error "Schema file not found: $SCHEMA_DIR/02-create-schema.sql"
-    exit 1
-fi
-
 log_success "Schema files found"
+
+cd "$PROJECT_DIR"
+
+# Check if the container exists and remove it if RESET_DB is true
+if docker ps -a --filter "name=${POSTGRES_CONTAINER_NAME}" --format "{{.Names}}" | grep -q "${POSTGRES_CONTAINER_NAME}"; then
+    if [ "$RESET_DB" = true ]; then
+        log_info "Removing existing '${POSTGRES_CONTAINER_NAME}' container..."
+        if docker rm -f "${POSTGRES_CONTAINER_NAME}"; then
+            log_success "Existing '${POSTGRES_CONTAINER_NAME}' container removed."
+        else
+            log_error "Failed to remove existing '${POSTGRES_CONTAINER_NAME}' container."
+            exit 1
+        fi
+    fi
+fi
 
 # Start PostgreSQL container
 log_info "Starting PostgreSQL container..."
-cd "$PROJECT_DIR"
-
 if docker-compose up -d postgres; then
     log_success "PostgreSQL container started"
 else
@@ -83,52 +86,6 @@ while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
     fi
     sleep 1
 done
-
-# Check if database is already initialized
-log_info "Checking if database is already initialized..."
-TABLE_EXISTS=$(docker-compose exec -T postgres psql -U "$DB_USER" -d "$DB_NAME" -tAc \
-    "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'recipes');" 2>/dev/null || echo "false")
-
-if [ "$TABLE_EXISTS" = "t" ]; then
-    if [ "$RESET_DB" = false ]; then
-        log_error "Database is already initialized (recipes table exists)"
-        log_error "Use --reset flag to drop and recreate the schema"
-        exit 1
-    else
-        log_warning "Database is already initialized - dropping schema due to --reset flag"
-
-        # Drop all tables
-        log_info "Dropping existing tables..."
-        docker-compose exec -T postgres psql -U "$DB_USER" -d "$DB_NAME" <<-EOSQL
-			DROP TABLE IF EXISTS recipe_embeddings CASCADE;
-			DROP TABLE IF EXISTS recipes CASCADE;
-		EOSQL
-        log_success "Existing tables dropped"
-    fi
-else
-    log_success "Database is not initialized - proceeding with schema creation"
-fi
-
-# Apply schema files
-log_info "Applying schema files..."
-
-# Apply 01-create-extensions.sql
-log_info "Creating extensions..."
-if docker-compose exec -T postgres psql -U "$DB_USER" -d "$DB_NAME" < "$SCHEMA_DIR/01-create-extensions.sql" >/dev/null 2>&1; then
-    log_success "Extensions created"
-else
-    log_error "Failed to create extensions"
-    exit 1
-fi
-
-# Apply 02-create-schema.sql
-log_info "Creating schema..."
-if docker-compose exec -T postgres psql -U "$DB_USER" -d "$DB_NAME" < "$SCHEMA_DIR/02-create-schema.sql" >/dev/null 2>&1; then
-    log_success "Schema created"
-else
-    log_error "Failed to create schema"
-    exit 1
-fi
 
 # Verify schema was applied
 log_info "Verifying schema..."

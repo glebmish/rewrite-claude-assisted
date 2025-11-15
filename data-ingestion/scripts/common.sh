@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 #
 # Common utilities for data ingestion scripts
 # Source this file: source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
@@ -114,18 +115,20 @@ verify_java_version() {
 # Generator repository configuration
 
 setup_generator_paths() {
-    GENERATOR_WORKSPACE="${GENERATOR_WORKSPACE:-$PROJECT_DIR/workspace}"
-    GENERATOR_DIR="$GENERATOR_WORKSPACE/rewrite-recipe-markdown-generator"
-    GENERATOR_OUTPUT_DIR="${GENERATOR_OUTPUT_DIR:-build/docs}"
+    GENERATOR_WORKSPACE="${GENERATOR_WORKSPACE}"
+    GENERATOR_DIR="${GENERATOR_DIR}"
+    GENERATOR_DIR_FULL="$GENERATOR_WORKSPACE/${GENERATOR_DIR}"
+    GENERATOR_OUTPUT_DIR="${GENERATOR_OUTPUT_DIR}"
 
     export GENERATOR_WORKSPACE
     export GENERATOR_DIR
+    export GENERATOR_DIR_FULL
     export GENERATOR_OUTPUT_DIR
 }
 
 verify_generator() {
-    if [ ! -d "$GENERATOR_DIR" ]; then
-        log_error "Generator directory not found: $GENERATOR_DIR"
+    if [ ! -d "$GENERATOR_DIR_FULL" ]; then
+        log_error "Generator directory not found: $GENERATOR_DIR_FULL"
         log_error "Run 01-setup-generator.sh first"
         return 1
     fi
@@ -135,12 +138,12 @@ verify_generator() {
 # Database configuration
 
 setup_database_config() {
-    DB_HOST="${DB_HOST:-localhost}"
-    DB_PORT="${DB_PORT:-5432}"
-    DB_NAME="${DB_NAME:-openrewrite_recipes}"
-    DB_USER="${DB_USER:-mcp_user}"
-    DB_PASSWORD="${DB_PASSWORD:-changeme}"
-    POSTGRES_CONTAINER_NAME="${POSTGRES_CONTAINER_NAME:-openrewrite-postgres}"
+    DB_HOST="${DB_HOST}"
+    DB_PORT="${DB_PORT}"
+    DB_NAME="${DB_NAME}"
+    DB_USER="${DB_USER}"
+    DB_PASSWORD="${DB_PASSWORD}"
+    POSTGRES_CONTAINER_NAME="${POSTGRES_CONTAINER_NAME}"
 
     export DB_HOST DB_PORT DB_NAME DB_USER DB_PASSWORD POSTGRES_CONTAINER_NAME
 }

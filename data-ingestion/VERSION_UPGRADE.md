@@ -17,6 +17,11 @@ MODERNE_BOM_VERSION="${MODERNE_BOM_VERSION:-0.21.0}"  # ← Update this if neede
 SPRING_QUARKUS_VERSION="${SPRING_QUARKUS_VERSION:-0.2.0}"  # ← Update this if needed
 ```
 
+Also, update commit:
+```bash
+GENERATOR_REPO_COMMIT="171ed7c4" # ← Update this
+```
+
 ### 2. Update `scripts/extract-recipe-metadata.gradle.kts`
 
 In the buildscript block, update the rewrite-core version (line 43):
