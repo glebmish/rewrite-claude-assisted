@@ -2,7 +2,7 @@
 # Startup script for OpenRewrite MCP Server
 # Automatically manages PostgreSQL Docker container lifecycle
 
-set -e
+set -euo pipefail
 
 # Get the directory where this script is located
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -19,17 +19,16 @@ if [ -f .env ]; then
 fi
 
 # Set defaults for database configuration
-DB_IMAGE_NAME="${DB_IMAGE_NAME:-bboygleb/openrewrite-recipes-db}"
-DB_IMAGE_TAG="${DB_IMAGE_TAG:-latest}"
-DB_IMAGE_REGISTRY="${DB_IMAGE_REGISTRY:-}"
-DB_HOST="${DB_HOST:-localhost}"
-DB_PORT="${DB_PORT:-5432}"
-DB_NAME="${DB_NAME:-openrewrite_recipes}"
-DB_USER="${DB_USER:-mcp_user}"
-DB_PASSWORD="${DB_PASSWORD:-changeme}"
+DB_IMAGE_NAME="${DB_IMAGE_NAME}"
+DB_IMAGE_TAG="${DB_IMAGE_TAG}"
+DB_HOST="${DB_HOST}"
+DB_PORT="${DB_PORT}"
+DB_NAME="${DB_NAME}"
+DB_USER="${DB_USER}"
+DB_PASSWORD="${DB_PASSWORD}"
 
 # Export for docker-compose
-export DB_IMAGE_NAME DB_IMAGE_TAG DB_IMAGE_REGISTRY
+export DB_IMAGE_NAME DB_IMAGE_TAG
 export DB_HOST DB_PORT DB_NAME DB_USER DB_PASSWORD
 
 # Cleanup function to stop Docker container
@@ -64,7 +63,7 @@ if ! command -v docker-compose &> /dev/null; then
 fi
 
 # Check if required image exists
-FULL_IMAGE="${DB_IMAGE_REGISTRY:+${DB_IMAGE_REGISTRY}/}${DB_IMAGE_NAME}:${DB_IMAGE_TAG}"
+FULL_IMAGE="${DB_IMAGE_NAME}:${DB_IMAGE_TAG}"
 if ! docker image inspect "$FULL_IMAGE" &> /dev/null; then
     echo "Error: Database image not found: $FULL_IMAGE" >&2
     echo "Please run the setup script first: ./scripts/setup.sh" >&2
@@ -139,63 +138,6 @@ while [ $EXTERNAL_RETRY_COUNT -lt $MAX_EXTERNAL_RETRIES ]; do
     fi
     sleep 1
 done
-
-# Test database connection from Python
-echo "Testing database connection..." >&2
-if ! "$PROJECT_DIR/venv/bin/python" -c "
-import asyncio
-import asyncpg
-import sys
-
-async def test():
-    try:
-        conn = await asyncpg.connect(
-            host='$DB_HOST',
-            port=$DB_PORT,
-            database='$DB_NAME',
-            user='$DB_USER',
-            password='$DB_PASSWORD',
-            timeout=5
-        )
-        await conn.close()
-        print('✅ Database connection successful', file=sys.stderr)
-    except Exception as e:
-        print(f'❌ Database connection failed: {e}', file=sys.stderr)
-        sys.exit(1)
-
-asyncio.run(test())
-" < /dev/null; then
-  docker-compose logs
-    echo "Error: Cannot connect to database" >&2
-    exit 1
-fi
-
-# Verify recipes are available
-RECIPE_COUNT=$("$PROJECT_DIR/venv/bin/python" -c "
-import asyncio
-import asyncpg
-import sys
-
-async def count():
-    try:
-        conn = await asyncpg.connect(
-            host='$DB_HOST',
-            port=$DB_PORT,
-            database='$DB_NAME',
-            user='$DB_USER',
-            password='$DB_PASSWORD',
-            timeout=5
-        )
-        count = await conn.fetchval('SELECT COUNT(*) FROM recipes')
-        await conn.close()
-        print(count)
-    except Exception as e:
-        print(0)
-
-asyncio.run(count())
-" < /dev/null 2>/dev/null || echo "0")
-
-echo "✅ Database contains $RECIPE_COUNT recipes" >&2
 
 # Start MCP server
 echo "Starting MCP server..." >&2

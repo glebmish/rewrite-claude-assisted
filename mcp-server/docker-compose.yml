@@ -4,18 +4,18 @@ services:
   postgres:
     # Pre-loaded database image with all OpenRewrite recipes
     # Configure image name/tag in .env
-    image: bboygleb/openrewrite-recipes-db:latest
+    image: ${DB_IMAGE_NAME}:${DB_IMAGE_TAG}
     container_name: openrewrite-mcp-db
     environment:
-      POSTGRES_DB: ${DB_NAME:-openrewrite_recipes}
-      POSTGRES_USER: ${DB_USER:-mcp_user}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "${DB_PORT:-5432}:5432"
+      - "${DB_PORT}:5432"
     # NOTE: No volume mount - data is pre-loaded in the Docker image
     # If we mount a volume here, it would overlay the pre-loaded data with an empty filesystem
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-mcp_user}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
       interval: 5s
       timeout: 5s
       retries: 5

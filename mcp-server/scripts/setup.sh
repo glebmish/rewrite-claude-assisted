@@ -61,16 +61,9 @@ else
 fi
 
 # Configuration with defaults
-DB_IMAGE_NAME="${DB_IMAGE_NAME:-openrewrite-recipes-db}"
-DB_IMAGE_TAG="${DB_IMAGE_TAG:-latest}"
-DB_IMAGE_REGISTRY="${DB_IMAGE_REGISTRY:-}"
-
-# Full image name
-if [ -n "$DB_IMAGE_REGISTRY" ]; then
-    FULL_IMAGE_NAME="${DB_IMAGE_REGISTRY}/${DB_IMAGE_NAME}:${DB_IMAGE_TAG}"
-else
-    FULL_IMAGE_NAME="${DB_IMAGE_NAME}:${DB_IMAGE_TAG}"
-fi
+DB_IMAGE_NAME="${DB_IMAGE_NAME}"
+DB_IMAGE_TAG="${DB_IMAGE_TAG}"
+FULL_IMAGE_NAME="${DB_IMAGE_NAME}/${DB_IMAGE_TAG}"
 
 echo "Configuration:"
 echo "  Database image: $FULL_IMAGE_NAME"
@@ -117,46 +110,17 @@ if docker image inspect "$FULL_IMAGE_NAME" &> /dev/null; then
 else
     log_warning "Image not found locally: $FULL_IMAGE_NAME"
 
-    # Try to pull from registry if configured
-    if [ -n "$DB_IMAGE_REGISTRY" ]; then
-        log_info "Attempting to pull from registry..."
-        if docker pull "$FULL_IMAGE_NAME"; then
-            log_success "Image pulled successfully"
-        else
-            log_error "Failed to pull image from registry"
-            echo ""
-            echo "Build the image locally:"
-            echo "  cd ../data-ingestion"
-            echo "  ./scripts/run-full-pipeline.sh"
-            echo ""
-            exit 1
-        fi
+    log_info "Attempting to pull from registry..."
+    if docker pull "$FULL_IMAGE_NAME"; then
+        log_success "Image pulled successfully"
     else
-        log_warning "No registry configured - image must be built locally"
+        log_error "Failed to pull image from registry"
         echo ""
-        echo "To build the pre-loaded image, run:"
+        echo "Build the image locally:"
         echo "  cd ../data-ingestion"
         echo "  ./scripts/run-full-pipeline.sh"
         echo ""
-        echo "This will take 15-20 minutes but only needs to be done once."
-        echo ""
-        read -p "Build the image now? (y/N) " -n 1 -r
-        echo
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            log_info "Starting data ingestion pipeline..."
-            cd "$PROJECT_DIR/../data-ingestion"
-            if ./scripts/run-full-pipeline.sh; then
-                log_success "Image built successfully"
-                cd "$PROJECT_DIR"
-            else
-                log_error "Failed to build image"
-                exit 1
-            fi
-        else
-            log_warning "Setup incomplete - image not available"
-            echo "  Run this script again after building the image"
-            exit 1
-        fi
+        exit 1
     fi
 fi
 
