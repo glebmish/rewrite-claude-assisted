@@ -21,5 +21,10 @@ rootProject {
     rewrite {
         activeRecipe(<recipeName>)
         setExportDatatables(true)
+        exclusion(
+          "**/gradlew",
+          "**/gradlew.bat",
+          "**/gradle-wrapper.jar"
+        )
     }
 }
