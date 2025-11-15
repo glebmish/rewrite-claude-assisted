@@ -16,15 +16,15 @@ class Config:
     SERVER_VERSION: str = "0.1.0"
 
     # Database settings (for future phases)
-    DB_HOST: str = os.getenv("DB_HOST", "localhost")
-    DB_PORT: int = int(os.getenv("DB_PORT", "5432"))
-    DB_NAME: str = os.getenv("DB_NAME", "openrewrite_recipes")
-    DB_USER: str = os.getenv("DB_USER", "mcp_user")
-    DB_PASSWORD: str = os.getenv("DB_PASSWORD", "")
+    DB_HOST: str = os.environ["DB_HOST"]
+    DB_PORT: int = int(os.environ["DB_PORT"])
+    DB_NAME: str = os.environ["DB_NAME"]
+    DB_USER: str = os.environ["DB_USER"]
+    DB_PASSWORD: str = os.environ["DB_PASSWORD"]
 
     # Embedding settings (for future phases)
-    EMBEDDING_MODEL: str = os.getenv("EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
-    EMBEDDING_DIMENSION: int = int(os.getenv("EMBEDDING_DIMENSION", "384"))
+    EMBEDDING_MODEL: str = os.environ["EMBEDDING_MODEL"]
+    EMBEDDING_DIMENSION: int = int(os.environ["EMBEDDING_DIMENSION"])
 
     # Tool settings
     DEFAULT_RECIPE_LIMIT: int = 5
