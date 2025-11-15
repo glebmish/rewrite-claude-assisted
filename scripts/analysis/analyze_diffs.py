@@ -1,6 +1,29 @@
 import sys
 import json
+import re
 from unidiff import PatchSet
+
+def remove_binary_diffs(diff_content):
+    """
+    Removes binary file diffs from the diff content.
+    Binary file diffs cause unidiff to fail with trailing newline errors.
+
+    Binary file diffs look like:
+    diff --git a/path/to/file b/path/to/file
+    new file mode 100644
+    index 0000000..cb76119
+    --- /dev/null
+    +++ b/path/to/file
+    Binary files differ
+    """
+    # Pattern to match binary file diff blocks
+    # Matches from "diff --git" to "Binary files differ" (inclusive)
+    binary_diff_pattern = r'diff --git .*?\nBinary files .*?\n'
+
+    # Remove all binary diff blocks
+    cleaned_content = re.sub(binary_diff_pattern, '', diff_content, flags=re.MULTILINE | re.DOTALL)
+
+    return cleaned_content
 
 def parse_diff_to_set(file_path):
     """
@@ -15,6 +38,9 @@ def parse_diff_to_set(file_path):
 
         # Decode and normalize line endings (replace CRLF with LF, then strip any remaining \r)
         diff_content = raw_content.decode('utf-8').replace('\r\n', '\n').replace('\r', '\n')
+
+        # Remove binary file diffs before passing to unidiff
+        diff_content = remove_binary_diffs(diff_content)
 
         # Parse the normalized content
         patch_set = PatchSet(diff_content)
