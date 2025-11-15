@@ -34,6 +34,9 @@ NEVER validate recipes concurrently. Shared workspace is used and concurrent val
 ### Phase 5: Final decision
 
 Based on the results, choose the final recommended recipe and generate result artifacts.
+This step is CRITICAL and must never be skipped. Even when results are not conclusive and none of the tested recipes
+provide a definitive best output, one of the recipes must be chosen for the final recommendation.
+!Failure to complete this step constitutes the failure of the whole workflow!
 
 **Output Directory**: Create `result/` subdirectory in the scratchpad directory. Make sure it is created before any
 attempts to use it.
