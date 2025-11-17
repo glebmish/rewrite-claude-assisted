@@ -1,0 +1,52 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.example.UpgradeDropwizard2To3_Conservative
+displayName: Upgrade Dropwizard 2.x to 3.0 (Conservative)
+description: Safely upgrades Dropwizard from 2.x to 3.0 with precise transformations only
+recipeList:
+  # Step 1: Upgrade Java version to 17 (prerequisite for Dropwizard 3)
+  - org.openrewrite.java.migrate.UpgradeJavaVersion:
+      version: 17
+
+  # Step 2: Upgrade Dropwizard dependencies individually (explicit control)
+  - org.openrewrite.gradle.UpgradeDependencyVersion:
+      groupId: io.dropwizard
+      artifactId: dropwizard-core
+      newVersion: 3.0.0
+  - org.openrewrite.gradle.UpgradeDependencyVersion:
+      groupId: io.dropwizard
+      artifactId: dropwizard-jdbi3
+      newVersion: 3.0.0
+  - org.openrewrite.gradle.UpgradeDependencyVersion:
+      groupId: io.dropwizard
+      artifactId: dropwizard-auth
+      newVersion: 3.0.0
+  - org.openrewrite.gradle.UpgradeDependencyVersion:
+      groupId: io.dropwizard
+      artifactId: dropwizard-configuration
+      newVersion: 3.0.0
+  - org.openrewrite.gradle.UpgradeDependencyVersion:
+      groupId: io.dropwizard
+      artifactId: dropwizard-testing
+      newVersion: 3.0.0
+
+  # Step 3: Migrate core package structure (4 specific classes)
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: io.dropwizard.Application
+      newFullyQualifiedTypeName: io.dropwizard.core.Application
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: io.dropwizard.Configuration
+      newFullyQualifiedTypeName: io.dropwizard.core.Configuration
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: io.dropwizard.setup.Bootstrap
+      newFullyQualifiedTypeName: io.dropwizard.core.setup.Bootstrap
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: io.dropwizard.setup.Environment
+      newFullyQualifiedTypeName: io.dropwizard.core.setup.Environment
+
+  # Step 4: @Override removal SKIPPED - requires manual intervention
+  # Reason: Generic RemoveAnnotation is too broad and will break code
+  # Manual step documented in migration guide
+
+  # Step 5: Format code for consistency
+  - org.openrewrite.java.format.AutoFormat

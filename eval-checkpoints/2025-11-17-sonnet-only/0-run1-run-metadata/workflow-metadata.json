@@ -1,0 +1,9 @@
+{
+  "pr_url": "https://github.com/openrewrite-assist-testing-dataset/ecommerce-catalog/pull/2",
+  "commit_hash": "c56241be35c4118b3a085bcfb801f9f2e1e170e8",
+  "status": "success",
+  "exit_code": 0,
+  "duration_seconds": 1189,
+  "start_time": "2025-11-15T19:00:07Z",
+  "end_time": "2025-11-15T19:19:56Z"
+}

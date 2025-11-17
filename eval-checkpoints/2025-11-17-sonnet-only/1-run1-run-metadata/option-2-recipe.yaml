@@ -1,0 +1,31 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.yourorg.BumpJavaVersionTo17
+displayName: Bump Java version to 17 (minimal changes)
+description: >
+  Minimal migration to Java 17 targeting only version numbers in build.gradle,
+  Gradle wrapper upgrade to 7.6, and Dockerfile base images. Does not include
+  language feature modernizations or deprecated API migrations.
+recipeList:
+  # Update Java version in build.gradle (sourceCompatibility, targetCompatibility)
+  - org.openrewrite.gradle.UpdateJavaCompatibility:
+      version: 17
+      declarationStyle: String
+
+  # Update Gradle wrapper to 7.6
+  - org.openrewrite.gradle.UpdateGradleWrapper:
+      version: 7.6
+      distribution: all
+      addIfMissing: false
+
+  # Update Dockerfile JDK base image
+  - org.openrewrite.text.FindAndReplace:
+      find: 'openjdk:11-jdk-slim'
+      replace: 'eclipse-temurin:17-jdk-alpine'
+      filePattern: '**/Dockerfile'
+
+  # Update Dockerfile JRE base image
+  - org.openrewrite.text.FindAndReplace:
+      find: 'openjdk:11-jre-slim'
+      replace: 'eclipse-temurin:17-jre-alpine'
+      filePattern: '**/Dockerfile'

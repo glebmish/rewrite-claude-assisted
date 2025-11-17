@@ -1,0 +1,25 @@
+initscript {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.openrewrite.rewrite:org.openrewrite.rewrite.gradle.plugin:7.3.0")
+    }
+}
+rootProject {
+    plugins.apply(org.openrewrite.gradle.RewritePlugin)
+    dependencies {
+        rewrite platform('org.openrewrite.recipe:rewrite-recipe-bom:2.23.0')
+        rewrite("org.openrewrite.meta:rewrite-analysis")
+        rewrite("org.openrewrite.recipe:rewrite-all")
+        rewrite("org.openrewrite.recipe:rewrite-docker")
+        rewrite("org.openrewrite.recipe:rewrite-github-actions")
+        rewrite("org.openrewrite.recipe:rewrite-java-dependencies")
+        rewrite("org.openrewrite.recipe:rewrite-migrate-java")
+    }
+    rewrite {
+        activeRecipe("com.yourorg.MigrateH2ToPostgreSQL.Consolidated")
+        setExportDatatables(true)
+    }
+}

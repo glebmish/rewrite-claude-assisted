@@ -1,0 +1,45 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.yourorg.UpgradeJava17To21InfrastructureOnly
+displayName: Upgrade Java 17 to 21 infrastructure files only
+description: Targeted upgrade of build files, CI/CD, Docker, and documentation without application code changes
+recipeList:
+  # Gradle: Add Java 21 toolchain configuration
+  # This adds the java { toolchain { languageVersion = JavaLanguageVersion.of(21) } } block
+  # Note: May not remove existing sourceCompatibility/targetCompatibility properties
+  - org.openrewrite.java.migrate.UpgradeJavaVersion:
+      version: 21
+
+  # Gradle: Update wrapper to version 8.5 (required for Java 21 support)
+  - org.openrewrite.gradle.UpdateGradleWrapper:
+      version: 8.5
+      distribution: bin
+
+  # GitHub Actions: Update java-version in actions/setup-java steps
+  - org.openrewrite.github.SetupJavaUpgradeJavaVersion:
+      minimumJavaMajorVersion: 21
+
+  # GitHub Actions: Update step name (text-based approach for reliability)
+  - org.openrewrite.text.FindAndReplace:
+      find: Set up JDK 17
+      replace: Set up JDK 21
+      filePattern: .github/workflows/ci.yml
+
+  # Dockerfile: Update builder stage base image (text-based)
+  - org.openrewrite.text.FindAndReplace:
+      find: eclipse-temurin:17-jdk-alpine
+      replace: eclipse-temurin:21-jdk-alpine
+      filePattern: Dockerfile
+
+  # Dockerfile: Update runtime stage base image (text-based)
+  - org.openrewrite.text.FindAndReplace:
+      find: eclipse-temurin:17-jre-alpine
+      replace: eclipse-temurin:21-jre-alpine
+      filePattern: Dockerfile
+
+  # README: Update "Java 17" references to "Java 21" (text-based)
+  # This will update all occurrences in Technology Stack and Prerequisites sections
+  - org.openrewrite.text.FindAndReplace:
+      find: Java 17
+      replace: Java 21
+      filePattern: README.md
