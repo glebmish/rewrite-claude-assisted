@@ -15,32 +15,32 @@ them, and recommending the best one.
 
 2. Tool Usage and Agent Struggles                                                                                                                                                
 
-The agent's overall tool success rate was 92.77%, with 12 failed calls out of 166. The failures reveal specific, recurring struggles:                                           █
+The agent's overall tool success rate was 92.77%, with 12 failed calls out of 166. The failures reveal specific, recurring struggles:
 
-* Misuse of Complex Shell Commands: The agent, particularly the openrewrite-recipe-validator sub-agent, repeatedly failed when trying to use Bash with shell operators for     █
-  redirection (>>, <<) and piping (| tee). In each case, it recovered by falling back to the appropriate Write or Edit tool, or by running a simpler command. This indicates a █
-  fundamental misunderstanding of the Bash tool's limitations, leading to inefficiency.                                                                                        █
-* `Edit` Tool Failures: The agent failed multiple times with the Edit tool by providing a non-unique old_string for context (e.g., using a generic --- separator). It recovered█
-  by re-trying with a more specific, longer string. This shows a recurring difficulty in adhering to the tool's requirement for unique context.                                █
-* Graceful Recovery: Despite the failures, the agent recovered well in all instances. For example, when a gh pr view command failed due to an incorrect JSON field, it         █
-  immediately retried with the correct fields. When the file command was not found, it fell back to using ls, which was sufficient.                                            █
+* Misuse of Complex Shell Commands: The agent, particularly the openrewrite-recipe-validator sub-agent, repeatedly failed when trying to use Bash with shell operators for
+  redirection (>>, <<) and piping (| tee). In each case, it recovered by falling back to the appropriate Write or Edit tool, or by running a simpler command. This indicates a
+  fundamental misunderstanding of the Bash tool's limitations, leading to inefficiency.
+* `Edit` Tool Failures: The agent failed multiple times with the Edit tool by providing a non-unique old_string for context (e.g., using a generic --- separator). It recovered
+  by re-trying with a more specific, longer string. This shows a recurring difficulty in adhering to the tool's requirement for unique context.
+* Graceful Recovery: Despite the failures, the agent recovered well in all instances. For example, when a gh pr view command failed due to an incorrect JSON field, it
+  immediately retried with the correct fields. When the file command was not found, it fell back to using ls, which was sufficient.
 
-3. Scratchpad and Log Analysis                                                                                                                                                  █
+3. Scratchpad and Log Analysis
 
 The rewrite-assist-scratchpad.md file does not accurately reflect the agent's execution process.
 
 * Omission of Failures: The scratchpad is a "sanitized" narrative. It omits all failed tool calls and the subsequent recovery attempts. For instance, it documents the          
-  successful creation of the rewrite.gradle file but makes no mention of the preceding failed attempt to create it using cat >> ... << EOF.                                    █
-* Illusion of Perfection: This practice makes the agent's process appear flawless, hiding the trial-and-error loops that actually occurred. The scratchpad reads as a plan that█
-  was executed perfectly, not as a log of what truly happened.                                                                                                                 █
+  successful creation of the rewrite.gradle file but makes no mention of the preceding failed attempt to create it using cat >> ... << EOF.
+* Illusion of Perfection: This practice makes the agent's process appear flawless, hiding the trial-and-error loops that actually occurred. The scratchpad reads as a plan that
+  was executed perfectly, not as a log of what truly happened.
 
-4. Token and Cost Analysis                                                                                                                                                      █
+4. Token and Cost Analysis
 
-* Total Cost: The run cost approximately $6.30.                                                                                                                                █
-* Cost Distribution: The most expensive parts of the workflow were the two openrewrite-recipe-validator sub-agents, which is expected as they perform the heavy lifting of     █
-  running recipes, building the code, and analyzing large diffs.                                                                                                               █
-* Token Wastage: The repeated cycles of tool failure and recovery (especially with Bash and Edit) represent a notable source of token wastage. Each failed attempt and         █
-  subsequent correction consumes unnecessary tokens. Improving the agent's intrinsic understanding of its tool's limitations would be the primary way to reduce costs.         █
+* Total Cost: The run cost approximately $6.30.
+* Cost Distribution: The most expensive parts of the workflow were the two openrewrite-recipe-validator sub-agents, which is expected as they perform the heavy lifting of
+  running recipes, building the code, and analyzing large diffs.
+* Token Wastage: The repeated cycles of tool failure and recovery (especially with Bash and Edit) represent a notable source of token wastage. Each failed attempt and
+  subsequent correction consumes unnecessary tokens. Improving the agent's intrinsic understanding of its tool's limitations would be the primary way to reduce costs.
 
-In conclusion, the agent produced a high-quality, correct outcome and demonstrated sophisticated reasoning in its final recommendation. However, the process was inefficient,   █
+In conclusion, the agent produced a high-quality, correct outcome and demonstrated sophisticated reasoning in its final recommendation. However, the process was inefficient,
 marked by repeated, predictable tool failures. The agent also "hides" these struggles in its scratchpad, presenting a misleadingly perfect narrative of its execution. 
