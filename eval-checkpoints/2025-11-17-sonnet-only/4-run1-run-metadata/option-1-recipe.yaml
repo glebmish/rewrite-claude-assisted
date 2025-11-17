@@ -1,0 +1,146 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.yourorg.MigrateH2ToPostgreSQL.Granular
+displayName: Migrate from H2 to PostgreSQL with Infrastructure Upgrades (Granular)
+description: >
+  Complete migration from H2 in-memory database to PostgreSQL production database,
+  including dependency updates, configuration changes, SQL syntax migration, and
+  infrastructure modernization. This granular version lists each transformation
+  explicitly for maximum transparency and control.
+
+recipeList:
+  # ============================================================================
+  # PHASE 1: Gradle Build File Changes (Semantic LST-based)
+  # ============================================================================
+
+  # 1.1: Remove H2 database dependency
+  - org.openrewrite.gradle.RemoveDependency:
+      groupId: com.h2database
+      artifactId: h2
+
+  # 1.2: Add PostgreSQL driver dependency
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.postgresql
+      artifactId: postgresql
+      version: 42.6.0
+      configuration: implementation
+      onlyIfUsing: com.h2database..*
+
+  # 1.3: Add Testcontainers core dependency
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.testcontainers
+      artifactId: testcontainers
+      version: 1.17.6
+      configuration: testImplementation
+
+  # 1.4: Add Testcontainers PostgreSQL module
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.testcontainers
+      artifactId: postgresql
+      version: 1.17.6
+      configuration: testImplementation
+
+  # 1.5: Add Testcontainers JUnit Jupiter integration
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.testcontainers
+      artifactId: junit-jupiter
+      version: 1.17.6
+      configuration: testImplementation
+
+  # ============================================================================
+  # PHASE 2: YAML Configuration Changes (Semantic LST-based)
+  # ============================================================================
+
+  # 2.1: Update database driver class from H2 to PostgreSQL
+  - org.openrewrite.yaml.ChangePropertyValue:
+      propertyKey: database.driverClass
+      newValue: org.postgresql.Driver
+      oldValue: org.h2.Driver
+      fileMatcher: '**/config.yml'
+
+  # 2.2: Externalize database username to environment variable
+  - org.openrewrite.yaml.ChangePropertyValue:
+      propertyKey: database.user
+      newValue: '"{{ GET_ENV_VAR:DATABASE_USER }}"'
+      oldValue: sa
+      fileMatcher: '**/config.yml'
+
+  # 2.3: Externalize database password to environment variable
+  - org.openrewrite.yaml.ChangePropertyValue:
+      propertyKey: database.password
+      newValue: '"{{ GET_ENV_VAR:DATABASE_PASSWORD }}"'
+      fileMatcher: '**/config.yml'
+
+  # 2.4: Externalize database URL to environment variable
+  - org.openrewrite.yaml.ChangePropertyValue:
+      propertyKey: database.url
+      newValue: '"{{ GET_ENV_VAR:DATABASE_URL }}"'
+      fileMatcher: '**/config.yml'
+
+  # 2.5: Update Hibernate dialect from H2 to PostgreSQL
+  - org.openrewrite.yaml.ChangePropertyValue:
+      propertyKey: database.properties.hibernate.dialect
+      newValue: org.hibernate.dialect.PostgreSQLDialect
+      oldValue: org.hibernate.dialect.H2Dialect
+      fileMatcher: '**/config.yml'
+
+  # ============================================================================
+  # PHASE 3: GitHub Actions Infrastructure Upgrade (Semantic LST-based)
+  # ============================================================================
+
+  # 3.1: Upgrade actions/cache from v2 to v4
+  - org.openrewrite.github.ChangeActionVersion:
+      action: actions/cache
+      version: v4
+
+  # ============================================================================
+  # PHASE 4: SQL Migration Script Syntax Changes (Text-based - No LST parser)
+  # ============================================================================
+
+  # 4.1: Convert H2 AUTO_INCREMENT syntax to PostgreSQL BIGSERIAL
+  - org.openrewrite.text.FindAndReplace:
+      find: 'BIGINT AUTO_INCREMENT'
+      replace: 'BIGSERIAL'
+      regex: false
+      caseSensitive: true
+      filePattern: '**/db/migration/V*__*.sql'
+
+  # ============================================================================
+  # PHASE 5: Dockerfile Base Image Modernization (Text-based - No LST parser)
+  # ============================================================================
+
+  # 5.1: Update Docker base image from openjdk to eclipse-temurin with Alpine
+  - org.openrewrite.text.FindAndReplace:
+      find: 'FROM openjdk:17-jre-slim'
+      replace: 'FROM eclipse-temurin:17-jre-alpine'
+      regex: false
+      caseSensitive: true
+      filePattern: 'Dockerfile'
+
+---
+# Recipe Metadata
+# Author: OpenRewrite Recipe Assistant
+# Generated: 2025-11-16
+# Session ID: a0288115-2a67-4c55-b32e-dd2fd2f7a2b6
+#
+# Recipe Statistics:
+# - Total transformations: 13
+# - Semantic (LST-based): 11 (85%)
+# - Text-based: 2 (15%)
+#
+# Coverage:
+# - Gradle dependency changes: 5 recipes
+# - YAML configuration changes: 5 recipes
+# - GitHub Actions upgrades: 1 recipe
+# - SQL syntax migration: 1 recipe
+# - Dockerfile updates: 1 recipe
+#
+# Execution Order:
+# All recipes are independent and operate on different files or different
+# sections of the same files. The order is organized by category for clarity,
+# but there are no interdependencies requiring specific sequencing.
+#
+# Text-based Recipes Justification:
+# - SQL files: No OpenRewrite LST parser exists for SQL
+# - Dockerfiles: No OpenRewrite LST parser exists for Dockerfiles
+# Both are legitimate use cases for text-based transformation.

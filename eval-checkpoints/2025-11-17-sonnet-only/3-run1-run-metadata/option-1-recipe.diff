@@ -1,0 +1,1248 @@
+diff --git a/src/main/java/com/example/tasks/db/TaskDAO.java b/src/main/java/com/example/tasks/db/TaskDAO.java
+index 1b01065..0eb230e 100644
+--- a/src/main/java/com/example/tasks/db/TaskDAO.java
++++ b/src/main/java/com/example/tasks/db/TaskDAO.java
+@@ -13,52 +13,52 @@ com.example.UpgradeDropwizard2To3_Aggressive
+ 
+ @RegisterBeanMapper(Task.class)
+ public interface TaskDAO {
+-    
++
+     @SqlUpdate("INSERT INTO tasks (title, description, status, priority, assignee_id, created_at, updated_at, due_date) " +
+-               "VALUES (:title, :description, :status, :priority, :assigneeId, :createdAt, :updatedAt, :dueDate)")
++           "VALUES (:title, :description, :status, :priority, :assigneeId, :createdAt, :updatedAt, :dueDate)")
+     @GetGeneratedKeys("id")
+     Long insert(@BindBean Task task);
+-    
++
+     default Task create(Task task) {
+         Long id = insert(task);
+         task.setId(id);
+         return task;
+     }
+-    
++
+     @SqlQuery("SELECT * FROM tasks WHERE id = :id")
+     Optional<Task> findById(@Bind("id") Long id);
+-    
++
+     @SqlQuery("SELECT * FROM tasks ORDER BY created_at DESC")
+     List<Task> findAll();
+-    
++
+     @SqlQuery("SELECT * FROM tasks WHERE assignee_id = :assigneeId ORDER BY created_at DESC")
+     List<Task> findByAssigneeId(@Bind("assigneeId") String assigneeId);
+-    
++
+     @SqlQuery("SELECT * FROM tasks WHERE status = :status ORDER BY created_at DESC")
+     List<Task> findByStatus(@Bind("status") Task.TaskStatus status);
+-    
++
+     @SqlQuery("SELECT * FROM tasks WHERE priority = :priority ORDER BY created_at DESC")
+     List<Task> findByPriority(@Bind("priority") Task.TaskPriority priority);
+-    
++
+     @SqlUpdate("UPDATE tasks SET title = :title, description = :description, status = :status, " +
+-               "priority = :priority, assignee_id = :assigneeId, updated_at = :updatedAt, due_date = :dueDate " +
+-               "WHERE id = :id")
++           "priority = :priority, assignee_id = :assigneeId, updated_at = :updatedAt, due_date = :dueDate " +
++           "WHERE id = :id")
+     void updateTask(@BindBean Task task);
+-    
++
+     default Task update(Task task) {
+         updateTask(task);
+         return task;
+     }
+-    
++
+     @SqlUpdate("DELETE FROM tasks WHERE id = :id")
+     void delete(@Bind("id") Long id);
+-    
++
+     @SqlQuery("SELECT COUNT(*) FROM tasks")
+     int count();
+-    
++
+     @SqlQuery("SELECT COUNT(*) FROM tasks WHERE status = :status")
+     int countByStatus(@Bind("status") Task.TaskStatus status);
+-    
++
+     @SqlQuery("SELECT COUNT(*) FROM tasks WHERE assignee_id = :assigneeId")
+     int countByAssigneeId(@Bind("assigneeId") String assigneeId);
+ }
+\ No newline at end of file
+
+diff --git a/src/main/java/com/example/tasks/db/RawJdbcTaskDAO.java b/src/main/java/com/example/tasks/db/RawJdbcTaskDAO.java
+index 34b5ddf..40f4a77 100644
+--- a/src/main/java/com/example/tasks/db/RawJdbcTaskDAO.java
++++ b/src/main/java/com/example/tasks/db/RawJdbcTaskDAO.java
+@@ -10,20 +10,20 @@ com.example.UpgradeDropwizard2To3_Aggressive
+ import java.util.Optional;
+ 
+ public class RawJdbcTaskDAO {
+-    
++
+     private final DataSource dataSource;
+-    
++
+     public RawJdbcTaskDAO(DataSource dataSource) {
+         this.dataSource = dataSource;
+     }
+-    
++
+     public Task createWithRawJdbc(Task task) throws SQLException {
+         String sql = "INSERT INTO tasks (title, description, status, priority, assignee_id, created_at, updated_at, due_date) " +
+-                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+-        
++               "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
++
+         try (Connection conn = dataSource.getConnection();
+              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+-            
++
+             stmt.setString(1, task.getTitle());
+             stmt.setString(2, task.getDescription());
+             stmt.setString(3, task.getStatus().name());
+@@ -32,13 +32,13 @@
+             stmt.setTimestamp(6, Timestamp.valueOf(task.getCreatedAt()));
+             stmt.setTimestamp(7, Timestamp.valueOf(task.getUpdatedAt()));
+             stmt.setTimestamp(8, task.getDueDate() != null ? Timestamp.valueOf(task.getDueDate()) : null);
+-            
++
+             int affectedRows = stmt.executeUpdate();
+-            
++
+             if (affectedRows == 0) {
+                 throw new SQLException("Creating task failed, no rows affected.");
+             }
+-            
++
+             try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                 if (generatedKeys.next()) {
+                     task.setId(generatedKeys.getLong(1));
+@@ -47,80 +47,80 @@
+                 }
+             }
+         }
+-        
++
+         return task;
+     }
+-    
++
+     public List<Task> findOverdueTasksWithRawJdbc() throws SQLException {
+         String sql = "SELECT * FROM tasks WHERE due_date < ? AND status != 'COMPLETED' ORDER BY due_date ASC";
+         List<Task> tasks = new ArrayList<>();
+-        
++
+         try (Connection conn = dataSource.getConnection();
+              PreparedStatement stmt = conn.prepareStatement(sql)) {
+-            
++
+             stmt.setTimestamp(1, Timestamp.valueOf(LocalDateTime.now()));
+-            
++
+             try (ResultSet rs = stmt.executeQuery()) {
+                 while (rs.next()) {
+                     tasks.add(mapResultSetToTask(rs));
+                 }
+             }
+         }
+-        
++
+         return tasks;
+     }
+-    
++
+     public Optional<Task> findByIdWithRawJdbc(Long id) throws SQLException {
+         String sql = "SELECT * FROM tasks WHERE id = ?";
+-        
++
+         try (Connection conn = dataSource.getConnection();
+              PreparedStatement stmt = conn.prepareStatement(sql)) {
+-            
++
+             stmt.setLong(1, id);
+-            
++
+             try (ResultSet rs = stmt.executeQuery()) {
+                 if (rs.next()) {
+                     return Optional.of(mapResultSetToTask(rs));
+                 }
+             }
+         }
+-        
++
+         return Optional.empty();
+     }
+-    
++
+     public int updateTaskStatusWithRawJdbc(Long taskId, Task.TaskStatus newStatus) throws SQLException {
+         String sql = "UPDATE tasks SET status = ?, updated_at = ? WHERE id = ?";
+-        
++
+         try (Connection conn = dataSource.getConnection();
+              PreparedStatement stmt = conn.prepareStatement(sql)) {
+-            
++
+             stmt.setString(1, newStatus.name());
+             stmt.setTimestamp(2, Timestamp.valueOf(LocalDateTime.now()));
+             stmt.setLong(3, taskId);
+-            
++
+             return stmt.executeUpdate();
+         }
+     }
+-    
++
+     public List<Task> searchTasksByTitleWithRawJdbc(String searchTerm) throws SQLException {
+         String sql = "SELECT * FROM tasks WHERE title LIKE ? ORDER BY created_at DESC";
+         List<Task> tasks = new ArrayList<>();
+-        
++
+         try (Connection conn = dataSource.getConnection();
+              PreparedStatement stmt = conn.prepareStatement(sql)) {
+-            
++
+             stmt.setString(1, "%" + searchTerm + "%");
+-            
++
+             try (ResultSet rs = stmt.executeQuery()) {
+                 while (rs.next()) {
+                     tasks.add(mapResultSetToTask(rs));
+                 }
+             }
+         }
+-        
++
+         return tasks;
+     }
+-    
++
+     private Task mapResultSetToTask(ResultSet rs) throws SQLException {
+         Task task = new Task();
+         task.setId(rs.getLong("id"));
+@@ -129,22 +129,22 @@
+         task.setStatus(Task.TaskStatus.valueOf(rs.getString("status")));
+         task.setPriority(Task.TaskPriority.valueOf(rs.getString("priority")));
+         task.setAssigneeId(rs.getString("assignee_id"));
+-        
++
+         Timestamp createdAt = rs.getTimestamp("created_at");
+         if (createdAt != null) {
+             task.setCreatedAt(createdAt.toLocalDateTime());
+         }
+-        
++
+         Timestamp updatedAt = rs.getTimestamp("updated_at");
+         if (updatedAt != null) {
+             task.setUpdatedAt(updatedAt.toLocalDateTime());
+         }
+-        
++
+         Timestamp dueDate = rs.getTimestamp("due_date");
+         if (dueDate != null) {
+             task.setDueDate(dueDate.toLocalDateTime());
+         }
+-        
++
+         return task;
+     }
+ }
+\ No newline at end of file
+
+diff --git a/src/main/java/com/example/tasks/DatabaseHealthCheck.java b/src/main/java/com/example/tasks/DatabaseHealthCheck.java
+index 68e2895..96aad3c 100644
+--- a/src/main/java/com/example/tasks/DatabaseHealthCheck.java
++++ b/src/main/java/com/example/tasks/DatabaseHealthCheck.java
+@@ -9,23 +9,22 @@ com.example.UpgradeDropwizard2To3_Aggressive
+ import java.sql.ResultSet;
+ 
+ public class DatabaseHealthCheck extends HealthCheck {
+-    
++
+     private final DataSourceFactory dataSourceFactory;
+-    
++
+     public DatabaseHealthCheck(DataSourceFactory dataSourceFactory) {
+         this.dataSourceFactory = dataSourceFactory;
+     }
+-    
+-    @Override
++
+     protected Result check() throws Exception {
+         try (Connection connection = DriverManager.getConnection(
+-                dataSourceFactory.getUrl(),
+-                dataSourceFactory.getUser(),
+-                dataSourceFactory.getPassword())) {
+-            
++               dataSourceFactory.getUrl(),
++               dataSourceFactory.getUser(),
++               dataSourceFactory.getPassword())) {
++
+             try (PreparedStatement statement = connection.prepareStatement("SELECT 1");
+                  ResultSet resultSet = statement.executeQuery()) {
+-                
++
+                 if (resultSet.next() && resultSet.getInt(1) == 1) {
+                     return Result.healthy("Database connection is working");
+                 } else {
+
+diff --git a/src/main/java/com/example/tasks/api/TaskResource.java b/src/main/java/com/example/tasks/api/TaskResource.java
+index f23c741..48d96a9 100644
+--- a/src/main/java/com/example/tasks/api/TaskResource.java
++++ b/src/main/java/com/example/tasks/api/TaskResource.java
+@@ -21,28 +21,28 @@ com.example.UpgradeDropwizard2To3_Aggressive
+ @Consumes(MediaType.APPLICATION_JSON)
+ @Api(value = "tasks", description = "Task management operations")
+ public class TaskResource {
+-    
++
+     private final TaskDAO taskDAO;
+-    
++
+     public TaskResource(TaskDAO taskDAO) {
+         this.taskDAO = taskDAO;
+     }
+-    
++
+     @GET
+     @ApiOperation(value = "Get all tasks", notes = "Retrieve a list of all tasks")
+     @ApiResponses({
+-        @ApiResponse(code = 200, message = "Successfully retrieved tasks"),
+-        @ApiResponse(code = 401, message = "Authentication required")
++           @ApiResponse(code = 200, message = "Successfully retrieved tasks"),
++           @ApiResponse(code = 401, message = "Authentication required")
+     })
+     public List<Task> getAllTasks(@Auth Principal principal) {
+         return taskDAO.findAll();
+     }
+-    
++
+     @GET
+     @Path("/{id}")
+     @ApiOperation(value = "Get task by ID", notes = "Retrieve a specific task by its ID")
+-    public Response getTask(@Auth Principal principal, 
+-                           @ApiParam(value = "Task ID", required = true) @PathParam("id") Long id) {
++    public Response getTask(@Auth Principal principal,
++           @ApiParam(value = "Task ID", required = true) @PathParam("id") Long id) {
+         Optional<Task> task = taskDAO.findById(id);
+         if (task.isPresent()) {
+             return Response.ok(task.get()).build();
+@@ -50,88 +50,88 @@
+             return Response.status(Response.Status.NOT_FOUND).build();
+         }
+     }
+-    
++
+     @POST
+     @ApiOperation(value = "Create new task", notes = "Create a new task")
+     public Response createTask(@Auth Principal principal, Task task) {
+         if (task.getTitle() == null || task.getTitle().trim().isEmpty()) {
+             return Response.status(Response.Status.BAD_REQUEST)
+-                    .entity(new ErrorResponse("Title is required"))
+-                    .build();
++                   .entity(new ErrorResponse("Title is required"))
++                   .build();
+         }
+-        
++
+         Task createdTask = taskDAO.create(task);
+         return Response.status(Response.Status.CREATED).entity(createdTask).build();
+     }
+-    
++
+     @PUT
+     @Path("/{id}")
+     @ApiOperation(value = "Update task", notes = "Update an existing task")
+     public Response updateTask(@Auth Principal principal,
+-                              @ApiParam(value = "Task ID", required = true) @PathParam("id") Long id,
+-                              Task task) {
++           @ApiParam(value = "Task ID", required = true) @PathParam("id") Long id,
++           Task task) {
+         Optional<Task> existingTask = taskDAO.findById(id);
+         if (!existingTask.isPresent()) {
+             return Response.status(Response.Status.NOT_FOUND).build();
+         }
+-        
++
+         Task taskToUpdate = existingTask.get();
+-        
++
+         if (task.getTitle() != null && !task.getTitle().trim().isEmpty()) {
+             taskToUpdate.setTitle(task.getTitle());
+         }
+-        
++
+         if (task.getDescription() != null) {
+             taskToUpdate.setDescription(task.getDescription());
+         }
+-        
++
+         if (task.getStatus() != null) {
+             taskToUpdate.setStatus(task.getStatus());
+         }
+-        
++
+         if (task.getPriority() != null) {
+             taskToUpdate.setPriority(task.getPriority());
+         }
+-        
++
+         if (task.getAssigneeId() != null) {
+             taskToUpdate.setAssigneeId(task.getAssigneeId());
+         }
+-        
++
+         if (task.getDueDate() != null) {
+             taskToUpdate.setDueDate(task.getDueDate());
+         }
+-        
++
+         Task updatedTask = taskDAO.update(taskToUpdate);
+         return Response.ok(updatedTask).build();
+     }
+-    
++
+     @DELETE
+     @Path("/{id}")
+     @ApiOperation(value = "Delete task", notes = "Delete a task by ID")
+     public Response deleteTask(@Auth Principal principal,
+-                              @ApiParam(value = "Task ID", required = true) @PathParam("id") Long id) {
++           @ApiParam(value = "Task ID", required = true) @PathParam("id") Long id) {
+         Optional<Task> task = taskDAO.findById(id);
+         if (!task.isPresent()) {
+             return Response.status(Response.Status.NOT_FOUND).build();
+         }
+-        
++
+         taskDAO.delete(id);
+         return Response.noContent().build();
+     }
+-    
++
+     @GET
+     @Path("/user/{userId}")
+     @ApiOperation(value = "Get tasks by user", notes = "Retrieve tasks assigned to a specific user")
+     public List<Task> getTasksByUser(@Auth Principal principal,
+-                                    @ApiParam(value = "User ID", required = true) @PathParam("userId") String userId) {
++           @ApiParam(value = "User ID", required = true) @PathParam("userId") String userId) {
+         return taskDAO.findByAssigneeId(userId);
+     }
+-    
++
+     @GET
+     @Path("/status/{status}")
+     @ApiOperation(value = "Get tasks by status", notes = "Retrieve tasks with a specific status")
+     public List<Task> getTasksByStatus(@Auth Principal principal,
+-                                      @ApiParam(value = "Task status", required = true) @PathParam("status") String status) {
++           @ApiParam(value = "Task status", required = true) @PathParam("status") String status) {
+         try {
+             Task.TaskStatus taskStatus = Task.TaskStatus.valueOf(status.toUpperCase());
+             return taskDAO.findByStatus(taskStatus);
+@@ -139,14 +139,14 @@
+             throw new WebApplicationException("Invalid status: " + status, Response.Status.BAD_REQUEST);
+         }
+     }
+-    
++
+     public static class ErrorResponse {
+         private final String error;
+-        
++
+         public ErrorResponse(String error) {
+             this.error = error;
+         }
+-        
++
+         public String getError() {
+             return error;
+         }
+
+diff --git a/src/main/java/com/example/tasks/TaskApplication.java b/src/main/java/com/example/tasks/TaskApplication.java
+index 4af92f5..e4222ad 100644
+--- a/src/main/java/com/example/tasks/TaskApplication.java
++++ b/src/main/java/com/example/tasks/TaskApplication.java
+@@ -4,15 +4,15 @@ com.example.UpgradeDropwizard2To3_Aggressive
+ import com.example.tasks.auth.BasicAuthenticator;
+ import com.example.tasks.auth.ApiKeyAuthenticator;
+ import com.example.tasks.db.TaskDAO;
+-import io.dropwizard.Application;
+ import io.dropwizard.auth.AuthDynamicFeature;
+ import io.dropwizard.auth.AuthValueFactoryProvider;
+ import io.dropwizard.auth.basic.BasicCredentialAuthFilter;
+ import io.dropwizard.auth.chained.ChainedAuthFilter;
++import io.dropwizard.core.Application;
++import io.dropwizard.core.setup.Bootstrap;
++import io.dropwizard.core.setup.Environment;
+ import io.dropwizard.db.DataSourceFactory;
+ import io.dropwizard.jdbi3.JdbiFactory;
+-import io.dropwizard.setup.Bootstrap;
+-import io.dropwizard.setup.Environment;
+ import io.swagger.jaxrs.config.BeanConfig;
+ import io.swagger.jaxrs.listing.ApiListingResource;
+ import io.swagger.jaxrs.listing.SwaggerSerializers;
+@@ -23,61 +23,58 @@
+ import java.util.Arrays;
+ 
+ public class TaskApplication extends Application<TaskConfiguration> {
+-    
++
+     public static void main(String[] args) throws Exception {
+         new TaskApplication().run(args);
+     }
+-    
+-    @Override
++
+     public String getName() {
+         return "task-management-api";
+     }
+-    
+-    @Override
++
+     public void initialize(Bootstrap<TaskConfiguration> bootstrap) {
+         // Add any bundles here
+     }
+-    
+-    @Override
++
+     public void run(TaskConfiguration configuration, Environment environment) {
+         final JdbiFactory factory = new JdbiFactory();
+         final Jdbi jdbi = factory.build(environment, configuration.getDataSourceFactory(), "mysql");
+         final TaskDAO taskDAO = jdbi.onDemand(TaskDAO.class);
+         final TaskResource taskResource = new TaskResource(taskDAO);
+-        
++
+         // Register resources
+         environment.jersey().register(taskResource);
+-        
++
+         // Configure authentication - chained Basic Auth and API Key
+         environment.jersey().register(new AuthDynamicFeature(
+-            new ChainedAuthFilter<>(Arrays.asList(
+-                new BasicCredentialAuthFilter.Builder<Principal>()
+-                    .setAuthenticator(new BasicAuthenticator())
+-                    .setRealm("TASK API - Basic Auth")
+-                    .buildAuthFilter(),
+-                new BasicCredentialAuthFilter.Builder<Principal>()
+-                    .setAuthenticator(new ApiKeyAuthenticator())
+-                    .setRealm("TASK API - API Key")
+-                    .buildAuthFilter()
+-            ))
++               new ChainedAuthFilter<>(Arrays.asList(
++                      new BasicCredentialAuthFilter.Builder<Principal>()
++                             .setAuthenticator(new BasicAuthenticator())
++                             .setRealm("TASK API - Basic Auth")
++                             .buildAuthFilter(),
++                      new BasicCredentialAuthFilter.Builder<Principal>()
++                             .setAuthenticator(new ApiKeyAuthenticator())
++                             .setRealm("TASK API - API Key")
++                             .buildAuthFilter()
++               ))
+         ));
+-        
++
+         environment.jersey().register(RolesAllowedDynamicFeature.class);
+         environment.jersey().register(new AuthValueFactoryProvider.Binder<>(Principal.class));
+-        
++
+         // Configure minimal Swagger documentation
+         environment.jersey().register(new ApiListingResource());
+         environment.jersey().register(new SwaggerSerializers());
+-        
++
+         BeanConfig config = new BeanConfig();
+         config.setTitle("Task Management API");
+         config.setVersion("1.0.0");
+         config.setResourcePackage("com.example.tasks.api");
+         config.setScan(true);
+         config.setBasePath("/");
+-        
++
+         // Health checks
+-        environment.healthChecks().register("database", 
+-            new DatabaseHealthCheck(configuration.getDataSourceFactory()));
++        environment.healthChecks().register("database",
++               new DatabaseHealthCheck(configuration.getDataSourceFactory()));
+     }
+ }
+\ No newline at end of file
+
+diff --git a/src/main/java/com/example/tasks/auth/BasicAuthenticator.java b/src/main/java/com/example/tasks/auth/BasicAuthenticator.java
+index 3d87805..3c26a0b 100644
+--- a/src/main/java/com/example/tasks/auth/BasicAuthenticator.java
++++ b/src/main/java/com/example/tasks/auth/BasicAuthenticator.java
+@@ -10,39 +10,38 @@ com.example.UpgradeDropwizard2To3_Aggressive
+ import java.util.Optional;
+ 
+ public class BasicAuthenticator implements Authenticator<BasicCredentials, Principal> {
+-    
+-    private static final Map<String, String> VALID_USERS = new HashMap<String, String>() {{
+-        put("admin", "password");
+-        put("user", "user123");
+-        put("manager", "manager456");
+-        put("taskmaster", "tasks789");
+-    }};
+-    
+-    @Override
++
++    private static final Map<String, String> VALID_USERS = new HashMap<String, String>() {
++        {
++            put("admin", "password");
++            put("user", "user123");
++            put("manager", "manager456");
++            put("taskmaster", "tasks789");
++        }
++    };
++
+     public Optional<Principal> authenticate(BasicCredentials credentials) throws AuthenticationException {
+         String username = credentials.getUsername();
+         String password = credentials.getPassword();
+-        
++
+         if (VALID_USERS.containsKey(username) && VALID_USERS.get(username).equals(password)) {
+             return Optional.of(new BasicPrincipal(username));
+         }
+-        
++
+         return Optional.empty();
+     }
+-    
++
+     public static class BasicPrincipal implements Principal {
+         private final String name;
+-        
++
+         public BasicPrincipal(String name) {
+             this.name = name;
+         }
+-        
+-        @Override
++
+         public String getName() {
+             return name;
+         }
+-        
+-        @Override
++
+         public String toString() {
+             return "BasicPrincipal{" + "name='" + name + '\'' + '}';
+         }
+
+diff --git a/src/main/java/com/example/tasks/auth/ApiKeyAuthenticator.java b/src/main/java/com/example/tasks/auth/ApiKeyAuthenticator.java
+index 0b85e67..41c9793 100644
+--- a/src/main/java/com/example/tasks/auth/ApiKeyAuthenticator.java
++++ b/src/main/java/com/example/tasks/auth/ApiKeyAuthenticator.java
+@@ -9,49 +9,46 @@ com.example.UpgradeDropwizard2To3_Aggressive
+ import java.util.Set;
+ 
+ public class ApiKeyAuthenticator implements Authenticator<BasicCredentials, Principal> {
+-    
++
+     private static final Set<String> VALID_API_KEYS = Set.of(
+-        "task-api-key-123",
+-        "task-api-key-456", 
+-        "task-api-key-789",
+-        "task-admin-key-000",
+-        "task-manager-key-999"
++           "task-api-key-123",
++           "task-api-key-456",
++           "task-api-key-789",
++           "task-admin-key-000",
++           "task-manager-key-999"
+     );
+-    
+-    @Override
++
+     public Optional<Principal> authenticate(BasicCredentials credentials) throws AuthenticationException {
+         String apiKey = credentials.getUsername();
+         String password = credentials.getPassword();
+-        
++
+         // API key authentication uses the username field for the key, password should be empty
+         if (password != null && !password.isEmpty()) {
+             return Optional.empty();
+         }
+-        
++
+         if (VALID_API_KEYS.contains(apiKey)) {
+             return Optional.of(new ApiKeyPrincipal(apiKey));
+         }
+-        
++
+         return Optional.empty();
+     }
+-    
++
+     public static class ApiKeyPrincipal implements Principal {
+         private final String apiKey;
+-        
++
+         public ApiKeyPrincipal(String apiKey) {
+             this.apiKey = apiKey;
+         }
+-        
+-        @Override
++
+         public String getName() {
+             return apiKey;
+         }
+-        
++
+         public String getApiKey() {
+             return apiKey;
+         }
+-        
+-        @Override
++
+         public String toString() {
+             return "ApiKeyPrincipal{" + "apiKey='" + apiKey + '\'' + '}';
+         }
+
+diff --git a/src/main/java/com/example/tasks/core/Task.java b/src/main/java/com/example/tasks/core/Task.java
+index 7811f98..8b2a349 100644
+--- a/src/main/java/com/example/tasks/core/Task.java
++++ b/src/main/java/com/example/tasks/core/Task.java
+@@ -9,117 +9,147 @@ com.example.UpgradeDropwizard2To3_Aggressive
+ 
+ @ApiModel(description = "Task entity")
+ public class Task {
+-    
++
+     @JsonProperty
+     @ApiModelProperty(value = "Unique task identifier", example = "1")
+     private Long id;
+-    
++
+     @JsonProperty
+     @ApiModelProperty(value = "Task title", example = "Complete project documentation", required = true)
+     private String title;
+-    
++
+     @JsonProperty
+     @ApiModelProperty(value = "Task description", example = "Write comprehensive documentation for the API")
+     private String description;
+-    
++
+     @JsonProperty
+     @ApiModelProperty(value = "Task status", example = "pending")
+     private TaskStatus status;
+-    
++
+     @JsonProperty
+     @ApiModelProperty(value = "Task priority", example = "high")
+     private TaskPriority priority;
+-    
++
+     @JsonProperty
+     @ApiModelProperty(value = "Assigned user ID", example = "user123")
+     private String assigneeId;
+-    
++
+     @JsonProperty
+     @ApiModelProperty(value = "Task creation timestamp")
+     private LocalDateTime createdAt;
+-    
++
+     @JsonProperty
+     @ApiModelProperty(value = "Task last update timestamp")
+     private LocalDateTime updatedAt;
+-    
++
+     @JsonProperty
+     @ApiModelProperty(value = "Task due date")
+     private LocalDateTime dueDate;
+-    
++
+     public Task() {
+         this.createdAt = LocalDateTime.now();
+         this.updatedAt = LocalDateTime.now();
+         this.status = TaskStatus.PENDING;
+         this.priority = TaskPriority.MEDIUM;
+     }
+-    
++
+     public Task(String title, String description) {
+         this();
+         this.title = title;
+         this.description = description;
+     }
+-    
++
+     // Getters and setters
+-    public Long getId() { return id; }
+-    public void setId(Long id) { this.id = id; }
+-    
+-    public String getTitle() { return title; }
+-    public void setTitle(String title) { 
+-        this.title = title; 
++    public Long getId() {
++        return id;
++    }
++
++    public void setId(Long id) {
++        this.id = id;
++    }
++
++    public String getTitle() {
++        return title;
++    }
++
++    public void setTitle(String title) {
++        this.title = title;
+         this.updatedAt = LocalDateTime.now();
+     }
+-    
+-    public String getDescription() { return description; }
+-    public void setDescription(String description) { 
++
++    public String getDescription() {
++        return description;
++    }
++
++    public void setDescription(String description) {
+         this.description = description;
+         this.updatedAt = LocalDateTime.now();
+     }
+-    
+-    public TaskStatus getStatus() { return status; }
+-    public void setStatus(TaskStatus status) { 
++
++    public TaskStatus getStatus() {
++        return status;
++    }
++
++    public void setStatus(TaskStatus status) {
+         this.status = status;
+         this.updatedAt = LocalDateTime.now();
+     }
+-    
+-    public TaskPriority getPriority() { return priority; }
+-    public void setPriority(TaskPriority priority) { 
++
++    public TaskPriority getPriority() {
++        return priority;
++    }
++
++    public void setPriority(TaskPriority priority) {
+         this.priority = priority;
+         this.updatedAt = LocalDateTime.now();
+     }
+-    
+-    public String getAssigneeId() { return assigneeId; }
+-    public void setAssigneeId(String assigneeId) { 
++
++    public String getAssigneeId() {
++        return assigneeId;
++    }
++
++    public void setAssigneeId(String assigneeId) {
+         this.assigneeId = assigneeId;
+         this.updatedAt = LocalDateTime.now();
+     }
+-    
+-    public LocalDateTime getCreatedAt() { return createdAt; }
+-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+-    
+-    public LocalDateTime getUpdatedAt() { return updatedAt; }
+-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+-    
+-    public LocalDateTime getDueDate() { return dueDate; }
+-    public void setDueDate(LocalDateTime dueDate) { 
++
++    public LocalDateTime getCreatedAt() {
++        return createdAt;
++    }
++
++    public void setCreatedAt(LocalDateTime createdAt) {
++        this.createdAt = createdAt;
++    }
++
++    public LocalDateTime getUpdatedAt() {
++        return updatedAt;
++    }
++
++    public void setUpdatedAt(LocalDateTime updatedAt) {
++        this.updatedAt = updatedAt;
++    }
++
++    public LocalDateTime getDueDate() {
++        return dueDate;
++    }
++
++    public void setDueDate(LocalDateTime dueDate) {
+         this.dueDate = dueDate;
+         this.updatedAt = LocalDateTime.now();
+     }
+-    
+-    @Override
++
+     public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+         Task task = (Task) o;
+-        return Objects.equals(id, task.id) && 
++        return Objects.equals(id, task.id) &&
+                Objects.equals(title, task.title);
+     }
+-    
+-    @Override
++
+     public int hashCode() {
+         return Objects.hash(id, title);
+     }
+-    
+-    @Override
++
+     public String toString() {
+         return "Task{" +
+                "id=" + id +
+@@ -130,11 +160,11 @@
+                ", createdAt=" + createdAt +
+                '}';
+     }
+-    
++
+     public enum TaskStatus {
+         PENDING, IN_PROGRESS, COMPLETED, CANCELLED
+     }
+-    
++
+     public enum TaskPriority {
+         LOW, MEDIUM, HIGH, URGENT
+     }
+
+diff --git a/src/main/java/com/example/tasks/TaskConfiguration.java b/src/main/java/com/example/tasks/TaskConfiguration.java
+index aed98f3..6167038 100644
+--- a/src/main/java/com/example/tasks/TaskConfiguration.java
++++ b/src/main/java/com/example/tasks/TaskConfiguration.java
+@@ -1,23 +1,23 @@ com.example.UpgradeDropwizard2To3_Aggressive
+ package com.example.tasks;
+ 
+ import com.fasterxml.jackson.annotation.JsonProperty;
+-import io.dropwizard.Configuration;
++import io.dropwizard.core.Configuration;
+ import io.dropwizard.db.DataSourceFactory;
+ 
+ import javax.validation.Valid;
+ import javax.validation.constraints.NotNull;
+ 
+ public class TaskConfiguration extends Configuration {
+-    
++
+     @Valid
+     @NotNull
+     private DataSourceFactory database = new DataSourceFactory();
+-    
++
+     @JsonProperty("database")
+     public DataSourceFactory getDataSourceFactory() {
+         return database;
+     }
+-    
++
+     @JsonProperty("database")
+     public void setDataSourceFactory(DataSourceFactory database) {
+         this.database = database;
+
+diff --git a/src/test/java/com/example/tasks/TaskResourceTest.java b/src/test/java/com/example/tasks/TaskResourceTest.java
+index e5b774a..7b6ac3c 100644
+--- a/src/test/java/com/example/tasks/TaskResourceTest.java
++++ b/src/test/java/com/example/tasks/TaskResourceTest.java
+@@ -23,20 +23,20 @@ com.example.UpgradeDropwizard2To3_Aggressive
+ 
+ @RunWith(MockitoJUnitRunner.class)
+ public class TaskResourceTest {
+-    
++
+     @Mock
+     private TaskDAO taskDAO;
+-    
++
+     @Mock
+     private Principal principal;
+-    
++
+     private TaskResource taskResource;
+-    
++
+     @Before
+     public void setUp() {
+         taskResource = new TaskResource(taskDAO);
+     }
+-    
++
+     @Test
+     public void testGetAllTasks() {
+         // Given
+@@ -46,17 +46,17 @@
+         task2.setId(2L);
+         List<Task> tasks = Arrays.asList(task1, task2);
+         when(taskDAO.findAll()).thenReturn(tasks);
+-        
++
+         // When
+         List<Task> result = taskResource.getAllTasks(principal);
+-        
++
+         // Then
+         assertEquals(2, result.size());
+         assertEquals("Task 1", result.get(0).getTitle());
+         assertEquals("Task 2", result.get(1).getTitle());
+         verify(taskDAO, times(1)).findAll();
+     }
+-    
++
+     @Test
+     public void testGetTaskById() {
+         // Given
+@@ -64,31 +64,31 @@
+         Task task = new Task("Test Task", "Test Description");
+         task.setId(taskId);
+         when(taskDAO.findById(taskId)).thenReturn(Optional.of(task));
+-        
++
+         // When
+         Response response = taskResource.getTask(principal, taskId);
+-        
++
+         // Then
+         assertEquals(200, response.getStatus());
+         Task returnedTask = (Task) response.getEntity();
+         assertEquals("Test Task", returnedTask.getTitle());
+         verify(taskDAO, times(1)).findById(taskId);
+     }
+-    
++
+     @Test
+     public void testGetTaskByIdNotFound() {
+         // Given
+         Long taskId = 999L;
+         when(taskDAO.findById(taskId)).thenReturn(Optional.empty());
+-        
++
+         // When
+         Response response = taskResource.getTask(principal, taskId);
+-        
++
+         // Then
+         assertEquals(404, response.getStatus());
+         verify(taskDAO, times(1)).findById(taskId);
+     }
+-    
++
+     @Test
+     public void testCreateTask() {
+         // Given
+@@ -96,47 +96,47 @@
+         Task createdTask = new Task("New Task", "New Description");
+         createdTask.setId(1L);
+         when(taskDAO.create(any(Task.class))).thenReturn(createdTask);
+-        
++
+         // When
+         Response response = taskResource.createTask(principal, task);
+-        
++
+         // Then
+         assertEquals(201, response.getStatus());
+         Task returnedTask = (Task) response.getEntity();
+         assertEquals("New Task", returnedTask.getTitle());
+         verify(taskDAO, times(1)).create(any(Task.class));
+     }
+-    
++
+     @Test
+     public void testCreateTaskWithEmptyTitle() {
+         // Given
+         Task task = new Task("", "Description");
+-        
++
+         // When
+         Response response = taskResource.createTask(principal, task);
+-        
++
+         // Then
+         assertEquals(400, response.getStatus());
+         TaskResource.ErrorResponse error = (TaskResource.ErrorResponse) response.getEntity();
+         assertEquals("Title is required", error.getError());
+         verify(taskDAO, never()).create(any(Task.class));
+     }
+-    
++
+     @Test
+     public void testCreateTaskWithNullTitle() {
+         // Given
+         Task task = new Task(null, "Description");
+-        
++
+         // When
+         Response response = taskResource.createTask(principal, task);
+-        
++
+         // Then
+         assertEquals(400, response.getStatus());
+         TaskResource.ErrorResponse error = (TaskResource.ErrorResponse) response.getEntity();
+         assertEquals("Title is required", error.getError());
+         verify(taskDAO, never()).create(any(Task.class));
+     }
+-    
++
+     @Test
+     public void testUpdateTask() {
+         // Given
+@@ -146,35 +146,35 @@
+         Task updateData = new Task("New Title", "New Description");
+         updateData.setStatus(Task.TaskStatus.IN_PROGRESS);
+         updateData.setPriority(Task.TaskPriority.HIGH);
+-        
++
+         when(taskDAO.findById(taskId)).thenReturn(Optional.of(existingTask));
+         when(taskDAO.update(any(Task.class))).thenReturn(existingTask);
+-        
++
+         // When
+         Response response = taskResource.updateTask(principal, taskId, updateData);
+-        
++
+         // Then
+         assertEquals(200, response.getStatus());
+         verify(taskDAO, times(1)).findById(taskId);
+         verify(taskDAO, times(1)).update(any(Task.class));
+     }
+-    
++
+     @Test
+     public void testUpdateTaskNotFound() {
+         // Given
+         Long taskId = 999L;
+         Task updateData = new Task("New Title", "New Description");
+         when(taskDAO.findById(taskId)).thenReturn(Optional.empty());
+-        
++
+         // When
+         Response response = taskResource.updateTask(principal, taskId, updateData);
+-        
++
+         // Then
+         assertEquals(404, response.getStatus());
+         verify(taskDAO, times(1)).findById(taskId);
+         verify(taskDAO, never()).update(any(Task.class));
+     }
+-    
++
+     @Test
+     public void testDeleteTask() {
+         // Given
+@@ -182,31 +182,31 @@
+         Task task = new Task("Test Task", "Test Description");
+         task.setId(taskId);
+         when(taskDAO.findById(taskId)).thenReturn(Optional.of(task));
+-        
++
+         // When
+         Response response = taskResource.deleteTask(principal, taskId);
+-        
++
+         // Then
+         assertEquals(204, response.getStatus());
+         verify(taskDAO, times(1)).findById(taskId);
+         verify(taskDAO, times(1)).delete(taskId);
+     }
+-    
++
+     @Test
+     public void testDeleteTaskNotFound() {
+         // Given
+         Long taskId = 999L;
+         when(taskDAO.findById(taskId)).thenReturn(Optional.empty());
+-        
++
+         // When
+         Response response = taskResource.deleteTask(principal, taskId);
+-        
++
+         // Then
+         assertEquals(404, response.getStatus());
+         verify(taskDAO, times(1)).findById(taskId);
+         verify(taskDAO, never()).delete(anyLong());
+     }
+-    
++
+     @Test
+     public void testGetTasksByUser() {
+         // Given
+@@ -217,17 +217,17 @@
+         task2.setAssigneeId(userId);
+         List<Task> tasks = Arrays.asList(task1, task2);
+         when(taskDAO.findByAssigneeId(userId)).thenReturn(tasks);
+-        
++
+         // When
+         List<Task> result = taskResource.getTasksByUser(principal, userId);
+-        
++
+         // Then
+         assertEquals(2, result.size());
+         assertEquals(userId, result.get(0).getAssigneeId());
+         assertEquals(userId, result.get(1).getAssigneeId());
+         verify(taskDAO, times(1)).findByAssigneeId(userId);
+     }
+-    
++
+     @Test
+     public void testGetTasksByStatus() {
+         // Given
+@@ -238,10 +238,10 @@
+         task2.setStatus(Task.TaskStatus.PENDING);
+         List<Task> tasks = Arrays.asList(task1, task2);
+         when(taskDAO.findByStatus(Task.TaskStatus.PENDING)).thenReturn(tasks);
+-        
++
+         // When
+         List<Task> result = taskResource.getTasksByStatus(principal, status);
+-        
++
+         // Then
+         assertEquals(2, result.size());
+         assertEquals(Task.TaskStatus.PENDING, result.get(0).getStatus());
+
+diff --git a/build.gradle b/build.gradle
+index 9efba2a..5d441e8 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -9,7 +9,7 @@ com.example.UpgradeDropwizard2To3_Aggressive
+ 
+ java {
+     toolchain {
+-        languageVersion = JavaLanguageVersion.of(11)
++        languageVersion = JavaLanguageVersion.of(17)
+     }
+ }
+ 
+@@ -19,10 +19,10 @@
+ 
+ dependencies {
+     // Dropwizard 2.1.x
+-    implementation 'io.dropwizard:dropwizard-core:2.1.12'
+-    implementation 'io.dropwizard:dropwizard-jdbi3:2.1.12'
+-    implementation 'io.dropwizard:dropwizard-auth:2.1.12'
+-    implementation 'io.dropwizard:dropwizard-configuration:2.1.12'
++    implementation 'io.dropwizard:dropwizard-core:3.0.0'
++    implementation 'io.dropwizard:dropwizard-jdbi3:3.0.0'
++    implementation 'io.dropwizard:dropwizard-auth:3.0.0'
++    implementation 'io.dropwizard:dropwizard-configuration:3.0.0'
+     
+     // MySQL
+     implementation 'mysql:mysql-connector-java:8.0.33'
+@@ -46,7 +46,7 @@
+     
+     // JUnit 4 for tests
+     testImplementation 'junit:junit:4.13.2'
+-    testImplementation 'io.dropwizard:dropwizard-testing:2.1.12'
++    testImplementation 'io.dropwizard:dropwizard-testing:3.0.0'
+     testImplementation 'org.mockito:mockito-core:4.6.1'
+     testImplementation 'org.testcontainers:mysql:1.17.6'
+ }
+

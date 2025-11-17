@@ -1,0 +1,153 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.example.UpgradeJava17JUnit5Targeted
+displayName: Targeted Java 11 to 17 and JUnit 4 to 5 Migration
+description: |
+  Targeted migration recipe for upgrading from Java 11 to Java 17 and JUnit 4 to JUnit 5.
+  This recipe uses more specific, narrow recipes to minimize unexpected changes and focus
+  on exact transformations observed in the PR. Avoids additional Java 17 modernizations
+  like pattern matching and text blocks in favor of minimal, precise updates.
+
+recipeList:
+  # ============================================================================
+  # PHASE 1: Java Version Upgrade (Minimal - Toolchain Only)
+  # ============================================================================
+
+  # Upgrade Java version to 17 in build configuration
+  # This recipe updates java.toolchain.languageVersion in Gradle build files
+  # Also handles Maven compiler plugin settings and related configurations
+  # More targeted than UpgradeToJava17 - does NOT include:
+  # - Pattern matching migrations
+  # - Text block conversions
+  # - String.formatted() replacements
+  # - Other Java 17 language feature adoptions
+  - org.openrewrite.java.migrate.UpgradeJavaVersion:
+      version: 17
+
+  # ============================================================================
+  # PHASE 2: JUnit 4 to JUnit 5 Migration
+  # ============================================================================
+  # Note: Even in the "narrow" approach, we must use the comprehensive JUnit4to5Migration
+  # recipe because JUnit migration requires coordinated changes across imports, annotations,
+  # and assertions. Decomposing this would risk missing critical interdependencies.
+
+  # Comprehensive JUnit 4 to JUnit 5 migration - includes all necessary changes:
+  # - Migrates annotations: @Before -> @BeforeEach, @After -> @AfterEach, @Test
+  # - Updates imports: org.junit.* -> org.junit.jupiter.api.*
+  # - Migrates assertions: Assert.* -> Assertions.*
+  # - Updates dependencies: removes junit:junit, adds jupiter-api and jupiter-engine
+  # - Configures test tasks: useJUnit() -> useJUnitPlatform()
+  # - Handles @RunWith, @Rule, Hamcrest, Mockito, parameterized tests
+  #
+  # This is unavoidable even in narrow approach - JUnit migration is inherently comprehensive
+  - org.openrewrite.java.testing.junit5.JUnit4to5Migration
+
+  # ============================================================================
+  # PHASE 3: Gradle Wrapper Upgrade
+  # ============================================================================
+
+  # Update Gradle wrapper to version 7.6.4 for Java 17 compatibility
+  # Modifies gradle/wrapper/gradle-wrapper.properties
+  # Queries services.gradle.org to ensure version is valid
+  - org.openrewrite.gradle.UpdateGradleWrapper:
+      version: 7.6.4
+      distribution: bin
+
+  # ============================================================================
+  # PHASE 4: Gradle Plugin Upgrades
+  # ============================================================================
+
+  # Upgrade Shadow plugin to version 7.1.2 for Gradle 7.6.4 compatibility
+  # Shadow plugin 6.x is not compatible with Gradle 7.6.4
+  # This updates the plugin version in the plugins {} block
+  - org.openrewrite.gradle.plugins.UpgradePluginVersion:
+      pluginIdPattern: com.github.johnrengelman.shadow
+      newVersion: 7.1.2
+
+  # ============================================================================
+  # PHASE 5: GitHub Actions CI/CD Updates
+  # ============================================================================
+
+  # Update GitHub Actions workflows to use Java 17
+  # Changes java-version property in actions/setup-java steps from 11 to 17
+  # Applies to all workflows in .github/workflows/
+  - org.openrewrite.github.SetupJavaUpgradeJavaVersion:
+      minimumJavaMajorVersion: 17
+
+  # Update GitHub Actions step name from "Set up JDK 11" to "Set up JDK 17"
+  # Uses YAML LST (semantic tree) to navigate and modify workflow structure
+  # This is NOT text-based replacement - it understands YAML structure
+  # Navigates to step with specific name and updates it
+  - org.openrewrite.yaml.ChangePropertyValue:
+      propertyKey: jobs.build.steps[?(@.name == 'Set up JDK 11')].name
+      newValue: Set up JDK 17
+      filePattern: .github/workflows/*.yml
+
+  # ============================================================================
+  # MANUAL VERIFICATION REQUIRED
+  # ============================================================================
+  # The following changes require manual verification or additional custom recipes:
+  #
+  # 1. mainClassName -> mainClass migration in application {} block:
+  #    - This deprecation is part of Gradle 7 (deprecated) / Gradle 8 (removed)
+  #    - Current PR targets Gradle 7.6.4, so mainClassName still works but is deprecated
+  #    - No confirmed recipe exists for this context-aware transformation
+  #    - Options:
+  #      a) Test org.openrewrite.gradle.MigrateToGradle8 (may include this, but would upgrade to Gradle 8)
+  #      b) Create custom recipe (see implementation notes in scratchpad)
+  #      c) Manual step: Change `mainClassName = '...'` to `mainClass = '...'` in application {} block
+  #    - IMPORTANT: Keep `mainClassName` in shadowJar {} block (not deprecated there)
+  #
+  # 2. shadowJar mainClassName configuration:
+  #    - PR adds explicit `mainClassName` in shadowJar {} block
+  #    - This is configuration addition, not a migration pattern
+  #    - Manual step: Verify shadowJar configuration includes mainClassName
+  #    - Context: Shadow plugin behavior changed; mainClass in application {} doesn't apply to shadowJar
+  #
+  # Custom recipe implementation outline for mainClassName migration:
+  #
+  # public class MigrateApplicationMainClassName extends Recipe {
+  #     // Uses GroovyIsoVisitor to detect application {} blocks
+  #     // Transforms mainClassName assignments to mainClass.set(...) calls
+  #     // Preserves mainClassName in shadowJar {} blocks
+  #     // Requires understanding of Gradle DSL LST structure
+  #     // Complexity: Medium-High (4-6 hours development)
+  # }
+  #
+  # See scratchpad for complete implementation details.
+
+---
+# Recipe metadata
+# - Uses 6 recipes from OpenRewrite's core and recipe modules
+# - Coverage: ~95% of PR changes automated (same as Option 1)
+# - Manual steps: mainClassName migration verification
+# - Key difference from Option 1: Avoids extra Java 17 modernizations
+#
+# Required dependencies:
+# - org.openrewrite.recipe:rewrite-migrate-java (for UpgradeJavaVersion)
+# - org.openrewrite.recipe:rewrite-testing-frameworks (for JUnit4to5Migration)
+# - org.openrewrite.recipe:rewrite-github-actions (for SetupJavaUpgradeJavaVersion)
+# - Core recipes (UpdateGradleWrapper, UpgradePluginVersion, ChangePropertyValue) require no additional dependencies
+#
+# Recipe ordering rationale:
+# 1. Java version upgrade first (establishes build foundation)
+# 2. JUnit migration second (test framework change)
+# 3. Gradle wrapper upgrade (supports new Java version)
+# 4. Plugin upgrades (compatibility with new Gradle version)
+# 5. CI/CD updates last (reflects build configuration changes)
+#
+# Narrow approach trade-offs:
+# - Avoids extra Java 17 features (pattern matching, text blocks, String.formatted())
+# - Minimal changes only - just what's in the PR
+# - More predictable transformation surface
+# - BUT: Still uses comprehensive JUnit4to5Migration (unavoidable)
+# - Miss out on beneficial Java 17 improvements
+# - Same coverage as Option 1 (~95%) despite more restrictive approach
+#
+# Key differences from Option 1 (Broad):
+# - UpgradeJavaVersion instead of UpgradeToJava17
+#   - Only updates toolchain configuration
+#   - Does NOT migrate to modern Java 17 patterns
+# - Everything else is identical (JUnit migration can't be decomposed)
+# - Simpler if team wants to delay Java 17 feature adoption
+# - Consider Option 1 if team is ready for full Java 17 modernization

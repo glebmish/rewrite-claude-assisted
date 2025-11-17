@@ -1,0 +1,17 @@
+{
+  "diff_files": {
+    "pr_diff": "/__w/rewrite-claude-assisted/rewrite-claude-assisted/.scratchpad/2025-11-15-19-00/result/pr.diff",
+    "recipe_diff": "/__w/rewrite-claude-assisted/rewrite-claude-assisted/.scratchpad/2025-11-15-19-00/result/recommended-recipe.diff"
+  },
+  "metrics": {
+    "total_expected_changes": 21,
+    "true_positives": 12,
+    "false_positives": 38,
+    "false_negatives": 9,
+    "precision": 0.24,
+    "recall": 0.5714,
+    "f1_score": 0.338,
+    "is_perfect_match": false
+  },
+  "analysis_timestamp": "2025-11-15T19:19:59Z"
+}

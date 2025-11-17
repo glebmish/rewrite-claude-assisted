@@ -1,0 +1,19 @@
+initscript {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.openrewrite.rewrite:org.openrewrite.rewrite.gradle.plugin:7.3.0")
+    }
+}
+rootProject {
+    plugins.apply(org.openrewrite.gradle.RewritePlugin)
+    dependencies {
+        rewrite("org.openrewrite.recipe:rewrite-migrate-java:2.26.1")
+    }
+    rewrite {
+        activeRecipe("com.yourorg.UpgradeJava11To17WithDocker")
+        setExportDatatables(true)
+    }
+}

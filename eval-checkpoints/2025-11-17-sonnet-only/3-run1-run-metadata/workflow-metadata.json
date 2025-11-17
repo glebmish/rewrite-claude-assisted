@@ -1,0 +1,9 @@
+{
+  "pr_url": "https://github.com/openrewrite-assist-testing-dataset/task-management-api/pull/3",
+  "commit_hash": "c56241be35c4118b3a085bcfb801f9f2e1e170e8",
+  "status": "success",
+  "exit_code": 0,
+  "duration_seconds": 1445,
+  "start_time": "2025-11-16T14:09:12Z",
+  "end_time": "2025-11-16T14:33:17Z"
+}
