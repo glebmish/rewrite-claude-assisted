@@ -3,6 +3,13 @@ import json
 import re
 from unidiff import PatchSet
 
+# List of file paths to exclude from the diff analysis.
+# These files will be skipped, and their changes will not be counted.
+EXCLUDED_FILES = [
+    "gradlew.bat",
+    "gradlew"
+]
+
 def remove_binary_diffs(diff_content):
     """
     Removes binary file diffs from the diff content.
@@ -46,6 +53,10 @@ def parse_diff_to_set(file_path):
         patch_set = PatchSet(diff_content)
 
         for patched_file in patch_set:
+            # Skip files that are in the exclusion list
+            if patched_file.path in EXCLUDED_FILES:
+                continue
+
             # Use the target_file path for additions and source_file for removals
             # to correctly handle file creation and deletion.
             for hunk in patched_file:
