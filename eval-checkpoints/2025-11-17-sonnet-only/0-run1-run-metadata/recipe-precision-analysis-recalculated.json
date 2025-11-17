@@ -1,0 +1,17 @@
+{
+  "diff_files": {
+    "pr_diff": "eval-checkpoints/2025-11-17-sonnet-only/0-run1-run-metadata/result/pr.diff",
+    "recipe_diff": "eval-checkpoints/2025-11-17-sonnet-only/0-run1-run-metadata/result/recommended-recipe.diff"
+  },
+  "metrics": {
+    "total_expected_changes": 21,
+    "true_positives": 12,
+    "false_positives": 0,
+    "false_negatives": 9,
+    "precision": 1.0,
+    "recall": 0.5714,
+    "f1_score": 0.7273,
+    "is_perfect_match": false
+  },
+  "analysis_timestamp": "2025-11-16T13:21:42Z"
+}
