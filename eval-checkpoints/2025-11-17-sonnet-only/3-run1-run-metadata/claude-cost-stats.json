@@ -1,0 +1,159 @@
+{
+  "log_file": "/__w/rewrite-claude-assisted/rewrite-claude-assisted/.scratchpad/2025-11-16-14-09/log/9b29c07a-2252-4996-ae7d-3293d1b9883d.jsonl",
+  "analysis_timestamp": "2025-11-16T14:33:19.798046Z",
+  "main_agent": {
+    "agent_id": "main",
+    "usage": {
+      "input_tokens": 321,
+      "output_tokens": 1205,
+      "cache_creation_input_tokens": 358134,
+      "cache_read_input_tokens": 2887860
+    },
+    "costs": {
+      "input_tokens_cost": 0.000963,
+      "output_tokens_cost": 0.018075,
+      "cache_creation_cost": 1.343003,
+      "cache_read_cost": 0.866358,
+      "total_cost": 2.228398
+    },
+    "by_model": {
+      "claude-sonnet-4-5-20250929": {
+        "usage": {
+          "input_tokens": 321,
+          "output_tokens": 1205,
+          "cache_creation_input_tokens": 358134,
+          "cache_read_input_tokens": 2887860
+        },
+        "costs": {
+          "input_tokens_cost": 0.000963,
+          "output_tokens_cost": 0.018075,
+          "cache_creation_cost": 1.343003,
+          "cache_read_cost": 0.866358,
+          "total_cost": 2.228398
+        }
+      }
+    }
+  },
+  "subagents": [
+    {
+      "agent_id": "6c56f9a2",
+      "subagent_type": "openrewrite-recipe-validator",
+      "description": "Validate Option 1 Aggressive recipe",
+      "usage": {
+        "input_tokens": 67,
+        "output_tokens": 22068,
+        "cache_creation_input_tokens": 91035,
+        "cache_read_input_tokens": 2353246
+      },
+      "costs": {
+        "input_tokens_cost": 0.000201,
+        "output_tokens_cost": 0.33102,
+        "cache_creation_cost": 0.341381,
+        "cache_read_cost": 0.705974,
+        "total_cost": 1.378576
+      },
+      "by_model": {
+        "claude-sonnet-4-5-20250929": {
+          "usage": {
+            "input_tokens": 67,
+            "output_tokens": 22068,
+            "cache_creation_input_tokens": 91035,
+            "cache_read_input_tokens": 2353246
+          },
+          "costs": {
+            "input_tokens_cost": 0.000201,
+            "output_tokens_cost": 0.33102,
+            "cache_creation_cost": 0.341381,
+            "cache_read_cost": 0.705974,
+            "total_cost": 1.378576
+          }
+        }
+      }
+    },
+    {
+      "agent_id": "68a89d66",
+      "subagent_type": "openrewrite-expert",
+      "description": "Discover and map Dropwizard recipes",
+      "usage": {
+        "input_tokens": 12659,
+        "output_tokens": 16301,
+        "cache_creation_input_tokens": 133880,
+        "cache_read_input_tokens": 648737
+      },
+      "costs": {
+        "input_tokens_cost": 0.037977,
+        "output_tokens_cost": 0.244515,
+        "cache_creation_cost": 0.50205,
+        "cache_read_cost": 0.194621,
+        "total_cost": 0.979163
+      },
+      "by_model": {
+        "claude-sonnet-4-5-20250929": {
+          "usage": {
+            "input_tokens": 12659,
+            "output_tokens": 16301,
+            "cache_creation_input_tokens": 133880,
+            "cache_read_input_tokens": 648737
+          },
+          "costs": {
+            "input_tokens_cost": 0.037977,
+            "output_tokens_cost": 0.244515,
+            "cache_creation_cost": 0.50205,
+            "cache_read_cost": 0.194621,
+            "total_cost": 0.979163
+          }
+        }
+      }
+    },
+    {
+      "agent_id": "616969a9",
+      "subagent_type": "openrewrite-recipe-validator",
+      "description": "Validate Option 2 Conservative recipe",
+      "usage": {
+        "input_tokens": 488,
+        "output_tokens": 23794,
+        "cache_creation_input_tokens": 111647,
+        "cache_read_input_tokens": 3122842
+      },
+      "costs": {
+        "input_tokens_cost": 0.001464,
+        "output_tokens_cost": 0.35691,
+        "cache_creation_cost": 0.418676,
+        "cache_read_cost": 0.936853,
+        "total_cost": 1.713903
+      },
+      "by_model": {
+        "claude-sonnet-4-5-20250929": {
+          "usage": {
+            "input_tokens": 488,
+            "output_tokens": 23794,
+            "cache_creation_input_tokens": 111647,
+            "cache_read_input_tokens": 3122842
+          },
+          "costs": {
+            "input_tokens_cost": 0.001464,
+            "output_tokens_cost": 0.35691,
+            "cache_creation_cost": 0.418676,
+            "cache_read_cost": 0.936853,
+            "total_cost": 1.713903
+          }
+        }
+      }
+    }
+  ],
+  "totals": {
+    "usage": {
+      "input_tokens": 13535,
+      "output_tokens": 63368,
+      "cache_creation_input_tokens": 694696,
+      "cache_read_input_tokens": 9012685
+    },
+    "costs": {
+      "input_tokens_cost": 0.040605,
+      "output_tokens_cost": 0.95052,
+      "cache_creation_cost": 2.60511,
+      "cache_read_cost": 2.703806,
+      "total_cost": 6.30004
+    }
+  }
+}

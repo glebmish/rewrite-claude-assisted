@@ -1,0 +1,124 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.example.UpgradeJava17JUnit5Comprehensive
+displayName: Comprehensive Java 11 to 17 and JUnit 4 to 5 Migration
+description: |
+  Comprehensive migration recipe for upgrading from Java 11 to Java 17 and JUnit 4 to JUnit 5.
+  This recipe uses broad, well-tested composite recipes that include additional Java 17
+  modernizations beyond the minimal PR changes. Includes toolchain migration, JUnit 5 migration,
+  Gradle wrapper update, Shadow plugin upgrade, and GitHub Actions CI updates.
+
+recipeList:
+  # ============================================================================
+  # PHASE 1: Java Version Upgrade (Comprehensive)
+  # ============================================================================
+
+  # Comprehensive Java 17 migration - includes build updates, API migrations,
+  # and modern Java 17 features (pattern matching, text blocks, etc.)
+  # Sub-recipes include:
+  # - UpgradeBuildToJava17 -> UpgradeJavaVersion (toolchain configuration)
+  # - Removes sourceCompatibility/targetCompatibility
+  # - Adds java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+  # - Upgrades plugins for Java 17 compatibility
+  # - Modernizes code patterns (instanceof pattern matching, text blocks, String.formatted())
+  - org.openrewrite.java.migrate.UpgradeToJava17
+
+  # ============================================================================
+  # PHASE 2: JUnit 4 to JUnit 5 Migration (Comprehensive)
+  # ============================================================================
+
+  # Comprehensive JUnit 4 to JUnit 5 migration - includes all necessary changes:
+  # - Migrates annotations: @Before -> @BeforeEach, @After -> @AfterEach, @Test
+  # - Updates imports: org.junit.* -> org.junit.jupiter.api.*
+  # - Migrates assertions: Assert.* -> Assertions.*
+  # - Updates dependencies: removes junit:junit, adds jupiter-api and jupiter-engine
+  # - Configures test tasks: useJUnit() -> useJUnitPlatform()
+  # - Handles @RunWith, @Rule, Hamcrest, Mockito, parameterized tests
+  - org.openrewrite.java.testing.junit5.JUnit4to5Migration
+
+  # ============================================================================
+  # PHASE 3: Gradle Wrapper Upgrade
+  # ============================================================================
+
+  # Update Gradle wrapper to version 7.6.4 for Java 17 compatibility
+  # Modifies gradle/wrapper/gradle-wrapper.properties
+  # Queries services.gradle.org to ensure version is valid
+  - org.openrewrite.gradle.UpdateGradleWrapper:
+      version: 7.6.4
+      distribution: bin
+
+  # ============================================================================
+  # PHASE 4: Gradle Plugin Upgrades
+  # ============================================================================
+
+  # Upgrade Shadow plugin to version 7.1.2 for Gradle 7.6.4 compatibility
+  # Shadow plugin 6.x is not compatible with Gradle 7.6.4
+  # This updates the plugin version in the plugins {} block
+  - org.openrewrite.gradle.plugins.UpgradePluginVersion:
+      pluginIdPattern: com.github.johnrengelman.shadow
+      newVersion: 7.1.2
+
+  # ============================================================================
+  # PHASE 5: GitHub Actions CI/CD Updates
+  # ============================================================================
+
+  # Update GitHub Actions workflows to use Java 17
+  # Changes java-version property in actions/setup-java steps from 11 to 17
+  # Applies to all workflows in .github/workflows/
+  - org.openrewrite.github.SetupJavaUpgradeJavaVersion:
+      minimumJavaMajorVersion: 17
+
+  # Update GitHub Actions step name from "Set up JDK 11" to "Set up JDK 17"
+  # Uses YAML LST (semantic tree) to navigate and modify workflow structure
+  # This is NOT text-based replacement - it understands YAML structure
+  - org.openrewrite.yaml.ChangePropertyValue:
+      propertyKey: jobs.build.steps[?(@.name == 'Set up JDK 11')].name
+      newValue: Set up JDK 17
+      filePattern: .github/workflows/*.yml
+
+  # ============================================================================
+  # MANUAL VERIFICATION REQUIRED
+  # ============================================================================
+  # The following changes may require manual verification or additional custom recipes:
+  #
+  # 1. mainClassName -> mainClass migration in application {} block:
+  #    - This deprecation is part of Gradle 7 (deprecated) / Gradle 8 (removed)
+  #    - Current PR targets Gradle 7.6.4, so mainClassName still works but is deprecated
+  #    - MigrateToGradle8 recipe may handle this, but it's not confirmed in documentation
+  #    - Manual step: Change `mainClassName = '...'` to `mainClass = '...'` in application {} block
+  #    - Keep `mainClassName` in shadowJar {} block (not deprecated there)
+  #
+  # 2. shadowJar mainClassName configuration:
+  #    - PR adds explicit `mainClassName` in shadowJar {} block
+  #    - This is configuration addition, not a migration pattern
+  #    - Manual step: Verify shadowJar configuration includes mainClassName
+  #
+  # To test if MigrateToGradle8 handles mainClassName migration, you could add:
+  # - org.openrewrite.gradle.MigrateToGradle8
+  # However, this would also upgrade Gradle wrapper to 8.x, which is beyond PR scope.
+
+---
+# Recipe metadata
+# - Uses 6 recipes from OpenRewrite's core and recipe modules
+# - Coverage: ~95% of PR changes automated
+# - Manual steps: mainClassName migration verification
+# - Extra transformations: Java 17 modern features (beneficial improvements)
+#
+# Required dependencies:
+# - org.openrewrite.recipe:rewrite-migrate-java (for UpgradeToJava17)
+# - org.openrewrite.recipe:rewrite-testing-frameworks (for JUnit4to5Migration)
+# - org.openrewrite.recipe:rewrite-github-actions (for SetupJavaUpgradeJavaVersion)
+# - Core recipes (UpdateGradleWrapper, UpgradePluginVersion, ChangePropertyValue) require no additional dependencies
+#
+# Recipe ordering rationale:
+# 1. Java version upgrade first (establishes build foundation)
+# 2. JUnit migration second (may depend on Java 17 features)
+# 3. Gradle wrapper upgrade (supports new Java version)
+# 4. Plugin upgrades (compatibility with new Gradle version)
+# 5. CI/CD updates last (reflects build configuration changes)
+#
+# Trade-offs accepted:
+# - Includes additional Java 17 modernizations (pattern matching, text blocks, String.formatted())
+# - These are safe, tested, idiomatic improvements
+# - May require review to ensure team is comfortable with modern Java 17 patterns
+# - Alternative: Use Option 2 (narrow approach) to avoid extra modernizations

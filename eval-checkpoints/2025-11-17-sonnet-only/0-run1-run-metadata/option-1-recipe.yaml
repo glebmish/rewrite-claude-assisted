@@ -1,0 +1,36 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.yourorg.UpgradeJava17To21WithInfrastructure
+displayName: Upgrade Java 17 to 21 with full infrastructure changes
+description: Comprehensive Java 21 upgrade including build files, GitHub Actions, Docker, and documentation
+recipeList:
+  # Foundation: Comprehensive Java 21 migration
+  # This includes build files, deprecated APIs, plugin upgrades, and GitHub Actions java-version
+  - org.openrewrite.java.migrate.UpgradeToJava21
+
+  # Gap Fill: GitHub Actions step name (not handled by UpgradeToJava21)
+  # Changes "Set up JDK 17" to "Set up JDK 21" in workflow step names
+  - org.openrewrite.yaml.ChangePropertyValue:
+      propertyKey: name
+      newValue: Set up JDK 21
+      oldValue: Set up JDK 17
+      filePattern: .github/workflows/*.yml
+
+  # Gap Fill: Dockerfile builder stage base image
+  # Text-based replacement for Docker base images (no semantic recipe available)
+  - org.openrewrite.text.FindAndReplace:
+      find: eclipse-temurin:17-jdk-alpine
+      replace: eclipse-temurin:21-jdk-alpine
+      filePattern: Dockerfile
+
+  # Gap Fill: Dockerfile runtime stage base image
+  - org.openrewrite.text.FindAndReplace:
+      find: eclipse-temurin:17-jre-alpine
+      replace: eclipse-temurin:21-jre-alpine
+      filePattern: Dockerfile
+
+  # Gap Fill: README Technology Stack section
+  - org.openrewrite.text.FindAndReplace:
+      find: Java 17
+      replace: Java 21
+      filePattern: README.md

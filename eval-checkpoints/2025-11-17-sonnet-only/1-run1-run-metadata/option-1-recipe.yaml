@@ -1,0 +1,29 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.yourorg.UpgradeJava11To17WithDocker
+displayName: Upgrade Java 11 to 17 with Gradle 7.6 and Docker
+description: >
+  Comprehensive migration from Java 11 to Java 17 including build files,
+  Gradle wrapper upgrade to 7.6, and Dockerfile base image updates to
+  Eclipse Temurin 17 Alpine distribution.
+recipeList:
+  # Core Java 17 migration (includes build updates, API migrations, language features)
+  - org.openrewrite.java.migrate.UpgradeToJava17
+
+  # Override Gradle wrapper version from default 7.3 to 7.6
+  - org.openrewrite.gradle.UpdateGradleWrapper:
+      version: 7.6
+      distribution: all
+      addIfMissing: false
+
+  # Update Dockerfile JDK base image
+  - org.openrewrite.text.FindAndReplace:
+      find: 'openjdk:11-jdk-slim'
+      replace: 'eclipse-temurin:17-jdk-alpine'
+      filePattern: '**/Dockerfile'
+
+  # Update Dockerfile JRE base image
+  - org.openrewrite.text.FindAndReplace:
+      find: 'openjdk:11-jre-slim'
+      replace: 'eclipse-temurin:17-jre-alpine'
+      filePattern: '**/Dockerfile'
