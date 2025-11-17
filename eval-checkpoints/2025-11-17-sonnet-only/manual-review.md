@@ -17,6 +17,9 @@ important change I've made for troubleshooting.
 * Many fixes related to precision calculation: diff parsing failed for binary file diffs and changes to gradlew/gradlew.bat distorted
 the result. Latter issue was fixed after test suite started and suite commit was set. Recalculated data is available
   * **There still seems to be a serious bug present**
+* Manual precision stats calculation shown the following issues:
+  * rewrite.patch contains duplicated diffs, only observed for gradle files (gradle-daemon.properties, gradle-daemon.jar, gradlew, gradlew.bat)
+  * rewrite.gradle is included to the rewrite.patch in runs 2 and 4
 
 ## Evals observations
 
