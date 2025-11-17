@@ -1,0 +1,119 @@
+diff --git a/src/main/java/com/example/usermanagement/api/UserResource.java b/src/main/java/com/example/usermanagement/api/UserResource.java
+index b1b1c3f..b462b5b 100644
+--- a/src/main/java/com/example/usermanagement/api/UserResource.java
++++ b/src/main/java/com/example/usermanagement/api/UserResource.java
+@@ -69,7 +69,7 @@ com.example.UpgradeJava17JUnit5Comprehensive
+     @Path("/{id}")
+     public Response updateUser(@PathParam("id") Long id, @Valid User user, @Auth User authenticatedUser) {
+         Optional<User> existingUser = userDAO.findById(id);
+-        if (!existingUser.isPresent()) {
++        if (existingUser.isEmpty()) {
+             return Response.status(Response.Status.NOT_FOUND).build();
+         }
+ 
+
+diff --git a/src/test/java/com/example/usermanagement/UserResourceTest.java b/src/test/java/com/example/usermanagement/UserResourceTest.java
+index 79b24fc..2cdcf17 100644
+--- a/src/test/java/com/example/usermanagement/UserResourceTest.java
++++ b/src/test/java/com/example/usermanagement/UserResourceTest.java
+@@ -1,16 +1,16 @@ com.example.UpgradeJava17JUnit5Comprehensive
+ package com.example.usermanagement;
+ 
+ import com.example.usermanagement.core.User;
+-import org.junit.Before;
+-import org.junit.Test;
++import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.Test;
+ 
+-import static org.junit.Assert.*;
++import static org.junit.jupiter.api.Assertions.*;
+ 
+ public class UserResourceTest {
+ 
+     private User testUser;
+ 
+-    @Before
++    @BeforeEach
+     public void setUp() {
+         testUser = new User("testuser", "test@example.com", "password123");
+         testUser.setId(1L);
+
+diff --git a/build.gradle b/build.gradle
+index dec1b75..c7cb08a 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -1,15 +1,15 @@ com.example.UpgradeJava17JUnit5Comprehensive
+ plugins {
+     id 'java'
+     id 'application'
+-    id 'com.github.johnrengelman.shadow' version '6.1.0'
++    id 'com.github.johnrengelman.shadow' version '7.1.2'
+ }
+ 
+ group = 'com.example'
+ version = '1.0.0'
+ 
+ java {
+-    sourceCompatibility = JavaVersion.VERSION_11
+-    targetCompatibility = JavaVersion.VERSION_11
++    sourceCompatibility = JavaVersion.VERSION_17
++    targetCompatibility = JavaVersion.VERSION_17
+ }
+ 
+ repositories {
+@@ -38,11 +38,9 @@
+     implementation 'org.apache.logging.log4j:log4j-core:2.14.1'
+     implementation 'org.apache.logging.log4j:log4j-api:2.14.1'
+     implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.14.1'
+-    
+-    // Testing - JUnit 4
+-    testImplementation 'junit:junit:4.13.2'
++    implementation "org.junit.jupiter:junit-jupiter:5.14.1"
+     testImplementation 'io.dropwizard:dropwizard-testing:2.0.25'
+-    testImplementation 'org.mockito:mockito-core:3.12.4'
++    testImplementation 'org.mockito:mockito-core:4.11.0'
+     testImplementation 'com.h2database:h2:1.4.200'
+ }
+ 
+@@ -56,5 +54,5 @@
+ }
+ 
+ test {
+-    useJUnit()
++    useJUnitPlatform()
+ }
+\ No newline at end of file
+
+diff --git a/gradle/wrapper/gradle-wrapper.properties b/gradle/wrapper/gradle-wrapper.properties
+index d867a96..740943c 100644
+--- a/gradle/wrapper/gradle-wrapper.properties
++++ b/gradle/wrapper/gradle-wrapper.properties
+@@ -1,7 +1,8 @@ com.example.UpgradeJava17JUnit5Comprehensive
+ distributionBase=GRADLE_USER_HOME
+ distributionPath=wrapper/dists
+-distributionUrl=https\://services.gradle.org/distributions/gradle-6.9-bin.zip
++distributionUrl=https\://services.gradle.org/distributions/gradle-7.6.4-bin.zip
+ networkTimeout=10000
+ validateDistributionUrl=true
+ zipStoreBase=GRADLE_USER_HOME
+-zipStorePath=wrapper/dists
+\ No newline at end of file
++zipStorePath=wrapper/dists
++distributionSha256Sum=bed1da33cca0f557ab13691c77f38bb67388119e4794d113e051039b80af9bb1
+\ No newline at end of file
+
+
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index f5934d5..4ce2ef7 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -31,7 +31,7 @@ com.example.UpgradeJava17JUnit5Comprehensive
+       - name: Set up JDK 11
+         uses: actions/setup-java@v3
+         with:
+-          java-version: '11'
++          java-version: '17'
+           distribution: 'temurin'
+ 
+       - name: Cache Gradle packages
+
