@@ -219,6 +219,24 @@ def parse_diff_to_set(file_path):
         
     return changes
 
+def normalize_for_matching(change):
+    """
+    Normalize a change tuple for matching by removing the line number.
+
+    We use (file, type, line_no, content) for deduplication (to distinguish
+    identical content at different positions), but we match changes using
+    (file, type, content) because line numbers can differ between PR and recipe
+    while representing the same semantic change.
+
+    Args:
+        change: Tuple of (file_path, change_type, line_no, content)
+
+    Returns:
+        Tuple of (file_path, change_type, content)
+    """
+    file_path, change_type, line_no, content = change
+    return (file_path, change_type, content)
+
 def main():
     if len(sys.argv) != 3:
         print('''{{"error": "Usage: python analyze_diffs.py <pr_diff_path> <recipe_diff_path>"}}''', file=sys.stderr)
@@ -243,17 +261,73 @@ def main():
     debug_log("COMPARING CHANGES")
     debug_log("="*80)
 
-    # Set Operations
-    tp_set = set_g.intersection(set_r)
+    # Normalize changes for matching (remove line numbers)
+    # We keep line numbers for deduplication but ignore them for matching
+    # because the same change can appear at different line numbers
+
+    # Build lookup from normalized form to all original changes
+    # Multiple changes can have the same normalized form (different line numbers)
+    pr_by_normalized = {}
+    for change in set_g:
+        normalized = normalize_for_matching(change)
+        if normalized not in pr_by_normalized:
+            pr_by_normalized[normalized] = []
+        pr_by_normalized[normalized].append(change)
+
+    recipe_by_normalized = {}
+    for change in set_r:
+        normalized = normalize_for_matching(change)
+        if normalized not in recipe_by_normalized:
+            recipe_by_normalized[normalized] = []
+        recipe_by_normalized[normalized].append(change)
+
+    # Match changes based on normalized form (ignoring line numbers)
+    pr_normalized_keys = set(pr_by_normalized.keys())
+    recipe_normalized_keys = set(recipe_by_normalized.keys())
+
+    tp_normalized = pr_normalized_keys.intersection(recipe_normalized_keys)
+    fn_normalized = pr_normalized_keys.difference(recipe_normalized_keys)
+    fp_normalized = recipe_normalized_keys.difference(pr_normalized_keys)
+
+    # For matched changes, pair them up optimally
+    # If PR has N instances and recipe has M instances of same normalized change:
+    # - min(N,M) are TPs
+    # - |N-M| are either FN (if N>M) or FP (if M>N)
+    tp_set = set()
+    fn_set = set()
+    fp_set = set()
+
+    # True positives: changes in both PR and recipe
+    for norm in tp_normalized:
+        pr_changes = pr_by_normalized[norm]
+        recipe_changes = recipe_by_normalized[norm]
+
+        # Match up to min(len(pr), len(recipe)) as TPs
+        matched_count = min(len(pr_changes), len(recipe_changes))
+        tp_set.update(pr_changes[:matched_count])
+
+        # Remaining PR changes are FN (recipe didn't make them)
+        if len(pr_changes) > len(recipe_changes):
+            fn_set.update(pr_changes[matched_count:])
+        # Remaining recipe changes are FP (extra changes recipe made)
+        elif len(recipe_changes) > len(pr_changes):
+            fp_set.update(recipe_changes[matched_count:])
+
+    # False negatives: changes in PR but not in recipe
+    for norm in fn_normalized:
+        fn_set.update(pr_by_normalized[norm])
+
+    # False positives: changes in recipe but not in PR
+    for norm in fp_normalized:
+        fp_set.update(recipe_by_normalized[norm])
+
     # True Positives (TP): Changes present in both the ground truth and the recipe output.
     tp = len(tp_set)
 
-    fn_set = set_g.difference(set_r)
     # False Negatives (FN): Changes required by the PR but missed by the recipe.
     # These are "errors of omission" - the recipe failed to do something it should have.
     fn = len(fn_set)
 
-    fp_set = set_r.difference(set_g)
     # False Positives (FP): Changes made by the recipe that were not in the original PR.
     # These are "errors of commission" - the recipe did something it shouldn't have.
     fp = len(fp_set)
