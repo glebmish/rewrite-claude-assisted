@@ -5,6 +5,7 @@ This review is added by Gleb after evals were executed and saved to the reposito
 
 ### General observations
 
+* **After further analysis, haiku run turned out to be completely incorrect and mostly result in an hallucinated output, not actual verification happened.**
 * During execution, there was an intermittent issue with session-id.txt not being saved by CC. Need to look more into it.
   * Early observation for Sonnet eval - same issue occurs (and on the same test 3)
 * This run tests workflow performance when only Haiku model is used. Haiku 4.5 is used by the main agent,
