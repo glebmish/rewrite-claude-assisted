@@ -1,7 +1,18 @@
 import sys
 import json
 import re
+import os
 from unidiff import PatchSet
+
+# Enable verbose troubleshooting logs with: ANALYZE_DIFFS_DEBUG=1
+DEBUG = os.environ.get('ANALYZE_DIFFS_DEBUG', '0') == '1'
+
+def debug_log(message, **kwargs):
+    """Print debug information to stderr if DEBUG is enabled."""
+    if DEBUG:
+        print(f"[DEBUG] {message}", file=sys.stderr)
+        for key, value in kwargs.items():
+            print(f"[DEBUG]   {key}: {value}", file=sys.stderr)
 
 # List of file paths to exclude from the diff analysis.
 # These files will be skipped, and their changes will not be counted.
@@ -100,24 +111,53 @@ def parse_diff_to_set(file_path):
         # Decode and normalize line endings (replace CRLF with LF, then strip any remaining \r)
         diff_content = raw_content.decode('utf-8').replace('\r\n', '\n').replace('\r', '\n')
 
+        original_size = len(diff_content)
+        original_lines = diff_content.count('\n')
+        original_diff_sections = len(re.findall(r'^diff --git', diff_content, re.MULTILINE))
+
+        debug_log(f"ORIGINAL {file_path}:",
+                  size_bytes=original_size,
+                  total_lines=original_lines,
+                  diff_sections=original_diff_sections)
+
         # PREPROCESSING PIPELINE:
         # 1. Remove binary file diffs
         diff_content = remove_binary_diffs(diff_content)
+        after_binary = len(diff_content)
+        debug_log("After binary removal:",
+                  size_bytes=after_binary,
+                  removed_bytes=original_size - after_binary)
 
         # 2. Deduplicate file sections (OpenRewrite sometimes duplicates Gradle wrapper files)
         diff_content = deduplicate_file_diffs(diff_content)
+        after_dedup = len(diff_content)
+        debug_log("After deduplication:",
+                  size_bytes=after_dedup,
+                  removed_bytes=after_binary - after_dedup)
 
         # 3. Clean malformed hunk headers (OpenRewrite appends recipe names to @@ headers)
         diff_content = clean_malformed_hunks(diff_content)
+        after_clean = len(diff_content)
+        debug_log("After hunk cleaning:",
+                  size_bytes=after_clean,
+                  removed_bytes=after_dedup - after_clean)
+
+        if DEBUG:
+            print(f"\n[DEBUG] ===== CLEANED CONTENT for {file_path} =====", file=sys.stderr)
+            print(diff_content, file=sys.stderr)
+            print(f"[DEBUG] ===== END CLEANED CONTENT =====\n", file=sys.stderr)
 
         # Parse the cleaned content
         patch_set = PatchSet(diff_content)
+        debug_log("Parsed with unidiff:", files_in_patch=len(patch_set))
 
         for patched_file in patch_set:
             # Skip files that are in the exclusion list
             if patched_file.path in EXCLUDED_FILES:
+                debug_log(f"Skipping excluded file: {patched_file.path}")
                 continue
 
+            file_changes = 0
             # Use the target_file path for additions and source_file for removals
             # to correctly handle file creation and deletion.
             for hunk in patched_file:
@@ -126,8 +166,12 @@ def parse_diff_to_set(file_path):
                     content = line.value
                     if line.is_added:
                         changes.add((patched_file.target_file, 'add', content))
+                        file_changes += 1
                     elif line.is_removed:
                         changes.add((patched_file.source_file, 'remove', content))
+                        file_changes += 1
+
+            debug_log(f"Extracted from {patched_file.path}:", changes=file_changes)
     except FileNotFoundError:
         print(f'''{{"error": "File not found: {file_path}"}}''', file=sys.stderr)
         sys.exit(1)
@@ -145,8 +189,21 @@ def main():
     pr_diff_path = sys.argv[1]
     recipe_diff_path = sys.argv[2]
 
+    debug_log("\n" + "="*80)
+    debug_log("PARSING PR DIFF")
+    debug_log("="*80)
     set_g = parse_diff_to_set(pr_diff_path)
+    debug_log(f"\nTotal changes extracted from PR: {len(set_g)}")
+
+    debug_log("\n" + "="*80)
+    debug_log("PARSING RECIPE DIFF")
+    debug_log("="*80)
     set_r = parse_diff_to_set(recipe_diff_path)
+    debug_log(f"\nTotal changes extracted from recipe: {len(set_r)}")
+
+    debug_log("\n" + "="*80)
+    debug_log("COMPARING CHANGES")
+    debug_log("="*80)
 
     # Set Operations
     tp_set = set_g.intersection(set_r)
@@ -162,6 +219,46 @@ def main():
     # False Positives (FP): Changes made by the recipe that were not in the original PR.
     # These are "errors of commission" - the recipe did something it shouldn't have.
     fp = len(fp_set)
+
+    if DEBUG:
+        # Group changes by file for easier reading
+        def group_by_file(change_set):
+            by_file = {}
+            for file_path, change_type, content in change_set:
+                if file_path not in by_file:
+                    by_file[file_path] = []
+                by_file[file_path].append((change_type, content))
+            return by_file
+
+        print(f"\n[DEBUG] TRUE POSITIVES (TP={tp}):", file=sys.stderr)
+        tp_by_file = group_by_file(tp_set)
+        for file_path, changes in sorted(tp_by_file.items()):
+            print(f"[DEBUG]   {file_path}: {len(changes)} changes", file=sys.stderr)
+            for change_type, content in changes[:3]:  # Show first 3
+                preview = content[:60].replace('\n', '\\n')
+                print(f"[DEBUG]     [{change_type}] {preview}", file=sys.stderr)
+            if len(changes) > 3:
+                print(f"[DEBUG]     ... and {len(changes) - 3} more", file=sys.stderr)
+
+        print(f"\n[DEBUG] FALSE POSITIVES (FP={fp}):", file=sys.stderr)
+        fp_by_file = group_by_file(fp_set)
+        for file_path, changes in sorted(fp_by_file.items()):
+            print(f"[DEBUG]   {file_path}: {len(changes)} changes", file=sys.stderr)
+            for change_type, content in changes[:3]:
+                preview = content[:60].replace('\n', '\\n')
+                print(f"[DEBUG]     [{change_type}] {preview}", file=sys.stderr)
+            if len(changes) > 3:
+                print(f"[DEBUG]     ... and {len(changes) - 3} more", file=sys.stderr)
+
+        print(f"\n[DEBUG] FALSE NEGATIVES (FN={fn}):", file=sys.stderr)
+        fn_by_file = group_by_file(fn_set)
+        for file_path, changes in sorted(fn_by_file.items()):
+            print(f"[DEBUG]   {file_path}: {len(changes)} changes", file=sys.stderr)
+            for change_type, content in changes[:3]:
+                preview = content[:60].replace('\n', '\\n')
+                print(f"[DEBUG]     [{change_type}] {preview}", file=sys.stderr)
+            if len(changes) > 3:
+                print(f"[DEBUG]     ... and {len(changes) - 3} more", file=sys.stderr)
 
     # Metric Calculation
     total_expected_changes = tp + fn
