@@ -132,7 +132,8 @@ def remove_excluded_files(diff_content):
 def parse_diff_to_set(file_path):
     """
     Parses a diff file and converts it into a set of canonical change tuples.
-    Each change is represented as (file_path, change_type, content).
+    Each change is represented as (file_path, change_type, line_number, content).
+    Line number distinguishes identical content at different positions.
     """
     changes = set()
     try:
@@ -200,10 +201,12 @@ def parse_diff_to_set(file_path):
                     # Use line.value to get the raw line content without +/-
                     content = line.value
                     if line.is_added:
-                        changes.add((patched_file.target_file, 'add', content))
+                        # Include target line number to distinguish same content at different positions
+                        changes.add((patched_file.target_file, 'add', line.target_line_no, content))
                         file_changes += 1
                     elif line.is_removed:
-                        changes.add((patched_file.source_file, 'remove', content))
+                        # Include source line number to distinguish same content at different positions
+                        changes.add((patched_file.source_file, 'remove', line.source_line_no, content))
                         file_changes += 1
 
             debug_log(f"Extracted from {patched_file.path}:", changes=file_changes)
@@ -259,35 +262,35 @@ def main():
         # Group changes by file for easier reading
         def group_by_file(change_set):
             by_file = {}
-            for file_path, change_type, content in change_set:
+            for file_path, change_type, line_no, content in change_set:
                 if file_path not in by_file:
                     by_file[file_path] = []
-                by_file[file_path].append((change_type, content))
+                by_file[file_path].append((change_type, line_no, content))
             return by_file
 
         print(f"\n[DEBUG] TRUE POSITIVES (TP={tp}):", file=sys.stderr)
         tp_by_file = group_by_file(tp_set)
         for file_path, changes in sorted(tp_by_file.items()):
             print(f"[DEBUG]   {file_path}: {len(changes)} changes", file=sys.stderr)
-            for change_type, content in changes:
+            for change_type, line_no, content in changes:
                 preview = content[:60].replace('\n', '\\n')
-                print(f"[DEBUG]     [{change_type}] {preview}", file=sys.stderr)
+                print(f"[DEBUG]     [L{line_no}] [{change_type}] {preview}", file=sys.stderr)
 
         print(f"\n[DEBUG] FALSE POSITIVES (FP={fp}):", file=sys.stderr)
         fp_by_file = group_by_file(fp_set)
         for file_path, changes in sorted(fp_by_file.items()):
             print(f"[DEBUG]   {file_path}: {len(changes)} changes", file=sys.stderr)
-            for change_type, content in changes:
+            for change_type, line_no, content in changes:
                 preview = content[:60].replace('\n', '\\n')
-                print(f"[DEBUG]     [{change_type}] {preview}", file=sys.stderr)
+                print(f"[DEBUG]     [L{line_no}] [{change_type}] {preview}", file=sys.stderr)
 
         print(f"\n[DEBUG] FALSE NEGATIVES (FN={fn}):", file=sys.stderr)
         fn_by_file = group_by_file(fn_set)
         for file_path, changes in sorted(fn_by_file.items()):
             print(f"[DEBUG]   {file_path}: {len(changes)} changes", file=sys.stderr)
-            for change_type, content in changes:
+            for change_type, line_no, content in changes:
                 preview = content[:60].replace('\n', '\\n')
-                print(f"[DEBUG]     [{change_type}] {preview}", file=sys.stderr)
+                print(f"[DEBUG]     [L{line_no}] [{change_type}] {preview}", file=sys.stderr)
 
     # Metric Calculation
     total_expected_changes = tp + fn
