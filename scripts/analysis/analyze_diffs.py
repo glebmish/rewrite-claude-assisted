@@ -97,6 +97,38 @@ def deduplicate_file_diffs(diff_content):
 
     return ''.join(unique_sections)
 
+def remove_excluded_files(diff_content):
+    """
+    Removes diff sections for excluded files from the diff content.
+
+    This filters out files in EXCLUDED_FILES (gradlew, gradlew.bat, rewrite.gradle)
+    before parsing, so they don't appear in the cleaned content output.
+    """
+    # Split into diff sections
+    file_sections = re.split(r'(?=^diff --git )', diff_content, flags=re.MULTILINE)
+
+    kept_sections = []
+    removed_count = 0
+
+    for section in file_sections:
+        if not section.strip():
+            continue
+
+        # Extract file path from "diff --git a/path b/path"
+        match = re.search(r'^diff --git a/(.*?) b/', section, re.MULTILINE)
+        if match:
+            file_path = match.group(1)
+            if file_path not in EXCLUDED_FILES:
+                kept_sections.append(section)
+            else:
+                removed_count += 1
+                debug_log(f"Removing excluded file section: {file_path}")
+        else:
+            # Keep sections without clear file paths
+            kept_sections.append(section)
+
+    return ''.join(kept_sections), removed_count
+
 def parse_diff_to_set(file_path):
     """
     Parses a diff file and converts it into a set of canonical change tuples.
@@ -142,6 +174,14 @@ def parse_diff_to_set(file_path):
                   size_bytes=after_clean,
                   removed_bytes=after_dedup - after_clean)
 
+        # 4. Remove excluded files (gradlew, gradlew.bat, rewrite.gradle)
+        diff_content, excluded_count = remove_excluded_files(diff_content)
+        after_exclusion = len(diff_content)
+        debug_log("After excluded file removal:",
+                  size_bytes=after_exclusion,
+                  removed_bytes=after_clean - after_exclusion,
+                  excluded_files=excluded_count)
+
         if DEBUG:
             print(f"\n[DEBUG] ===== CLEANED CONTENT for {file_path} =====", file=sys.stderr)
             print(diff_content, file=sys.stderr)
@@ -152,11 +192,6 @@ def parse_diff_to_set(file_path):
         debug_log("Parsed with unidiff:", files_in_patch=len(patch_set))
 
         for patched_file in patch_set:
-            # Skip files that are in the exclusion list
-            if patched_file.path in EXCLUDED_FILES:
-                debug_log(f"Skipping excluded file: {patched_file.path}")
-                continue
-
             file_changes = 0
             # Use the target_file path for additions and source_file for removals
             # to correctly handle file creation and deletion.
@@ -234,31 +269,25 @@ def main():
         tp_by_file = group_by_file(tp_set)
         for file_path, changes in sorted(tp_by_file.items()):
             print(f"[DEBUG]   {file_path}: {len(changes)} changes", file=sys.stderr)
-            for change_type, content in changes[:3]:  # Show first 3
+            for change_type, content in changes:
                 preview = content[:60].replace('\n', '\\n')
                 print(f"[DEBUG]     [{change_type}] {preview}", file=sys.stderr)
-            if len(changes) > 3:
-                print(f"[DEBUG]     ... and {len(changes) - 3} more", file=sys.stderr)
 
         print(f"\n[DEBUG] FALSE POSITIVES (FP={fp}):", file=sys.stderr)
         fp_by_file = group_by_file(fp_set)
         for file_path, changes in sorted(fp_by_file.items()):
             print(f"[DEBUG]   {file_path}: {len(changes)} changes", file=sys.stderr)
-            for change_type, content in changes[:3]:
+            for change_type, content in changes:
                 preview = content[:60].replace('\n', '\\n')
                 print(f"[DEBUG]     [{change_type}] {preview}", file=sys.stderr)
-            if len(changes) > 3:
-                print(f"[DEBUG]     ... and {len(changes) - 3} more", file=sys.stderr)
 
         print(f"\n[DEBUG] FALSE NEGATIVES (FN={fn}):", file=sys.stderr)
         fn_by_file = group_by_file(fn_set)
         for file_path, changes in sorted(fn_by_file.items()):
             print(f"[DEBUG]   {file_path}: {len(changes)} changes", file=sys.stderr)
-            for change_type, content in changes[:3]:
+            for change_type, content in changes:
                 preview = content[:60].replace('\n', '\\n')
                 print(f"[DEBUG]     [{change_type}] {preview}", file=sys.stderr)
-            if len(changes) > 3:
-                print(f"[DEBUG]     ... and {len(changes) - 3} more", file=sys.stderr)
 
     # Metric Calculation
     total_expected_changes = tp + fn
