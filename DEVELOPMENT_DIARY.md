@@ -144,7 +144,7 @@ that will print out necessary information for all recipes in the classpath.
   * ability to pass config that should be applied (to replace allowedTools flag that is less convenient)
   * visualizing subagent work as a tab that you can switch to
 
-2025-09-29
+## 2025-09-29
 * Had a long pause in project work and when I started again it hit me with failures. 
   * Looks like github actions don't checkout code automatically and the workflow there didn't base it on my prompts at all
   * Spend a lot of time looking for a rootcause
@@ -159,7 +159,7 @@ That's what going on with suite analysis now. Fixing it.
 * Coming up with a robust analysis of a single run. Should probably result in multiple files and should run as a part of
 main evaluation action, not suite analysis. Suite analysis will only combine results, probably with a script, not a claude code command.
 
-2025-01-11
+## 2025-01-11
 * Spent unbelievable amount of time trying to make evals work. Main challenges:
   * Working around Pro subscription limits. Solutions:
     * Batching of runs + wait in between. Helped to eventually run all tests
@@ -194,6 +194,35 @@ to be completely rewritten.
   * `model: haiku` in subagents SOMEHOW uses Haiku 3.5, not Haiku 4.5. Annoying, because more precise `haiku-4-5` doesn't seem to work either.
   * Works awful on non-trivial PRs (>10 changed lines)
 
-##
+## 2025-11-18
 
-* An easy way to continue remote session locally 
+* Few ideas to improve Claude Code, mostly for non-interactive mode. Maybe some were mentioned before
+  * An easy way to continue remote session locally, like `--teleport` for CC on the Web, but for any session
+  * Append tool to work around issues with Edit tool I constantly observe
+  * Log tool that prints data to stderr while non-interactive Claude Code session is in progress
+  * An ability for the model to stop the session and exit with a specific exit code
+  * A specific documented exit code for cases when session ends due to session limit
+  * Interactive mode: visualization for subagents - tabs or something like that
+* Improved the workflow enough to successfully do eval with Sonnet model. Initially I planned to just switch the model and
+do eval right away, but there turned out to be so many issues that I had to fix.
+  * Turns out Haiku didn't event perform validation and all results were purely hypothetical including diff files that were
+then analyzed for precision
+  * Debugging and fixing validation was the most time-consuming part. Still buggy - more later in Sonnet eval comments.
+  * Validation now is much more robust with a defined set of resulting artifacts and procedures to ensure clean environment, etc
+  * Another thing to fix once validation was working is to remove over-eagerness of the main agent that
+tried to improve things on top of what OpenRewrite recipe does. More safeguards here to specify not to add anything more
+than validation artifacts, have the final recommendation strictly be a copy of one of the validations, etc
+  * Added changes to follow Claude Code updates - support for separate subagent log files.
+  * Rewrote precision analysis to python and made it a more elaborate algorithm. Still incorrect...
+  * Attempted to fix tool use errors by restricting redirections in bash (`>`, `>>`), it still uses them a lot
+  * Other error - editing file with non-unique pattern - directions in CLAUDE.md didn't help either
+  * Successfully made scratchpad more detailed. But now it sometimes too verbose and in other cases still not truthful enough.
+* I had to drastically reduce eval size from 10 to 5 PRs due to subscription constraints - helped me do evals in a reasonable amount of time
+* New Sonnet eval is not good enough, unfortunately. I was going to do eval with MCP right after this, but more work is needed. Major issues:
+  * redirects in Bash and Edit tool failures are likely to be a fault of overflowing context trying to have everything in one file.
+I'll try to structure outputs better, split on more files and make overall context consumption smaller
+  * validation hits issues with rewrite.gradle script every time - for some reason BOM is not enough to specify
+dependency versions and Claude has to fix it by adding versions manually. On the bright side, it's smart enough to
+successfully do that.
+  * precision script is still incorrect - combination of weird rewrite.patch artifact produced by OpenRewrite dry run and 
+incorrect logic of counting total changes, true positives, false positives and false negatives.
