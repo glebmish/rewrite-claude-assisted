@@ -1,3 +1,35 @@
+/**
+ * OpenRewrite Init Script
+ *
+ * This init script applies OpenRewrite to a project for automated code analysis
+ * without requiring permanent modifications to the project's build files.
+ *
+ * Usage:
+ *   ./gradlew --init-script rewrite.gradle rewriteDryRun -DrecipeName=com.yourorg.YourRecipe
+ *
+ * The recipe name must be provided via the recipeName system property.
+ * The recipe itself should be defined in a rewrite.yml file in the repository root.
+ */
+
+// Recipe name from system property
+def recipeName = System.getProperty('recipeName')
+if (!recipeName) {
+    throw new GradleException("""
+        |Recipe name must be provided via system property.
+        |Usage: ./gradlew --init-script rewrite.gradle rewriteDryRun -DrecipeName=com.yourorg.YourRecipe
+        |
+        |Make sure you have a rewrite.yml file in the repository root that defines this recipe.
+    """.stripMargin())
+}
+
+// Centralized version management
+def rewriteAllVersion = '1.23.0'
+def rewriteDockerVersion = '2.14.0'
+def rewriteGithubActionsVersion = '3.14.0'
+def rewriteJavaDependenciesVersion = '1.45.0'
+def rewriteMigrateJava = '3.21.2'
+def rewriteTestingFrameworksVersion = '3.21.3'
+
 initscript {
     repositories {
         gradlePluginPortal()
@@ -7,19 +39,21 @@ initscript {
         classpath("org.openrewrite.rewrite:org.openrewrite.rewrite.gradle.plugin:7.3.0")
     }
 }
+
 rootProject {
     plugins.apply(org.openrewrite.gradle.RewritePlugin)
+
     dependencies {
-        rewrite platform('org.openrewrite.recipe:rewrite-recipe-bom:2.23.0')
-        rewrite("org.openrewrite.meta:rewrite-analysis")
-        rewrite("org.openrewrite.recipe:rewrite-all")
-        rewrite("org.openrewrite.recipe:rewrite-docker")
-        rewrite("org.openrewrite.recipe:rewrite-github-actions")
-        rewrite("org.openrewrite.recipe:rewrite-java-dependencies")
-        rewrite("org.openrewrite.recipe:rewrite-migrate-java")
+        rewrite("org.openrewrite.recipe:rewrite-all:${rewriteAllVersion}")
+        rewrite("org.openrewrite.recipe:rewrite-docker:${rewriteDockerVersion}")
+        rewrite("org.openrewrite.recipe:rewrite-github-actions:${rewriteGithubActionsVersion}")
+        rewrite("org.openrewrite.recipe:rewrite-java-dependencies:${rewriteJavaDependenciesVersion}")
+        rewrite("org.openrewrite.recipe:rewrite-migrate-java:${rewriteMigrateJava}")
+        rewrite("org.openrewrite.recipe:rewrite-testing-frameworks:${rewriteTestingFrameworksVersion}")
     }
+
     rewrite {
-        activeRecipe(<recipeName>)
+        activeRecipe(recipeName)
         setExportDatatables(true)
     }
 }
