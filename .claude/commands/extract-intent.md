@@ -15,7 +15,7 @@ Your task is to analyze given PRs in the repositories and extracts intents in th
 
 ## OpenRewrite Best Practices Review
 * Read and analyze `docs/openrewrite.md` to understand OpenRewrite best practices and patterns
-* Log key insights and relevant patterns to the scratchpad that will guide recipe selection
+* Log key insights and relevant patterns to the report that will guide recipe selection
 * Note any specific constraints or recommendations for recipe composition
 
 ## PR Analysis and Intent Extraction
@@ -46,7 +46,7 @@ For each PR:
     * Examples: "replace @Before with @BeforeEach in all test classes", "Set version 17 in java toolchain section in build.gradle", "Change Java version from 11 to 17 in actions/setup-java@v3 in .github/workflows/ci.yml"
 
 ## Intent Documentation
-* Create a structured summary in the scratchpad with:
+* Create a structured summary in the report with:
   * PR URL and title
   * Intents tree with confidence level (high/medium/low)
   * Any ambiguities or areas needing clarification

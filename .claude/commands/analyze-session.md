@@ -11,12 +11,12 @@ This command specializes in analyzing rewrite-assist workflow sessions to:
 
 ## Usage
 ```
-/analyze-session <scratchpad-file-path> <claude-code-log-path>
+/analyze-session <output-dir-path> <claude-code-log-path>
 ```
 
 ### Example
 ```
-/analyze-session .scratchpad/2024-11-20-14-30/scratchpad.md .scratchpad/2024-11-20-14-30/claude-log.jsonl
+/analyze-session .output/2024-11-20-14-30 .output/2024-11-20-14-30/claude-log.jsonl
 ```
 
 This will analyze a rewrite-assist session that attempted to find OpenRewrite recipes for PR changes.
@@ -24,7 +24,7 @@ This will analyze a rewrite-assist session that attempted to find OpenRewrite re
 ## Workflow
 
 1. **Validate Input**
-  - Check if scratchpad file path was provided
+  - Check if output directory path was provided
   - Verify file exists
   - Confirm file is readable
 
@@ -37,5 +37,5 @@ This will analyze a rewrite-assist session that attempted to find OpenRewrite re
 
 ## Output
 The session-analyzer subagent will generate:
-- Full workflow analysis: `.scratchpad/<current-workflow-dir>/evaluation-report.md`
-- Structured output with metrics: `.scratchpad/<current-workflow-dir>/subjective-evaluation.json`
+- Full workflow analysis: `.outpuut/<yyyy-mm-dd-hh-MM>/evaluation-report.md`
+- Structured output with metrics: `.output/<yyyy-mm-dd-hh-MM>/subjective-evaluation.json`
