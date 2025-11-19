@@ -132,6 +132,36 @@ rm -f rewrite.yml
 - Verify versions in scripts/rewrite.gradle are available in Maven Central
 - Ensure Gradle wrapper exists and is executable
 
+### Recipe Validation Script
+
+For automated recipe validation (primarily used by agents), use `scripts/validate-recipe.sh`:
+
+```bash
+scripts/validate-recipe.sh \
+  --repo-path .workspace/spring-petclinic \
+  --recipe-file .scratchpad/session/recipe.yaml \
+  --output-diff .scratchpad/session/recipe.diff \
+  --java-version 11
+```
+
+**What it does:**
+1. Creates isolated copy of repository (`.workspace/repo-rewrite-$$`)
+2. Extracts recipe name from YAML using `yq`
+3. Applies recipe using OpenRewrite `rewrite` task (not dry-run)
+4. Captures full `git diff` to output file
+5. Automatically cleans up isolated repository (even on failure)
+
+**Exit codes:**
+- `0`: Success
+- `1`: Recipe execution failed
+- `2`: Validation error (missing args, invalid paths)
+
+**Requirements:**
+- `yq` must be installed (included in eval/Dockerfile)
+- Recipe YAML must have `name` field
+- Java version must be 11 or 17
+- Repository must have Gradle wrapper
+
 ### Scratchpad Management
 
 * !!IMPORTANT!! When scratchpad file is passed to you in the initial prompt, append to this file and do not
