@@ -12,8 +12,8 @@ set -euo pipefail
 # Usage:
 #   validate-recipe.sh \
 #     --repo-path .workspace/spring-petclinic \
-#     --recipe-file .scratchpad/session/recipe.yaml \
-#     --output-diff .scratchpad/session/recipe.diff \
+#     --recipe-file .output/<session>/recipe.yaml \
+#     --output-diff .output/<session>/recipe.diff \
 #     --java-home 11
 
 # Parse arguments

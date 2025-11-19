@@ -70,37 +70,6 @@ When working with cloned repositories in .workspace directory, ALWAYS execute gr
 Example: `cd /path/to/.workspace/repo-name && ./gradlew build`
 Never use gradle wrapper from a different location or assume gradle is globally installed.
 
-### Scratchpad Management
-
-* !!IMPORTANT!! When scratchpad file is passed to you in the initial prompt, append to this file and do not
-attempt to resolve session or create a new file. If you've created any intermediate scratchpads, make sure their content
-is transferred to the main scratchpad and intermediate files are deleted.
-* At the beginning of main session get current date and time and create `.scratchpad/<yyyy-mm-dd-hh-MM>` directory.
-All scratchpad, context and analysis files for the given session and subagent sessions must be saved to this directory.
-* Pass the context on what the current directory is to each subagent. They must use this existing directory.
-* !!IMPORTANT!! At the beginning of main session retrieve session ID using and save it to the scratchpad directory: `scripts/get-session-id.sh -o .scratchpad/<yyy-mm-dd-hh-MM>/session-id.txt`.
-Do retry it with different path variations and ALWAYS fail fast if you are not able to execute this command.
-* Your scratchpad is a detailed, chronological execution log, not a summary. It must be a completely honest record of your process.
-You *must* log both successes and failures. When a tool call fails, you *must* log the error message from stderr and your
-hypothesis about the cause of the failure before logging your next recovery attempt. Do not hide your mistakes. 
-A detailed failure log is more valuable than a clean but misleading summary. Describing your struggles will help me to improve the workflow.
-
-ALWAYS keep the following types of scratchpads
-* Slash command execution log:
-  * Use `<command-name>-scratchpad.md` scratchpad file name
-  * If there's already a file for the given session id, keep writing to this file
-  * Append only, you cannot modify lines that were added before.
-  * Make it very comprehensive, detailed and truthful even when you execute multiple commands in a row.
-  * Log the execution of each phase, all commands with the reason why you execute it and its results
-  * Track overall progress and any issues encountered across phases
-  * Use the same scratchpad file for all commands and subagents in the same session
-* Context scratchpad:
-  * Use `<command-name>-context.md` scratchpad file located in .scratchpad directory
-  * Use this scratchpad to maintain context across main agent and subagents
-  * All subagents must read this file on start
-  * All subagents may append to this file
-  * It must be clearly stated what subagents contributed each part of the scratchpad
-
-### General direction
+## General direction
 * Do not use subagents unnecessarily
 * When tool use fails and this is a bash command with pipes, simplify it and try again before failing (even in strict mode)

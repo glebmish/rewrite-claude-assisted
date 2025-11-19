@@ -75,9 +75,9 @@ jobs:
         id: analyze_claude_code_workflow
         if: always()
         run: |
-          SCRATCHPAD_DIR="${{steps.run_claude_code_workflow.outputs.scratchpad_dir}}"
-          SESSION_ID=$(cat "$SCRATCHPAD_DIR/session-id.txt")
-          eval/analyze-workflow.sh -f "${{steps.run_claude_code_workflow.outputs.scratchpad_file}}" -s "$SESSION_ID"
+          OUTPUT_DIR="${{steps.run_claude_code_workflow.outputs.output_dir}}"
+          SESSION_ID=$(cat "$OUTPUT_DIR/session-id.txt")
+          eval/analyze-workflow.sh -d "$OUTPUT_DIR" -s "$SESSION_ID"
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -96,6 +96,6 @@ jobs:
         if: always()
         with:
           name: ${{ inputs.artifact_prefix && format('{0}-run-metadata', inputs.artifact_prefix) || format('{0}-run-metadata', github.run_number) }}
-          path: ${{steps.run_claude_code_workflow.outputs.scratchpad_dir}}
+          path: ${{steps.run_claude_code_workflow.outputs.output_dir}}
           if-no-files-found: ignore
           include-hidden-files: true
