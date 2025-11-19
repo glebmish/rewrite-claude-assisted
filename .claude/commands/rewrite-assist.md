@@ -29,7 +29,6 @@ Test each recipe produced on the previous phase and make the final decision on w
 
 ALWAYS use specialized subagents to perform the validation. You MUST let subagent know what options current task belongs to
 (e.g. `this recipe is called option 1`, `this recipe is called option 2`)
-NEVER validate recipes concurrently. Shared workspace is used and concurrent validations will be unreliable and lead to obscure bugs.
 
 ### Phase 5: Final decision
 
