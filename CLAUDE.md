@@ -69,69 +69,6 @@ When working with cloned repositories in .workspace directory, ALWAYS execute gr
 Example: `cd /path/to/.workspace/repo-name && ./gradlew build`
 Never use gradle wrapper from a different location or assume gradle is globally installed.
 
-### Running OpenRewrite with Init Script
-
-#### How to Use Init Script for OpenRewrite Validation
-
-**Step 1: Create Recipe YAML**
-Create `rewrite.yml` in the repository root:
-```yaml
----
-type: specs.openrewrite.org/v1beta/recipe
-name: com.yourorg.YourRecipe
-displayName: Recipe Display Name
-description: What this recipe does
-recipeList:
-  - org.openrewrite.java.migrate.UpgradeToJava17
-  # ... other recipes
-```
-
-**Step 2: Run OpenRewrite Dry Run**
-```bash
-cd .workspace/<repo-name>
-
-# Set JAVA_HOME based on project requirements (Java 11 or 17)
-# Use the recipe name from rewrite.yml
-JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64 \
-  ./gradlew --init-script /__w/rewrite-claude-assisted/rewrite-claude-assisted/scripts/rewrite.gradle \
-  rewriteDryRun \
-  -DrecipeName=com.yourorg.YourRecipe
-```
-
-**Important Notes:**
-- Recipe name MUST match the `name` field in `rewrite.yml`
-- Recipe name MUST be fully qualified (e.g., `com.yourorg.MyRecipe`)
-- Recipe name is passed via `-DrecipeName` system property (NOT a Gradle property)
-- Init script path must be absolute
-
-**Step 3: Extract Diff**
-The diff will be in `build/reports/rewrite/rewrite.patch`, it has to be copied over as is
-
-**Step 4: Clean Up**
-```bash
-cd .workspace/<repo-name>
-git reset --hard HEAD
-git clean -fd
-rm -f rewrite.yml
-```
-
-#### Troubleshooting
-
-**Error: "Recipe name must be provided"**
-- You forgot `-DrecipeName=...` system property
-- Always include: `-DrecipeName=<recipe-name-from-yaml>`
-- Note: Use `-D` (system property), NOT `-P` (Gradle property)
-
-**Error: "Could not find recipe"**
-- Check that `rewrite.yml` exists in repository root
-- Verify recipe name in YAML matches the name passed to `-DrecipeName`
-- Ensure YAML syntax is valid
-
-**Dependency Resolution Errors**
-- Check network connection (first run downloads dependencies)
-- Verify versions in scripts/rewrite.gradle are available in Maven Central
-- Ensure Gradle wrapper exists and is executable
-
 ### Scratchpad Management
 
 * !!IMPORTANT!! When scratchpad file is passed to you in the initial prompt, append to this file and do not
