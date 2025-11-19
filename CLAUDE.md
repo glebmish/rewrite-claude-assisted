@@ -8,7 +8,7 @@
 ## Bash Commands
 
 ### Main restrictions
-NEVER UNDER ANY CIRCUMSTANCES use `>` or `>>` redirects for writing files. Prefer using command line arguments to choose output.
+NEVER UNDER ANY CIRCUMSTANCES use `>` or `>>` redirects for writing files. This commands will ALWAYS fail. Prefer using command line arguments to choose output.
 If such argument is not available, use Write or Edit tools. Example: "Read(input_file) -> Write(input_file)" is GOOD, "Bash(cat input_file > output_file)" is BAD.
 !I REPEAT AND REMEMBER IT AS IF YOU LIFE DEPENDS ON IT: NEVER UNDER ANY CIRCUMSTANCES use `>` or `>>` redirects for writing files!
 
@@ -54,6 +54,7 @@ When you need to access repository files, clone it first and work with the clone
 ### Access to repository data on Github
 ALWAYS use `gh` tool to access repositories. NEVER EVER use WebFetch tool even when the input you work with is an https link.
 Prefer targeted commands over api commands, e.g. `gh pr` commands, not `gh api <pr-link>`
+For complete PR data use this: `gh pr view <pr-link> --json number,headRefName,baseRefName,headRepositoryOwner,url`
 
 ### Current date and time
 * `date +"%Y-%m-%d"` - get formatted date. If a different format is needed, you may modify this command.

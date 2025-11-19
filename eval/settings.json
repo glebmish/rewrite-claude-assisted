@@ -15,6 +15,7 @@
       "Bash(echo:*)",
       "Bash(sed:*)",
       "Bash(curl:*)",
+      "Bash(test:*)",
       "Bash(scripts/fetch-session.sh:*)",
       "Bash(scripts/get-session-id.sh:*)",
       "Bash(./scripts/fetch-session.sh:*)",
@@ -34,7 +35,8 @@
       "WebFetch(domain:github.com)",
       "Write",
       "Edit",
-      "WebSearch"
+      "WebSearch",
+      "WebFetch"
     ],
     "deny": [
       "Bash(git push:*)",
