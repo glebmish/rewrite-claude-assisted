@@ -165,18 +165,17 @@ DURATION=$((END_TIME - START_TIME))
 
 log "Execution completed with status: $EXECUTION_STATUS (duration: ${DURATION}s)"
 
-SCRATCHPAD_DIR=$(ls -d -1 $PWD/.scratchpad/*)
-echo "scratchpad_file=$SCRATCHPAD_DIR/rewrite-assist-scratchpad.md" >> $GITHUB_OUTPUT
-echo "scratchpad_dir=$SCRATCHPAD_DIR" >> $GITHUB_OUTPUT
+OUTPUT_DIR=$(ls -d -1 $PWD/.output/*)
+echo "output_dir=$OUTPUT_DIR" >> $GITHUB_OUTPUT
 
-# Move claude output log to scratchpad for debugging
+# Move claude output log to the output directory
 if [ -f "$CLAUDE_OUTPUT_LOG" ]; then
-    mv "$CLAUDE_OUTPUT_LOG" "$SCRATCHPAD_DIR/claude-output.log"
-    log "Claude output saved to: $SCRATCHPAD_DIR/claude-output.log"
+    mv "$CLAUDE_OUTPUT_LOG" "$OUTPUT_DIR/claude-output.log"
+    log "Claude output saved to: $OUTPUT_DIR/claude-output.log"
 fi
 
 # Create final metadata
-METADATA_FILE="$SCRATCHPAD_DIR/workflow-metadata.json"
+METADATA_FILE="$OUTPUT_DIR/workflow-metadata.json"
 cat > "$METADATA_FILE" << EOF
 {
   "pr_url": "$PR_URL",

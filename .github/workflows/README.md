@@ -12,20 +12,20 @@ The workflow uploads two artifact bundles (see lines 83-99 in `rewrite-assist.ym
 - **Purpose**: Complete conversation log for debugging and analysis
 
 ### 2. `{artifact_prefix}-run-metadata`
-- **Content**: Complete scratchpad directory with all generated files
-- **Source**: `${{steps.run_claude_code_workflow.outputs.scratchpad_dir}}`
-- **Path**: `.scratchpad/<yyyy-mm-dd-hh-MM>/`
+- **Content**: Complete output directory with all generated files
+- **Source**: `${{steps.run_claude_code_workflow.outputs.output_dir}}`
+- **Path**: `.output/<yyyy-mm-dd-hh-MM>/`
 - **Purpose**: All workflow execution artifacts and analysis results
 
 ## Artifact Contents
 
-All files below are contained within the scratchpad directory uploaded as `run-metadata`:
+All files below are contained within the output directory uploaded as `run-metadata`:
 
 ### Core Execution Logs
 
 | File | Generator | Description |
 |------|-----------|-------------|
-| `rewrite-assist-scratchpad.md` | rewrite-assist command | Main execution log tracking all phases, commands, results, and progress |
+| `rewrite-assist-report.md` | rewrite-assist command | Main execution log tracking all phases, commands, results, and progress |
 | `workflow-metadata.json` | entrypoint.sh:162-172 | Execution metadata: `pr_url`, `status`, `exit_code`, `duration_seconds`, `start_time`, `end_time` |
 
 ### Session Analysis Artifacts
@@ -56,7 +56,7 @@ Located in `result/` subdirectory (per `.claude/commands/rewrite-assist.md:30-35
 A successful workflow run produces:
 
 ### Required Files
-- ✅ `rewrite-assist-scratchpad.md`
+- ✅ `rewrite-assist-report.md`
 - ✅ `workflow-metadata.json`
 - ✅ `result/pr.diff`
 - ✅ `result/recommended-recipe.yaml`
@@ -171,7 +171,7 @@ Percentage of runs that completed successfully (exit_code=0)
 - **Perfect Match**: Boolean indicating zero divergence
 
 ### Quality Scores
-- **Truthfulness**: Execution accuracy and scratchpad correctness
+- **Truthfulness**: Execution accuracy and output correctness
 - **Extraction Quality**: Intent tree accuracy vs PR changes
 - **Mapping Effectiveness**: Recipe selection appropriateness
 - **Validation Correctness**: Validation metrics match claims

@@ -1,6 +1,6 @@
 ---
 name: openrewrite-recipe-validator
-description: Use this agent PROACTIVELY to validate OpenRewrite recipes against PR changes. MUST BE USED when: Testing OpenRewrite recipe correctness and effectiveness against real project (2) Comparing recipe coverage with desired PR changes (3) Validating recipe accuracy and precision (4) Analyzing gaps between recipe output and intended changes. Examples: 'validate recipe path/to/option1.yml and compare with PR #123', 'test if this recipe covers all changes in the security fix PR'. ALWAYS pass a directory for the current scratchpad and path to the recipe.
+description: Use this agent PROACTIVELY to validate OpenRewrite recipes against PR changes. MUST BE USED when: Testing OpenRewrite recipe correctness and effectiveness against real project (2) Comparing recipe coverage with desired PR changes (3) Validating recipe accuracy and precision (4) Analyzing gaps between recipe output and intended changes. Examples: 'validate recipe path/to/option-1-recipe.yaml and compare with PR #123', 'test if this recipe covers all changes in the security fix PR'. ALWAYS pass a an ouput directory and path to the recipe.
 model: sonnet
 color: orange
 ---
@@ -33,11 +33,11 @@ Your systematic approach validates recipes by:
 3. Capturing recipe diff from the execution
 4. Identifying gaps and over-applications
 
-From now on <scratchpad_dir> refers to the scratchpad directory passed to you by the caller.
+From now on <output_dir> refers to the output directory passed to you by the caller.
 
 ## Phase 0: PR Diff Capture
 
-Skip this phase if PR diff is already captured to `<scratchpad_dir>/pr-<pr_number>.diff`. Read existing file instead.
+Skip this phase if PR diff is already captured to `<output_dir>/pr-<pr_number>.diff`. Read existing file instead.
 
 In this section and below <default-branch> means the branch that is used in the repository by default.
 It is usually named `main` or `master`.
@@ -49,17 +49,17 @@ IMPORTANT: save this file before doing any validations.
 # IMPORTANT: Exclude Gradle wrapper files to match result/pr.diff format
 cd <repo_directory>
 git checkout <default_branch>
-git diff <default_branch> pr-<pr_number> --output=<scratchpad_dir>/pr-<pr_number>.diff
+git diff <default_branch> pr-<pr_number> --output=<output_dir>/pr-<pr_number>.diff
 ```
 
 ## Phase 1: Recipe Configuration and Validation
 Must be repeated for EVERY recipe under test
 
 ### Step 1: Create Recipe YAML
-Create recipe YAML file in `<scratchpad_dir>` with naming based on task.
+Create recipe YAML file in `<output_dir>` with naming based on task.
 Following file names assume main agent gave task like `this recipe is called option 1`:
 
-**File location**: `<scratchpad_dir>/recipe-option-1.yaml`
+**File location**: `<output_dir>/option-1-recipe.yaml`
 
 **Recipe Example (template)**:
 ```yaml
@@ -87,8 +87,8 @@ Run the validation script which handles all execution, diff capture, and cleanup
 ```bash
 scripts/validate-recipe.sh \
   --repo-path .workspace/<repo-name> \
-  --recipe-file <scratchpad_dir>/recipe-option-1.yaml \
-  --output-diff <scratchpad_dir>/recipe-option-1.diff \
+  --recipe-file <output_dir>/option-1-recipe.yaml \
+  --output-diff <output_dir>/option-1-recipe.diff \
   --java-home <java_home>
 ```
 
@@ -116,11 +116,11 @@ If the script fails:
 
 ## Phase 2: Diff Analysis & Metrics
 
-Analyze the generated diff file at `<scratchpad_dir>/recipe-option-1.diff`
+Analyze the generated diff file at `<output_dir>/option-1-recipe.diff`
 
 Compare against PR diff from Phase 0 to identify gaps and over-applications
 
-Document your analysis in <scratchpad_dir>/recipe-option-1-analysis.md
+Document your analysis in <output_dir>/option-1-recipe-analysis.md
 
 ### Over-application troubleshooting
 

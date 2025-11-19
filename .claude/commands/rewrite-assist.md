@@ -6,9 +6,17 @@ This command coordinates a multiphase workflow by executing individual commands 
 * Always complete a current phase first before reading description of the next phase.
 * Each phase must complete successfully before proceeding to the next phase.
 * When you start executing a new phase, update todo list with more details for the given phase.
-* Keep a detailed log of each phase execution in the same scratchpad.
+* Report detailed results of each phase and save it to phase<N>.md file (e.g. phase1.md)
 
-Phase can be described as a slash command (`/<command-name>`). To get the prompt for the slash command, read a file in `.claude/commands/<command-name>.md`
+At the beginning of the workflow get current date and time and create `.output/<yyyy-mm-dd-hh-MM>` directory. All output files
+for the given session and subagent sessions must be saved to this directory.
+* Pass the context on what the current directory is to each subagent. They must use this existing directory.
+
+!!IMPORTANT!! At the beginning of main session retrieve session ID using and save it to the output directory:
+`scripts/get-session-id.sh -o .output/<yyy-mm-dd-hh-MM>/session-id.txt`.
+* On failures, retry it with different path variations and ALWAYS fail fast if you are not able to execute this command.
+
+Phase can be described as a slash command (`/<command-name>`). Use SlashCommand tool for those.
 
 ## Workflow Overview
 
@@ -24,6 +32,10 @@ You MUST NOT try to improve or add anything on top of what PR is doing. Always a
 ### Phase 3: Recipe Mapping
 Discover available OpenRewrite recipes and map extracted intents to appropriate recipes.
 
+As a result two files must be created:
+* .output/<yyyy-mm-dd-hh-MM>/option-1-recipe.yaml
+* .output/<yyyy-mm-dd-hh-MM>/option-2-recipe.yaml
+
 ### Phase 4: Recipe validation
 Test each recipe produced on the previous phase and make the final decision on what recipe is the final version.
 
@@ -37,46 +49,40 @@ This step is CRITICAL and must never be skipped. Even when results are not concl
 provide a definitive best output, one of the recipes must be chosen for the final recommendation.
 !Failure to complete this step constitutes the failure of the whole workflow!
 
-**Output Directory**: Create `result/` subdirectory in the scratchpad directory. Make sure it is created before any
+**Output Directory**: Create `result/` subdirectory in the output directory. Make sure it is created before any
 attempts to use it.
 
 **CRITICAL**: The following 3 files MUST be generated in EXACTLY the specified formats. These files are parsed by automated analysis scripts.
-For the recommended recipe, you MUST only use yml and diff files saved to the scratchpad by subagents. If the files are not there,
+For the recommended recipe, you MUST only use yml and diff files saved to the output directory by subagents. If the files are not there,
 you MUST NOT try to acquire them in any other way such as running gradle command, or create files that you assume are correct. In this case you
 must clearly state that the task is failed and don't do anything else.
 
 #### Required Files
-Assuming you've already created scratchpad directory `.scratchpad/<yyyy-mm-dd-hh-MM>/` at the start of the workflow
+Assuming you've already created output directory `.output/<yyyy-mm-dd-hh-MM>/` at the start of the workflow
 
-**1. `.scratchpad/<yyyy-mm-dd-hh-MM>/result/pr.diff`** - Original PR diff
+**1. `.output/<yyyy-mm-dd-hh-MM>/result/pr.diff`** - Original PR diff
 MUST be a result of `git diff` command execution
 ```bash
 cd .workspace/<repo-name>
-git diff <default-branch> <pr-branch> --output=.scratchpad/<yyyy-mm-dd-hh-MM>/result/pr.diff -- . ':!gradle/wrapper/gradle-wrapper.jar' ':!gradlew' ':!gradlew.bat'
+git diff <default-branch> <pr-branch> --output=.output/<yyyy-mm-dd-hh-MM>/result/pr.diff
 ```
 - Format: Unified diff format (output of `git diff`)
 - Purpose: Ground truth for comparison
-- Note: Excludes generated/binary Gradle wrapper files (gradle-wrapper.jar, gradlew, gradlew.bat)
 
-**2. `.scratchpad/<yyyy-mm-dd-hh-MM>/result/recommended-recipe.yaml`** - Final recipe YAML
+**2. `.output/<yyyy-mm-dd-hh-MM>/result/recommended-recipe.yaml`** - Final recipe YAML
 - Format: Valid OpenRewrite recipe YAML
 - Content: The SINGLE recommended recipe composition
 - Must be syntactically valid and executable
 
-**3. `.scratchpad/<yyyy-mm-dd-hh-MM>/result/recommended-recipe.diff`** - Recipe output from main branch
-MUST be copied from the subagent's validated recipe diff file (e.g., `option-1-recipe.diff`, `recipe-option-2.diff`, etc.)
+**3. `.output/<yyyy-mm-dd-hh-MM>/result/recommended-recipe.diff`** - Recipe output from main branch
+MUST be copied from the subagent's validated recipe diff file (e.g., `option-1-recipe.diff`, `option-2-recipe.diff`, etc.)
 ```bash
-cp .scratchpad/<yyyy-mm-dd-hh-MM>/<subagent-recipe-diff-file> .scratchpad/<yyyy-mm-dd-hh-MM>/result/recommended-recipe.diff
+cp .output/<yyyy-mm-dd-hh-MM>/<subagent-recipe-diff-file> .output/<yyyy-mm-dd-hh-MM>/result/recommended-recipe.diff
 ```
-- Format: Unified diff format (from OpenRewrite rewrite.patch)
+- Format: Unified diff format (from OpenRewrite execution)
 - Purpose: Result of OpenRewrite recipe execution for empirical validation
 - Source: Must be the exact file produced by the validator subagent that validated the chosen recipe
-- **CRITICAL**: Copy the subagent's output file directly. Do NOT generate this with git diff.
-
-**4. other output files**
-**Human-Readable Analysis**: Any comparison summaries, assessments, or detailed analysis should go in:
-- The main scratchpad file (rewrite-assist-scratchpad.md)
-- OR: A separate `result/analysis.md` file
+- **CRITICAL**: Copy the subagent's resulting file directly. Do NOT generate this with git diff.
 
 ## Input Handling
 
@@ -102,17 +108,20 @@ cp .scratchpad/<yyyy-mm-dd-hh-MM>/<subagent-recipe-diff-file> .scratchpad/<yyyy-
 ## Error Handling
 * If any phase fails, stop the workflow and report the failure
 * Provide clear guidance on how to resume from a specific phase
-* Log all errors and recovery steps in the scratchpad
+* Log all errors and recovery steps in the reports
 
 ## Success Criteria
 * All phases complete successfully
-* Well-documented workflow progress in rewrite-assist-scratchpad.md scratchpad
-* PR diff saved
-* Recipe yaml and diff files saved for each evaluated recipe
 * Actionable recommendations for recipe deployment or refinement
-* **CRITICAL**: Before reporting success, verify ALL 3 required files exist in result/ directory:
-  - `.scratchpad/<yyyy-mm-dd-hh-MM>/result/pr.diff`
-  - `.scratchpad/<yyyy-mm-dd-hh-MM>/result/recommended-recipe.yaml`
-  - `.scratchpad/<yyyy-mm-dd-hh-MM>/result/recommended-recipe.diff`
+* **CRITICAL**: Before reporting success, verify ALL expected files exist:
+  * `.output/<yyyy-mm-dd-hh-MM>/session-id.txt` - captured Session ID
+  - `.output/<yyyy-mm-dd-hh-MM>/option-<N>-recipe.yaml` - generated OpenRewrite recipes
+  - `.output/<yyyy-mm-dd-hh-MM>/option-<N>-recipe.diff` - diffs from recipe validation
+  - `.output/<yyyy-mm-dd-hh-MM>/option-<N>-analysis.diff` - analysis based on recipe validation results
+  - `.output/<yyyy-mm-dd-hh-MM>/pr.diff` - original PR diff
+  - `.output/<yyyy-mm-dd-hh-MM>/phase<N>.md` - reports for each phase
+  - `.output/<yyyy-mm-dd-hh-MM>/result/pr.diff`
+  - `.output/<yyyy-mm-dd-hh-MM>/result/recommended-recipe.yaml`
+  - `.output/<yyyy-mm-dd-hh-MM>/result/recommended-recipe.diff`
 
-  If ANY file is missing, the workflow has FAILED. Do NOT report success.
+If ANY file is missing, the workflow has FAILED. Do NOT report success.

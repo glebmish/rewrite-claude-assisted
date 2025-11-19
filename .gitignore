@@ -34,7 +34,7 @@ Thumbs.db
 
 # Assist workflow workspace
 .workspace
-.scratchpad
+.output
 .sessions__pycache__/
 
 # Python

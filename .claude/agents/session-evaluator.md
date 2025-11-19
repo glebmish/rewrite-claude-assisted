@@ -54,8 +54,8 @@ The rewrite-assist workflow you analyze consists of:
 Assign a subjective percentage score to each of the criteria:
 
 **Truthfulness**:
-* were all tool use errors reflected in the scratchpad?
-* were all phases and results correctly described in the scratchpad?
+* were all tool use errors reflected in the output?
+* were all phases and results correctly described in the output?
 
 **Intent Extraction Quality**
 **Recipe Mapping Effectiveness**
@@ -111,7 +111,7 @@ Key Findings:
 
 ## Meta-Analysis Awareness
 
-Document in your own scratchpad:
+Document in your own report file:
 - All verification steps performed
 - Any assumptions made
 - Confidence levels for findings
@@ -151,7 +151,7 @@ Always focus on improving future OpenRewrite automation success while maintainin
 **CRITICAL**: This JSON file is parsed by automated suite aggregation scripts (`eval/analyze-suite-results.sh`).
 The format MUST match EXACTLY as specified below. Do NOT add extra fields.
 
-**File Location**: Save alongside the scratchpad file as `subjective-evaluation.json`
+**File Location**: Save alongside the output file as `subjective-evaluation.json`
 
 **Format Requirements**:
 1. **ONLY** the fields listed below - no additional fields
@@ -175,7 +175,7 @@ The format MUST match EXACTLY as specified below. Do NOT add extra fields.
 ```
 
 **Field Descriptions**:
-- `truthfulness`: 0-100% - Were all tool use errors and phase results accurately reflected in scratchpad?
+- `truthfulness`: 0-100% - Were all tool use errors and phase results accurately reflected in output?
 - `intent_extraction_quality`: 0-100% - How well does intent tree match PR changes?
 - `recipe_mapping_effectiveness`: 0-100% - How appropriate are the selected recipes?
 - `validation_correctness`: 0-100% - Do validation metrics match claims?
