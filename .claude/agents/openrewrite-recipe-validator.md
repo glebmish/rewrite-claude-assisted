@@ -57,7 +57,7 @@ cd <repo-directory>
 git checkout <default-branch>
 git reset --hard HEAD
 git clean -fd
-rm -f rewrite.yml rewrite.gradle pr-*.diff *.diff 2>/dev/null || true
+rm -f rewrite.yml pr-*.diff *.diff 2>/dev/null || true
 ```
 
 * Make sure current working directory is the repository directory
@@ -81,21 +81,25 @@ recipeList:
 
 The resulting file MUST be put to the root of the repository and MUST be called `rewrite.yml`
 
-### Gradle Init Script Setup
-Must be repeated for EVERY recipe under test
-
-Copy `rewrite.gradle` with proper dependencies and recipe name. Script is located in `scripts/rewrite.gradle`:
-
-The resulting file MUST be put to the root of the repository and MUST be called `rewrite.gradle`
+**IMPORTANT**: Recipe name in YAML must be fully qualified (e.g., `com.example.PRRecipe123Wide`)
 
 ## Phase 3: Dry Run Execution
 
 ### Execution Protocol
 ```bash
 cd <repo-directory>
-# Execute OpenRewrite dry run
-JAVA_HOME=<applicable-java-home> ./gradlew rewriteDryRun --init-script rewrite.gradle
+# Execute OpenRewrite dry run with init script
+# Recipe name is passed via -DrecipeName system property (matches name in rewrite.yml)
+JAVA_HOME=<applicable-java-home> ./gradlew rewriteDryRun \
+  --init-script /__w/rewrite-claude-assisted/rewrite-claude-assisted/scripts/rewrite.gradle \
+  -DrecipeName=com.example.PRRecipe<PR_NUMBER>Wide
 ```
+
+**CRITICAL NOTES**:
+- Init script path MUST be absolute (use /__w/rewrite-claude-assisted/rewrite-claude-assisted/scripts/rewrite.gradle)
+- Recipe name is passed via `-DrecipeName` system property (NOT `-PrecipeName`)
+- Recipe name MUST match the `name` field in rewrite.yml exactly
+- NO need to copy or modify rewrite.gradle - it's used directly from scripts/ directory
 
 ### Error Handling Checklist
 - Gradle wrapper present and executable
@@ -124,7 +128,6 @@ The following files must be copied to the scratchpad directory. They must be nam
 Following file names assume main agent gave task like `this recipe is called option 1`:
 * `rewrite.yml` must be copied to the scratchpad directory as `recipe-option-1.yaml`
 * `rewrite.patch` must be copied to the scratchpad directory as `recipe-option-1.diff`
-* `rewrite.gradle` must be copied to the scratchpad directory as `option-1.gradle`
 
 ### Over-application troubleshooting
 
@@ -147,12 +150,12 @@ cd <repo-directory>
 git checkout <default-branch>
 git reset --hard HEAD
 git clean -fd
-rm -f rewrite.yml rewrite.gradle pr-*.diff *.diff 2>/dev/null || true
+rm -f rewrite.yml pr-*.diff *.diff 2>/dev/null || true
 rm -rf build/ .gradle/ 2>/dev/null || true
 ```
 
 This ensures:
-- No leftover recipe files (rewrite.yml, rewrite.gradle)
+- No leftover recipe files (rewrite.yml)
 - No leftover diff files (pr-*.diff, *.diff)
 - No build artifacts
 - Repository is in pristine state for next validation
