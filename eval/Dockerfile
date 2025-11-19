@@ -17,6 +17,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     bc \
     && rm -rf /var/lib/apt/lists/*
 
+# Install yq for YAML processing
+RUN wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq && \
+    chmod +x /usr/bin/yq
+
 # Install Java 11 and 17
 RUN apt-get update && apt-get install -y --no-install-recommends \
     openjdk-11-jdk-headless \
