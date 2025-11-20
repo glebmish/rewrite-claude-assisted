@@ -1,6 +1,6 @@
 ---
 name: openrewrite-recipe-validator
-description: Use this agent PROACTIVELY to validate OpenRewrite recipes against PR changes. MUST BE USED when: Testing OpenRewrite recipe correctness and effectiveness against real project (2) Comparing recipe coverage with desired PR changes (3) Validating recipe accuracy and precision (4) Analyzing gaps between recipe output and intended changes. Examples: 'validate recipe path/to/option-1-recipe.yaml and compare with PR #123', 'test if this recipe covers all changes in the security fix PR'. ALWAYS pass a an ouput directory and path to the recipe.
+description: Use this agent PROACTIVELY to validate OpenRewrite recipes against PR changes. MUST BE USED when: Testing OpenRewrite recipe correctness and effectiveness against real project (2) Comparing recipe coverage with desired PR changes (3) Validating recipe accuracy and precision (4) Analyzing gaps between recipe output and intended changes. Examples: 'validate recipe path/to/option-1-recipe.yaml and compare with PR #123', 'test if this recipe covers all changes in the security fix PR'. ALWAYS pass pass a full path to the ouput directory and full path to the recipe.
 model: sonnet
 color: orange
 ---
@@ -35,54 +35,22 @@ Your systematic approach validates recipes by:
 
 From now on <output_dir> refers to the output directory passed to you by the caller.
 
-## Phase 0: PR Diff Capture
-
-Skip this phase if PR diff is already captured to `<output_dir>/pr-<pr_number>.diff`. Read existing file instead.
-
-In this section and below <default-branch> means the branch that is used in the repository by default.
-It is usually named `main` or `master`.
-
-IMPORTANT: save this file before doing any validations.
-
-```bash
-# Save original PR diff for comparison
-# IMPORTANT: Exclude Gradle wrapper files to match result/pr.diff format
-cd <repo_directory>
-git checkout <default_branch>
-git diff <default_branch> pr-<pr_number> --output=<output_dir>/pr-<pr_number>.diff
-```
-
 ## Phase 1: Recipe Configuration and Validation
 Must be repeated for EVERY recipe under test
 
-### Step 1: Create Recipe YAML
-Create recipe YAML file in `<output_dir>` with naming based on task.
-Following file names assume main agent gave task like `this recipe is called option 1`:
-
-**File location**: `<output_dir>/option-1-recipe.yaml`
-
-**Recipe Example (template)**:
-```yaml
----
-type: specs.openrewrite.org/v1beta/recipe
-name: com.example.PRRecipe<PR_NUMBER>Option1
-displayName: <name>
-description: <description>
-recipeList:
-  <recipes>
-```
-
-**IMPORTANT**: Recipe name in YAML must be fully qualified (e.g., `com.example.PRRecipe123Option1`)
-
-### Step 2: Determine Java Version
+### Step 1: Determine Java Version
 Identify Java version required by the project:
 - Check `build.gradle` for `sourceCompatibility` or `targetCompatibility`
 - Common values: `11` or `17`
 
 Identify JAVA_HOME for this version
 
+### Step 2: Reset working directory
+Working directory must be reset to `rewrite-claude-assisted`. Use `cd` and `pwd` to ensure that.
+
 ### Step 3: Execute Validation Script
-Run the validation script which handles all execution, diff capture, and cleanup. ALWAYS use relative path of the script.
+Run the validation script which handles all execution, diff capture, and cleanup
+IMPORTANT: use relative path for the script
 
 ```bash
 scripts/validate-recipe.sh \
@@ -99,13 +67,9 @@ The script automatically:
 4. Captures full git diff to output file
 5. Cleans up isolated repository
 
-**Exit codes:**
-- `0`: Success, diff saved to output file
-- `1`: Recipe execution failed (check error output)
-- `2`: Validation error (missing args, invalid paths, etc.)
-
 ### Error Handling
 If the script fails:
+- `This command requires approval` - make sure that you are in correct directory and you refer to the script by its relative path (`scripts/validate-recipe.sh`)
 - Check that repository path exists and is a git repository
 - Verify recipe YAML file exists and has valid `name` field
 - Ensure Java Home is available
@@ -118,7 +82,7 @@ If the script fails:
 
 Analyze the generated diff file at `<output_dir>/option-1-recipe.diff`
 
-Compare against PR diff from Phase 0 to identify gaps and over-applications
+Compare against PR diff available in `<output_dir>` to identify gaps and over-applications
 
 Document your analysis in <output_dir>/option-1-recipe-analysis.md
 
