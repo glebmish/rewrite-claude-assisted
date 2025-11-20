@@ -18,12 +18,16 @@
       "Bash(test:*)",
       "Bash(scripts/fetch-session.sh:*)",
       "Bash(scripts/get-session-id.sh:*)",
+      "Bash(scripts/validate-recipe.sh:*)",
       "Bash(./scripts/fetch-session.sh:*)",
       "Bash(./scripts/get-session-id.sh:*)",
+      "Bash(./scripts/validate-recipe.sh:*)",
       "Bash(bash scripts/fetch-session.sh:*)",
       "Bash(bash scripts/get-session-id.sh:*)",
+      "Bash(bash scripts/validate-recipe.sh:*)",
       "Bash(bash ./scripts/fetch-session.sh:*)",
       "Bash(bash ./scripts/get-session-id.sh:*)",
+      "Bash(bash ./scripts/validate-recipe.sh:*)",
       "Bash(update-alternatives:*)",
       "Bash(git:*)",
       "Bash(gh:*)",
@@ -36,7 +40,8 @@
       "Write",
       "Edit",
       "WebSearch",
-      "WebFetch"
+      "WebFetch",
+      "SlashCommand"
     ],
     "deny": [
       "Bash(git push:*)",
