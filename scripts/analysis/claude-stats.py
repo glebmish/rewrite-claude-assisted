@@ -227,7 +227,11 @@ def build_agent_usage(
     failed = sum(1 for t in tool_uses if t.is_failed)
 
     # Determine agent prefix for tool names
-    agent_prefix = "main" if agent_id == "main" else (subagent_type or agent_id)
+    if agent_id == "main":
+        agent_prefix = "main"
+    else:
+        # For subagents, include agent ID: "subagent_type (agent_id)"
+        agent_prefix = f"{subagent_type or agent_id} ({agent_id})"
 
     # Format tool names with agent prefix and failure markers
     tools_used = []
