@@ -82,7 +82,7 @@ Identify Java version required by the project:
 Identify JAVA_HOME for this version
 
 ### Step 3: Execute Validation Script
-Run the validation script which handles all execution, diff capture, and cleanup:
+Run the validation script which handles all execution, diff capture, and cleanup. ALWAYS use relative path of the script.
 
 ```bash
 scripts/validate-recipe.sh \
