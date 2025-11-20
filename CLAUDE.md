@@ -40,16 +40,18 @@ If such argument is not available, use Write or Edit tools. Example: "Read(input
 
 ### Changing directory
 ALWAYS use full path whenever you use `cd` command.
+NEVER use `cd` together with other commands (e.g. `cd dir/` and then `ls .`, NOT `cd dir/ && ls .)
 
 If any of the commands you've executed might have changed working directory, establish current working directory with `pwd`
 command first before attempting to run any other command. Track how this directory changes after command executions.
 
-### Cloning repositories
+### Cloning repositories and using git
 Always clone repositories to the .workspace directory and use repository name as directory name
 Always use `git@` links for cloning. Assume correct ssh keys are set up for you.
 Always use shallow clone: `git clone --depth 1 {repo-url} {directory}`
 Fetch PRs using: `git fetch origin pull/{pr-number}/head:pr-{pr-number}`
 When you need to access repository files, clone it first and work with the cloned version. Avoid fetching files from web.
+ALWAYS use `git diff` with `--output` flag when you want to write result in a file
 
 ### Access to repository data on Github
 ALWAYS use `gh` tool to access repositories. NEVER EVER use WebFetch tool even when the input you work with is an https link.
