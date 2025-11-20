@@ -16,7 +16,7 @@ for the given session and subagent sessions must be saved to this directory.
 `scripts/get-session-id.sh -o .output/<yyy-mm-dd-hh-MM>/session-id.txt`.
 * On failures, retry it with different path variations and ALWAYS fail fast if you are not able to execute this command.
 
-Phase can be described as a slash command (`/<command-name>`). Use SlashCommand tool for those.
+Phase can be described as a slash command (`/<command-name>`). Do NOT use SlashCommand tool for those, read the command file instead (in `.claude/commands`)
 
 ## Workflow Overview
 
@@ -25,12 +25,23 @@ The complete workflow consists of these phases:
 ### Phase 1: `/fetch-repos <PR links>` - Repository Setup
 Parse GitHub PR URLs, clone repositories, and set up PR branches for analysis.
 
+In this phase you MUST save PR diff to the output directory.
+In the code block below <default-branch> means the branch that is used in the repository by default. It is usually named `main` or `master`.
+IMPORTANT: save this file before continuing the workflow
+
+```bash
+# Save original PR diff for comparison
+cd <repo_directory>
+git diff <default_branch> pr-<pr_number> --output=<output_dir>/pr-<pr_number>.diff
+```
+
 ### Phase 2: `/extract-intent <pairs of repository-path:pr-branch-name>` - Intent Analysis  
 Analyze PRs to extract both strategic (wide) and tactical (narrow) transformation intents.
 You MUST NOT try to improve or add anything on top of what PR is doing. Always assume PR changes is the state the the user desires and work with PR changes only.
 
 ### Phase 3: Recipe Mapping
 Discover available OpenRewrite recipes and map extracted intents to appropriate recipes.
+**IMPORTANT**: Recipe name in YAML must be fully qualified (e.g., `com.example.PRRecipe123Option1`)
 
 As a result two files must be created:
 * .output/<yyyy-mm-dd-hh-MM>/option-1-recipe.yaml
@@ -120,8 +131,8 @@ cp .output/<yyyy-mm-dd-hh-MM>/<subagent-recipe-diff-file> .output/<yyyy-mm-dd-hh
   - `.output/<yyyy-mm-dd-hh-MM>/option-<N>-analysis.diff` - analysis based on recipe validation results
   - `.output/<yyyy-mm-dd-hh-MM>/pr.diff` - original PR diff
   - `.output/<yyyy-mm-dd-hh-MM>/phase<N>.md` - reports for each phase
-  - `.output/<yyyy-mm-dd-hh-MM>/result/pr.diff`
-  - `.output/<yyyy-mm-dd-hh-MM>/result/recommended-recipe.yaml`
-  - `.output/<yyyy-mm-dd-hh-MM>/result/recommended-recipe.diff`
+  - `.output/<yyyy-mm-dd-hh-MM>/result/pr.diff` - PR diff, must be copied from `.output/<yyyy-mm-dd-hh-MM>`
+  - `.output/<yyyy-mm-dd-hh-MM>/result/recommended-recipe.yaml` - recommended recipe, must be one of the options available in `.output/<yyyy-mm-dd-hh-MM>`
+  - `.output/<yyyy-mm-dd-hh-MM>/result/recommended-recipe.diff` - diff from the validation of the recommended recipe, must be copied from `.output/<yyyy-mm-dd-hh-MM>`
 
 If ANY file is missing, the workflow has FAILED. Do NOT report success.

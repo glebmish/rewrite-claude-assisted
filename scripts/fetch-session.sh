@@ -58,19 +58,15 @@ fi
 
 mkdir -p "$OUTPUT_DIR"
 
-# Function to check if an agent log is a warmup agent
-is_warmup_agent() {
+# Function to check if an agent log is a system agent
+# We assume it's a system agent if it has just 1 log line (no interactions)
+is_system_agent() {
     local agent_file="$1"
 
-    # Read first line and check if it contains "Warmup" as first user message
-    local first_line=$(head -n 1 "$agent_file")
-
-    # Check if type is "user" and message content is "Warmup"
-    if echo "$first_line" | grep -q '"type":"user"' && \
-       echo "$first_line" | grep -q '"content":"Warmup"'; then
-        return 0  # true - is warmup agent
+    if [[ $(cat "$agent_file" || wc -l) == 1 ]]; then
+        return 0  # true - is system agent
     else
-        return 1  # false - not warmup agent
+        return 1  # false - not system agent
     fi
 }
 
@@ -120,7 +116,7 @@ if [ -n "$AGENT_FILES" ]; then
     SKIPPED_COUNT=0
     echo "$AGENT_FILES" | while IFS= read -r agent_file; do
         if [ -n "$agent_file" ]; then
-            if is_warmup_agent "$agent_file"; then
+            if is_system_agent "$agent_file"; then
                 echo "  Skipping warmup agent: $(basename "$agent_file")"
                 SKIPPED_COUNT=$((SKIPPED_COUNT + 1))
             else
