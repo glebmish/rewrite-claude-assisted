@@ -6,7 +6,7 @@ This command coordinates a multiphase workflow by executing individual commands 
 * Always complete a current phase first before reading description of the next phase.
 * Each phase must complete successfully before proceeding to the next phase.
 * When you start executing a new phase, update todo list with more details for the given phase.
-* Report detailed results of each phase and save it to phase<N>.md file (e.g. phase1.md)
+* Report complete but concise results of each phase and save it to phase<N>.md file (e.g. phase1.md)
 
 At the beginning of the workflow get current date and time and create `.output/<yyyy-mm-dd-hh-MM>` directory. All output files
 for the given session and subagent sessions must be saved to this directory.
@@ -17,6 +17,13 @@ for the given session and subagent sessions must be saved to this directory.
 * On failures, retry it with different path variations and ALWAYS fail fast if you are not able to execute this command.
 
 Phase can be described as a slash command (`/<command-name>`). Do NOT use SlashCommand tool for those, read the command file instead (in `.claude/commands`)
+
+**CRITICAL VERBOSITY CONSTRAINTS:**
+- Be concise and factual - avoid verbose explanations
+- State findings clearly in bullet points, not prose
+- Skip background information and theory
+- Focus on actionable results and required outputs only
+- Do NOT create supplementary documentation files beyond the required files
 
 ## Workflow Overview
 
