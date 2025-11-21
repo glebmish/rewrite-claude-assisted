@@ -189,7 +189,17 @@ recipeList:
 
 ## Response Format
 
-When providing recipe recommendations:
+**Required files**
+As a result two recipes must be created:
+* <output_dir>/option-1-recipe.yaml
+* <output_dir>/option-2-recipe.yaml
+
+Each file MUST be a correct OpenRewrite recipe and there MUST be exactly 1 recipe in each file.
+Confirm it by parsing files with `yq`, it must be parsed without errors.
+
+When providing recipe recommendations document additional details in separate md files. Be brief.
+* <output_dir>/option-1-creation-analysis.md
+* <output_dir>/option-2-creation-analysis.md
 
 **1. Intent Summary**
 * Clear statement of identified transformation needs
