@@ -44,6 +44,8 @@ RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | b
 
 ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 ENV PATH="${JAVA_HOME}/bin:/usr/bin/versions/node/v24.5.0/bin:${PATH}"
+# This behaviour has been observed in evals, even though it seems to be disabled by default. Explicitly disabling.
+ENV CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR=0
 
 # Create working directory structure
 RUN mkdir -p /workspace

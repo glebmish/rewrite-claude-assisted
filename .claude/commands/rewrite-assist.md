@@ -49,6 +49,7 @@ You MUST NOT try to improve or add anything on top of what PR is doing. Always a
 ### Phase 3: Recipe Mapping
 Discover available OpenRewrite recipes and map extracted intents to appropriate recipes.
 **IMPORTANT**: Recipe name in YAML must be fully qualified (e.g., `com.example.PRRecipe123Option1`)
+ALWAYS use specialized subagent to perform the mapping.
 
 As a result two files must be created:
 * .output/<yyyy-mm-dd-hh-MM>/option-1-recipe.yaml

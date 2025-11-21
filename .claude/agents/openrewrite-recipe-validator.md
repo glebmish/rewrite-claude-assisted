@@ -40,7 +40,7 @@ Your systematic approach validates recipes by:
 3. Capturing recipe diff from the execution
 4. Identifying gaps and over-applications
 
-From now on <output_dir> refers to the output directory passed to you by the caller.
+From now on <output_dir_full_path> refers to the FULL PATH of the output directory passed to you by the caller.
 
 ## Phase 1: Recipe Configuration and Validation
 Must be repeated for EVERY recipe under test
@@ -62,8 +62,8 @@ IMPORTANT: use relative path for the script
 ```bash
 scripts/validate-recipe.sh \
   --repo-path .workspace/<repo-name> \
-  --recipe-file <output_dir>/option-1-recipe.yaml \
-  --output-diff <output_dir>/option-1-recipe.diff \
+  --recipe-file <output_dir_full_path>/option-1-recipe.yaml \
+  --output-diff <output_dir_full_path>/option-1-recipe.diff \
   --java-home <java_home>
 ```
 
@@ -87,11 +87,11 @@ If the script fails:
 
 ## Phase 2: Diff Analysis & Metrics
 
-Analyze the generated diff file at `<output_dir>/option-1-recipe.diff`
+Analyze the generated diff file at `<output_dir_full_path>/option-1-recipe.diff`
 
-Compare against PR diff available in `<output_dir>` to identify gaps and over-applications
+Compare against PR diff available in `<output_dir_full_path>` to identify gaps and over-applications
 
-Document your analysis in <output_dir>/option-1-recipe-analysis.md
+Document your analysis in <output_dir_full_path>/option-1-recipe-analysis.md
 
 ### Over-application troubleshooting
 
