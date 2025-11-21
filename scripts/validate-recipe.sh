@@ -99,6 +99,27 @@ trap cleanup EXIT
 # Copy recipe YAML to isolated repo root
 cp "$RECIPE_FILE" "$ISOLATED_REPO/rewrite.yml"
 
+# Add local gitignore to exclude common gradle artifacts
+echo "Adding local gitignore for gradle artifacts"
+mkdir -p "$ISOLATED_REPO/.git/info"
+cat > "$ISOLATED_REPO/.git/info/exclude" << 'GITIGNORE_EOF'
+# Gradle artifacts
+.gradle/
+**/gradle-wrapper.jar
+gradlew
+gradlew.bat
+gradle/
+
+# OpenRewrite artifacts
+rewrite.yml
+
+# Build outputs
+**/build/
+**/out/
+**/target/
+**/bin/
+GITIGNORE_EOF
+
 # Get absolute path to init script
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INIT_SCRIPT="$SCRIPT_DIR/rewrite.gradle"

@@ -52,15 +52,14 @@ Identify Java version required by the project:
 
 Identify JAVA_HOME for this version
 
-### Step 2: Reset working directory
-Working directory must be reset to `rewrite-claude-assisted`. Use `cd` and `pwd` to ensure that.
-
-### Step 3: Execute Validation Script
+### Step 2: Execute Validation Script
 Run the validation script which handles all execution, diff capture, and cleanup
 IMPORTANT: use relative path for the script
+IMPORTANT: if you aren't able to execute the script, fail early and report the failure. DO NOT try to perform
+validation in any other way. Failing early helps us troubleshoot and save resources.
 
 ```bash
-scripts/validate-recipe.sh \
+cd <rewrite-claude-assisted root directory> && scripts/validate-recipe.sh \
   --repo-path .workspace/<repo-name> \
   --recipe-file <output_dir_full_path>/option-1-recipe.yaml \
   --output-diff <output_dir_full_path>/option-1-recipe.diff \
