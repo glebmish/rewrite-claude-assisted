@@ -75,12 +75,21 @@ The script automatically:
 
 ### Error Handling
 If the script fails:
-- `This command requires approval` - make sure that you are in correct directory and you refer to the script by its relative path (`scripts/validate-recipe.sh`)
+- `This command requires approval` - make sure that you are in correct directory, and you refer to the script by its relative path (`scripts/validate-recipe.sh`)
 - Check that repository path exists and is a git repository
 - Verify recipe YAML file exists and has valid `name` field
 - Ensure Java Home is available
 - Check Gradle wrapper is present and executable in repository
 - Review error output for specific failure reason
+- CRITICAL: If none of those is the reason for the failure, rerun the script with `--debug`
+  ```
+  cd <rewrite-claude-assisted root directory> && scripts/validate-recipe.sh \
+  --repo-path .workspace/<repo-name> \
+  --recipe-file <output_dir_full_path>/option-1-recipe.yaml \
+  --output-diff <output_dir_full_path>/option-1-recipe.diff \
+  --java-home <java_home> \
+  --debug --gradle-output <output_dir_full_path>/option-1-gradle-output.log
+  ```
 
 **IMPORTANT**: Do NOT attempt to fix project issues. If recipe execution fails due to project problems, document the failure and move on.
 
@@ -90,7 +99,7 @@ Analyze the generated diff file at `<output_dir_full_path>/option-1-recipe.diff`
 
 Compare against PR diff available in `<output_dir_full_path>` to identify gaps and over-applications
 
-Document your analysis in <output_dir_full_path>/option-1-recipe-analysis.md
+Succinctly document your analysis in <output_dir_full_path>/option-1-recipe-validation-analysis.md
 
 ### Over-application troubleshooting
 
