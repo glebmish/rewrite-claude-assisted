@@ -45,6 +45,8 @@ NEVER use `cd` together with other commands (e.g. `cd dir/` and then `ls .`, NOT
 If any of the commands you've executed might have changed working directory, establish current working directory with `pwd`
 command first before attempting to run any other command. Track how this directory changes after command executions.
 
+On ANY unexpected result of a command that uses file path, establish current directory with `pwd` before trying something else.
+
 ### Cloning repositories and using git
 Always clone repositories to the .workspace directory and use repository name as directory name
 Always use `git@` links for cloning. Assume correct ssh keys are set up for you.
