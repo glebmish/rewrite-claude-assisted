@@ -16,6 +16,7 @@
       "Bash(sed:*)",
       "Bash(curl:*)",
       "Bash(test:*)",
+      "Bash(yq:*)",
       "Bash(scripts/fetch-session.sh:*)",
       "Bash(scripts/get-session-id.sh:*)",
       "Bash(scripts/validate-recipe.sh:*)",

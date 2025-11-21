@@ -21,6 +21,8 @@ REPO_PATH=""
 RECIPE_FILE=""
 OUTPUT_DIFF=""
 JAVA_HOME=""
+DEBUG_MODE=false
+GRADLE_OUTPUT=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -38,6 +40,14 @@ while [[ $# -gt 0 ]]; do
             ;;
         --java-home)
             JAVA_HOME="$2"
+            shift 2
+            ;;
+        --debug)
+            DEBUG_MODE=true
+            shift 1
+            ;;
+        --gradle-output)
+            GRADLE_OUTPUT="$2"
             shift 2
             ;;
         *)
@@ -80,15 +90,30 @@ fi
 
 echo "Recipe name: $RECIPE_NAME"
 
+# Save starting directory for cleanup
+STARTING_DIR=$(pwd)
+
 # Create isolated repository copy with PID for uniqueness
 REPO_NAME=$(basename "$REPO_PATH")
 ISOLATED_REPO="${REPO_PATH}-rewrite-$$"
 
 echo "Creating isolated copy: $ISOLATED_REPO"
-cp -r "$REPO_PATH" "$ISOLATED_REPO"
+cp -a "$REPO_PATH" "$ISOLATED_REPO"
+
+# Get absolute path to init script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+INIT_SCRIPT="$SCRIPT_DIR/rewrite.gradle"
+
+ # Convert to absolute path to ensure cleanup works regardless of cwd
+ISOLATED_REPO=$(cd "$ISOLATED_REPO" && pwd)
+cd "$ISOLATED_REPO"
+# Reset git state
+git reset --hard HEAD
+rm -f .git/index.lock
 
 # Cleanup function (called on exit via trap)
 cleanup() {
+    cd "$STARTING_DIR"
     if [[ -d "$ISOLATED_REPO" ]]; then
         echo "Cleaning up isolated repository: $ISOLATED_REPO"
         rm -rf "$ISOLATED_REPO"
@@ -99,16 +124,45 @@ trap cleanup EXIT
 # Copy recipe YAML to isolated repo root
 cp "$RECIPE_FILE" "$ISOLATED_REPO/rewrite.yml"
 
-# Add local gitignore to exclude common gradle artifacts
+if [[ ! -f "$INIT_SCRIPT" ]]; then
+    echo "Error: Init script not found at $INIT_SCRIPT" >&2
+    exit 2
+fi
+
+# Execute OpenRewrite
+echo "Executing OpenRewrite with recipe: $RECIPE_NAME"
+
+# Build gradle command with optional debug flags
+GRADLE_ARGS=(rewriteRun --init-script "$INIT_SCRIPT" -DrecipeName="$RECIPE_NAME")
+if [[ "$DEBUG_MODE" == true ]]; then
+    echo "Debug mode enabled"
+    GRADLE_ARGS+=(--debug --stacktrace)
+fi
+
+# Execute gradle with optional output redirection
+if [[ -n "$GRADLE_OUTPUT" ]]; then
+    echo "Redirecting Gradle output to: $GRADLE_OUTPUT"
+    if ! JAVA_HOME="$JAVA_HOME" ./gradlew "${GRADLE_ARGS[@]}" > "$GRADLE_OUTPUT" 2>&1; then
+        echo "Error: OpenRewrite execution failed (see $GRADLE_OUTPUT for details)" >&2
+        exit 1
+    fi
+else
+    if ! JAVA_HOME="$JAVA_HOME" ./gradlew "${GRADLE_ARGS[@]}"; then
+        echo "Error: OpenRewrite execution failed" >&2
+        exit 1
+    fi
+fi
+
+# Add local gitignore to exclude common gradle artifacts in diff
 echo "Adding local gitignore for gradle artifacts"
 mkdir -p "$ISOLATED_REPO/.git/info"
 cat > "$ISOLATED_REPO/.git/info/exclude" << 'GITIGNORE_EOF'
 # Gradle artifacts
 .gradle/
 **/gradle-wrapper.jar
+gradle/
 gradlew
 gradlew.bat
-gradle/
 
 # OpenRewrite artifacts
 rewrite.yml
@@ -120,25 +174,6 @@ rewrite.yml
 **/bin/
 GITIGNORE_EOF
 
-# Get absolute path to init script
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-INIT_SCRIPT="$SCRIPT_DIR/rewrite.gradle"
-
-if [[ ! -f "$INIT_SCRIPT" ]]; then
-    echo "Error: Init script not found at $INIT_SCRIPT" >&2
-    exit 2
-fi
-
-# Execute OpenRewrite
-echo "Executing OpenRewrite with recipe: $RECIPE_NAME"
-cd "$ISOLATED_REPO"
-
-if ! JAVA_HOME="$JAVA_HOME" ./gradlew rewriteRun \
-    --init-script "$INIT_SCRIPT" \
-    -DrecipeName="$RECIPE_NAME"; then
-    echo "Error: OpenRewrite execution failed" >&2
-    exit 1
-fi
 
 # Capture full git diff (no exclusions)
 echo "Capturing diff to: $OUTPUT_DIFF"
