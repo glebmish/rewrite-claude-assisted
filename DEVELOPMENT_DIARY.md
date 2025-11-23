@@ -230,6 +230,7 @@ incorrect logic of counting total changes, true positives, false positives and f
 ## 2025-11-23
 * Huge success with a new eval - fixes made the workflow much more efficient and robust (>35% efficiency increase)
   * Run 2 is an outlier that had many issues, will rerun it again to check if it's random, but also will work on a fix (probably encoding)
+  * Retry showed that it is still problematic, will be fixed and tested in the next eval.
 * Fixes made:
   * Got rid of scratchpad and single-file detailed log.
     * Significantly reduced write and edit issues and made results much more readable
