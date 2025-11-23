@@ -65,7 +65,7 @@ else
 fi
 
 # Copy output from build directory to expected location
-PLUGIN_OUTPUT="build/recipe-metadata.json"
+PLUGIN_OUTPUT="build/docs/recipe-metadata.json"
 if [ ! -f "$PLUGIN_OUTPUT" ]; then
     log_error "Output file not found: $PLUGIN_OUTPUT"
     exit 1
