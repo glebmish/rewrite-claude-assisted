@@ -47,8 +47,8 @@ Must be repeated for EVERY recipe under test
 
 ### Step 1: Determine Java Version
 Identify Java version required by the project:
-- Check `build.gradle` for `sourceCompatibility` or `targetCompatibility`
-- Common values: `11` or `17`
+- Check `build.gradle` for `sourceCompatibility`, `targetCompatibility` or `languageVersion`
+- Common values: `11`, `17`, `21`, `JavaLanguageVersion.of(11)`, `JavaLanguageVersion.of(17)`, `JavaLanguageVersion.of(21)`, `JavaVersion.VERSION_11`, `JavaVersion.VERSION_17`, `JavaVersion.VERSION_21`
 
 Identify JAVA_HOME for this version
 
@@ -76,6 +76,7 @@ The script automatically:
 ### Error Handling
 If the script fails:
 - `This command requires approval` - make sure that you are in correct directory, and you refer to the script by its relative path (`scripts/validate-recipe.sh`)
+- `Unsupported class file major version` - a wrong Java version was used
 - Check that repository path exists and is a git repository
 - Verify recipe YAML file exists and has valid `name` field
 - Ensure Java Home is available
