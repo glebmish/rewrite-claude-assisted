@@ -43,7 +43,10 @@
       "Write",
       "Edit",
       "WebSearch",
-      "WebFetch"
+      "WebFetch",
+      "mcp__openrewrite-mcp__test_connection",
+      "mcp__openrewrite-mcp__find_recipes",
+      "mcp__openrewrite-mcp__get_recipe"
     ],
     "deny": [
       "Bash(git push:*)",

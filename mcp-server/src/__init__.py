@@ -1,0 +1,1 @@
+"""OpenRewrite MCP Server."""

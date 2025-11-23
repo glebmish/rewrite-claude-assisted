@@ -1,0 +1,228 @@
+#!/usr/bin/env python3
+"""
+Script: 03-ingest-docs.py
+Purpose: Parse generated markdown files and ingest them into PostgreSQL database
+
+Note: This script expects the PostgreSQL database to already be running and
+initialized with the schema. Run 00-init-database.sh first if not already done.
+"""
+
+import asyncio
+import asyncpg
+import sys
+import re
+from pathlib import Path
+from typing import Optional
+from tqdm import tqdm
+
+# Import common utilities
+from common import ScriptConfig, Logger, test_db_connection
+
+# Initialize configuration
+config = ScriptConfig()
+logger = Logger(verbose=config.VERBOSE)
+
+# Get paths
+RECIPES_DIR = config.get_recipes_dir()
+
+
+def extract_recipe_name_from_markdown(markdown: str, normalized_path: str) -> Optional[str]:
+    """
+    Extract recipe name from markdown by finding bold pattern containing normalized path.
+
+    Args:
+        markdown: The markdown content to search
+        normalized_path: The normalized path (e.g., "java.spring.boot3.upgradespringboot_3_0")
+
+    Returns:
+        The full recipe name if found, None otherwise
+
+    Examples:
+        normalized_path: "java.spring.boot3.upgradespringboot_3_0"
+        markdown contains: "**org.openrewrite.java.spring.boot3.UpgradeSpringBoot\_3\_0**"
+        returns: "org.openrewrite.java.spring.boot3.UpgradeSpringBoot_3_0"
+
+        normalized_path: "core.renamefile"
+        markdown contains: "**org.openrewrite.RenameFile**"
+        returns: "org.openrewrite.RenameFile"
+    """
+    # Find all bold patterns **...**
+    pattern = r'\*\*([^*]+)\*\*'
+    matches = re.finditer(pattern, markdown)
+
+    # Search for a match containing the normalized path (case-insensitive)
+    # Strip 'core.' prefix as core recipes are under org.openrewrite directly
+    search_path = normalized_path
+    if search_path.startswith('core.'):
+        search_path = search_path[5:]  # Remove 'core.' prefix
+
+    # Strip common suffixes that appear in file paths but not in recipe names
+    suffixes_to_strip = ['-recipe', '-moderne-edition', '-community-edition', '-best-practices']
+    for suffix in suffixes_to_strip:
+        if search_path.endswith(suffix):
+            search_path = search_path[:-len(suffix)]
+            break
+
+    # In markdown, underscores are escaped as \_, so we need to escape them in our search string
+    normalized_lower = search_path.lower().replace('_', r'\_')
+
+    for match in matches:
+        bold_content = match.group(1)
+        if normalized_lower in bold_content.lower():
+            return bold_content.strip()
+
+    return None
+
+
+def path_to_normalized_name(file_path: Path, recipes_base: Path) -> str:
+    """
+    Convert file path to normalized recipe path for matching.
+
+    Example:
+        recipes/java/spring/boot3/upgradespringboot_3_0.md
+        -> java.spring.boot3.upgradespringboot_3_0
+    """
+    # Get relative path from recipes base
+    rel_path = file_path.relative_to(recipes_base)
+
+    # Remove .md extension
+    path_without_ext = rel_path.with_suffix('')
+
+    # Convert path separators to dots
+    normalized = str(path_without_ext).replace('/', '.')
+
+    return normalized
+
+
+def extract_recipe_name(file_path: Path, markdown: str, recipes_base: Path) -> str:
+    """
+    Extract recipe name by finding bold pattern containing normalized path.
+
+    Process:
+    1. Convert file path to normalized name (e.g., java/spring/boot3/upgradespringboot.md -> java.spring.boot3.upgradespringboot)
+    2. Find bold pattern **...** containing this normalized path (case-insensitive)
+    3. Return the full content between ** markers as the recipe name
+
+    Raises:
+        ValueError: If recipe name cannot be extracted
+    """
+    # Get normalized path from file
+    normalized_path = path_to_normalized_name(file_path, recipes_base)
+
+    # Extract recipe name from markdown using normalized path
+    recipe_name = extract_recipe_name_from_markdown(markdown, normalized_path)
+
+    if recipe_name:
+        return recipe_name
+
+    # If not found, raise error with helpful message
+    raise ValueError(
+        f"Could not extract recipe name from {file_path.name}. "
+        f"Expected to find bold pattern containing '{normalized_path}' (case-insensitive)"
+    )
+
+
+async def ingest_recipes():
+    """Main ingestion function."""
+    logger.print_stage_header("Stage 3: Ingest Documentation to Database")
+
+    # Verify recipes directory exists
+    if not RECIPES_DIR.exists():
+        logger.log(f"✗ Error: Recipes directory not found: {RECIPES_DIR}", force=True)
+        logger.log(f"  Run 02-generate-docs.sh first", force=True)
+        sys.exit(1)
+
+    # Test database connection
+    logger.log(f"→ Testing database connection...", force=True)
+    if not await test_db_connection(config, logger):
+        logger.log(f"  Database is not running or not initialized.", force=True)
+        logger.log(f"  Run 00-init-database.sh first to initialize the database.", force=True)
+        sys.exit(1)
+    logger.log(f"✓ Database connection successful", force=True)
+
+    # Connect to database
+    logger.log(f"→ Connecting to database...", force=True)
+    conn = await asyncpg.connect(
+        host=config.DB_HOST,
+        port=config.DB_PORT,
+        database=config.DB_NAME,
+        user=config.DB_USER,
+        password=config.DB_PASSWORD
+    )
+
+    try:
+        # Collect all markdown files (excluding README.md files)
+        logger.log(f"→ Scanning for markdown files...", force=True)
+        all_markdown_files = list(RECIPES_DIR.rglob('*.md'))
+        markdown_files = [f for f in all_markdown_files if f.name != 'README.md']
+        total_files = len(markdown_files)
+        excluded_count = len(all_markdown_files) - total_files
+        logger.log(f"✓ Found {total_files} markdown files (excluded {excluded_count} README.md files)", force=True)
+
+        if total_files == 0:
+            logger.log(f"✗ Error: No markdown files found in {RECIPES_DIR}", force=True)
+            sys.exit(1)
+
+        # Process files with progress bar
+        logger.log(f"→ Ingesting recipes...", force=True)
+        ingested = 0
+        skipped = 0
+        errors = []
+
+        progress_bar = tqdm(markdown_files, desc="Ingesting", unit="recipe")
+
+        for md_file in progress_bar:
+            try:
+                # Read markdown content
+                markdown_content = md_file.read_text(encoding='utf-8')
+
+                # Extract recipe name
+                recipe_name = extract_recipe_name(md_file, markdown_content, RECIPES_DIR)
+
+                # Update progress bar
+                progress_bar.set_postfix({"current": recipe_name.split('.')[-1][:20]})
+
+                # Insert or update recipe
+                await conn.execute("""
+                    INSERT INTO recipes (recipe_name, markdown_doc)
+                    VALUES ($1, $2)
+                    ON CONFLICT (recipe_name) DO UPDATE
+                    SET markdown_doc = EXCLUDED.markdown_doc,
+                        updated_at = NOW()
+                """, recipe_name, markdown_content)
+
+                ingested += 1
+                logger.log(f"  ✓ {recipe_name}")
+
+            except Exception as e:
+                errors.append((md_file.name, str(e)))
+                skipped += 1
+                logger.log(f"  ✗ Error processing {md_file.name}: {e}")
+
+        progress_bar.close()
+
+        # Get final count from database
+        total_in_db = await conn.fetchval("SELECT COUNT(*) FROM recipes")
+
+        logger.log(f"", force=True)
+        logger.log(f"Processed: {total_files} files", force=True)
+        logger.log(f"Ingested successfully: {ingested}", force=True)
+        logger.log(f"Skipped (errors): {skipped}", force=True)
+        logger.log(f"Total recipes in database: {total_in_db}", force=True)
+
+        if errors:
+            logger.log(f"", force=True)
+            logger.log(f"Errors encountered:", force=True)
+            for filename, error in errors[:10]:  # Show first 10 errors
+                logger.log(f"  - {filename}: {error}", force=True)
+            if len(errors) > 10:
+                logger.log(f"  ... and {len(errors) - 10} more", force=True)
+
+        logger.print_stage_footer("3", "Run 03b-generate-embeddings.py")
+
+    finally:
+        await conn.close()
+
+
+if __name__ == '__main__':
+    asyncio.run(ingest_recipes())

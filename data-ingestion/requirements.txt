@@ -1,0 +1,16 @@
+# Python dependencies for data ingestion
+
+# PostgreSQL async driver
+asyncpg>=0.29.0
+
+# Environment configuration
+python-dotenv>=1.0.0
+
+# YAML parsing (for frontmatter)
+PyYAML>=6.0.1
+
+# Progress tracking
+tqdm>=4.66.0
+
+# Phase 3: Semantic embeddings
+sentence-transformers>=2.7.0
