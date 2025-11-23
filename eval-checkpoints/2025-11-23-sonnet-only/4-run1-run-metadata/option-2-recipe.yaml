@@ -1,0 +1,97 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.example.simpleblog.MigrateH2ToPostgreSQLTargeted
+displayName: Targeted H2 to PostgreSQL Migration with Infrastructure Updates
+description: >
+  Surgical recipe approach that makes minimal, specific changes for H2 to PostgreSQL migration
+  and infrastructure updates. Uses individual targeted recipes for precise control over each
+  transformation. Ideal for incremental migration or environments requiring explicit change tracking.
+recipeList:
+  # Goal 1: Database Migration - Dependency Changes
+  - org.openrewrite.gradle.RemoveDependency:
+      groupId: com.h2database
+      artifactId: h2
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.postgresql
+      artifactId: postgresql
+      version: 42.6.0
+      onlyIfUsing: org.h2.Driver
+      configuration: implementation
+
+  # Goal 1: Database Migration - Testing Infrastructure
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.testcontainers
+      artifactId: testcontainers
+      version: 1.17.6
+      onlyIfUsing: org.h2.Driver
+      configuration: testImplementation
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.testcontainers
+      artifactId: postgresql
+      version: 1.17.6
+      onlyIfUsing: org.h2.Driver
+      configuration: testImplementation
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.testcontainers
+      artifactId: junit-jupiter
+      version: 1.17.6
+      onlyIfUsing: org.h2.Driver
+      configuration: testImplementation
+
+  # Goal 1: Database Migration - Driver Configuration
+  - org.openrewrite.yaml.ChangePropertyValue:
+      propertyKey: database.driverClass
+      newValue: org.postgresql.Driver
+      oldValue: org.h2.Driver
+      fileMatcher: "**/config.yml"
+
+  # Goal 1: Database Migration - Hibernate Dialect
+  - org.openrewrite.yaml.ChangePropertyValue:
+      propertyKey: database.properties.hibernate.dialect
+      newValue: org.hibernate.dialect.PostgreSQLDialect
+      oldValue: org.hibernate.dialect.H2Dialect
+      fileMatcher: "**/config.yml"
+
+  # Goal 1: Database Migration - Credentials (User)
+  - org.openrewrite.yaml.ChangePropertyValue:
+      propertyKey: database.user
+      newValue: "{{ GET_ENV_VAR:DATABASE_USER }}"
+      oldValue: sa
+      fileMatcher: "**/config.yml"
+
+  # Goal 1: Database Migration - Credentials (Password)
+  - org.openrewrite.yaml.ChangePropertyValue:
+      propertyKey: database.password
+      newValue: "{{ GET_ENV_VAR:DATABASE_PASSWORD }}"
+      oldValue: ""
+      fileMatcher: "**/config.yml"
+
+  # Goal 1: Database Migration - Connection URL
+  - org.openrewrite.yaml.ChangePropertyValue:
+      propertyKey: database.url
+      newValue: "{{ GET_ENV_VAR:DATABASE_URL }}"
+      fileMatcher: "**/config.yml"
+
+  # Goal 1: Database Migration - SQL Schema AUTO_INCREMENT to BIGSERIAL
+  - org.openrewrite.text.FindAndReplace:
+      find: "BIGINT AUTO_INCREMENT PRIMARY KEY"
+      replace: "BIGSERIAL PRIMARY KEY"
+      filePattern: "**/db/migration/V1__Create_posts_table.sql"
+
+  # Goal 1: Database Migration - Build File Comment
+  - org.openrewrite.text.FindAndReplace:
+      find: "// H2 Database"
+      replace: "// PostgreSQL"
+      filePattern: "**/build.gradle"
+
+  # Goal 2: Infrastructure Updates - GitHub Actions Cache
+  - org.openrewrite.text.FindAndReplace:
+      find: "uses: actions/cache@v2"
+      replace: "uses: actions/cache@v4"
+      filePattern: "**/.github/workflows/ci.yml"
+
+  # Goal 2: Infrastructure Updates - Docker Base Image
+  - org.openrewrite.text.FindAndReplace:
+      find: "FROM openjdk:17-jre-slim"
+      replace: "FROM eclipse-temurin:17-jre-alpine"
+      filePattern: "**/Dockerfile"

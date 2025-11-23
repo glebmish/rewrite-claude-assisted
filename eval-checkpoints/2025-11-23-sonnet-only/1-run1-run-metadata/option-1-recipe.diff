@@ -1,0 +1,156 @@
+diff --git a/Dockerfile b/Dockerfile
+index ae04ef6..8896c45 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,5 +1,5 @@
+ # Multi-stage build with outdated base image
+-FROM openjdk:11-jdk-slim as builder
++FROM eclipse-temurin:17-jdk-alpine as builder
+ 
+ WORKDIR /app
+ 
+@@ -17,7 +17,7 @@ COPY data-collector/ ./data-collector/
+ RUN ./gradlew clean build -x test
+ 
+ # Runtime stage with outdated JRE
+-FROM openjdk:11-jre-slim
++FROM eclipse-temurin:17-jre-alpine
+ 
+ WORKDIR /app
+ 
+diff --git a/build.gradle b/build.gradle
+index 79b8892..bc99458 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -8,8 +8,8 @@ subprojects {
+     apply plugin: 'java'
+     apply plugin: 'application'
+ 
+-    sourceCompatibility = '11'
+-    targetCompatibility = '11'
++    sourceCompatibility = '17'
++    targetCompatibility = '17'
+ 
+     dependencies {
+         implementation 'io.dropwizard:dropwizard-core:2.0.34'
+diff --git a/gradle/wrapper/gradle-wrapper.jar b/gradle/wrapper/gradle-wrapper.jar
+index 1b33c55..943f0cb 100644
+Binary files a/gradle/wrapper/gradle-wrapper.jar and b/gradle/wrapper/gradle-wrapper.jar differ
+diff --git a/gradle/wrapper/gradle-wrapper.properties b/gradle/wrapper/gradle-wrapper.properties
+index 472a41c..9b1b7b4 100644
+--- a/gradle/wrapper/gradle-wrapper.properties
++++ b/gradle/wrapper/gradle-wrapper.properties
+@@ -1,7 +1,8 @@
+ distributionBase=GRADLE_USER_HOME
+ distributionPath=wrapper/dists
+-distributionUrl=https\://services.gradle.org/distributions/gradle-6.7-all.zip
++distributionUrl=https\://services.gradle.org/distributions/gradle-7.6-bin.zip
+ networkTimeout=10000
+ validateDistributionUrl=true
+ zipStoreBase=GRADLE_USER_HOME
+ zipStorePath=wrapper/dists
++distributionSha256Sum=7ba68c54029790ab444b39d7e293d3236b2632631fb5f2e012bb28b4ff669e4b
+diff --git a/gradlew b/gradlew
+index 23d15a9..65dcd68 100755
+--- a/gradlew
++++ b/gradlew
+@@ -15,8 +15,6 @@
+ # See the License for the specific language governing permissions and
+ # limitations under the License.
+ #
+-# SPDX-License-Identifier: Apache-2.0
+-#
+ 
+ ##############################################################################
+ #
+@@ -57,7 +55,7 @@
+ #       Darwin, MinGW, and NonStop.
+ #
+ #   (3) This script is generated from the Groovy template
+-#       https://github.com/gradle/gradle/blob/HEAD/platforms/jvm/plugins-application/src/main/resources/org/gradle/api/internal/plugins/unixStartScript.txt
++#       https://github.com/gradle/gradle/blob/HEAD/subprojects/plugins/src/main/resources/org/gradle/api/internal/plugins/unixStartScript.txt
+ #       within the Gradle project.
+ #
+ #       You can find Gradle at https://github.com/gradle/gradle/.
+@@ -85,8 +83,10 @@ done
+ # This is normally unused
+ # shellcheck disable=SC2034
+ APP_BASE_NAME=${0##*/}
+-# Discard cd standard output in case $CDPATH is set (https://github.com/gradle/gradle/issues/25036)
+-APP_HOME=$( cd -P "${APP_HOME:-./}" > /dev/null && printf '%s\n' "$PWD" ) || exit
++APP_HOME=$( cd "${APP_HOME:-./}" && pwd -P ) || exit
++
++# Add default JVM options here. You can also use JAVA_OPTS and GRADLE_OPTS to pass JVM options to this script.
++DEFAULT_JVM_OPTS='"-Xmx64m" "-Xms64m"'
+ 
+ # Use the maximum available, or set MAX_FD != -1 to use that value.
+ MAX_FD=maximum
+@@ -114,7 +114,7 @@ case "$( uname )" in                #(
+   NONSTOP* )        nonstop=true ;;
+ esac
+ 
+-CLASSPATH="\\\"\\\""
++CLASSPATH=$APP_HOME/gradle/wrapper/gradle-wrapper.jar
+ 
+ 
+ # Determine the Java command to use to start the JVM.
+@@ -133,13 +133,10 @@ location of your Java installation."
+     fi
+ else
+     JAVACMD=java
+-    if ! command -v java >/dev/null 2>&1
+-    then
+-        die "ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH.
++    which java >/dev/null 2>&1 || die "ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH.
+ 
+ Please set the JAVA_HOME variable in your environment to match the
+ location of your Java installation."
+-    fi
+ fi
+ 
+ # Increase the maximum file descriptors if we can.
+@@ -147,7 +144,7 @@ if ! "$cygwin" && ! "$darwin" && ! "$nonstop" ; then
+     case $MAX_FD in #(
+       max*)
+         # In POSIX sh, ulimit -H is undefined. That's why the result is checked to see if it worked.
+-        # shellcheck disable=SC2039,SC3045
++        # shellcheck disable=SC3045 
+         MAX_FD=$( ulimit -H -n ) ||
+             warn "Could not query maximum file descriptor limit"
+     esac
+@@ -155,7 +152,7 @@ if ! "$cygwin" && ! "$darwin" && ! "$nonstop" ; then
+       '' | soft) :;; #(
+       *)
+         # In POSIX sh, ulimit -n is undefined. That's why the result is checked to see if it worked.
+-        # shellcheck disable=SC2039,SC3045
++        # shellcheck disable=SC3045 
+         ulimit -n "$MAX_FD" ||
+             warn "Could not set maximum file descriptor limit to $MAX_FD"
+     esac
+@@ -200,20 +197,16 @@ if "$cygwin" || "$msys" ; then
+     done
+ fi
+ 
+-
+-# Add default JVM options here. You can also use JAVA_OPTS and GRADLE_OPTS to pass JVM options to this script.
+-DEFAULT_JVM_OPTS='"-Xmx64m" "-Xms64m"'
+-
+-# Collect all arguments for the java command:
+-#   * DEFAULT_JVM_OPTS, JAVA_OPTS, and optsEnvironmentVar are not allowed to contain shell fragments,
+-#     and any embedded shellness will be escaped.
+-#   * For example: A user cannot expect ${Hostname} to be expanded, as it is an environment variable and will be
+-#     treated as '${Hostname}' itself on the command line.
++# Collect all arguments for the java command;
++#   * $DEFAULT_JVM_OPTS, $JAVA_OPTS, and $GRADLE_OPTS can contain fragments of
++#     shell script including quotes and variable substitutions, so put them in
++#     double quotes to make sure that they get re-expanded; and
++#   * put everything else in single quotes, so that it's not re-expanded.
+ 
+ set -- \
+         "-Dorg.gradle.appname=$APP_BASE_NAME" \
+         -classpath "$CLASSPATH" \
+-        -jar "$APP_HOME/gradle/wrapper/gradle-wrapper.jar" \
++        org.gradle.wrapper.GradleWrapperMain \
+         "$@"
+ 
+ # Stop when "xargs" is not available.

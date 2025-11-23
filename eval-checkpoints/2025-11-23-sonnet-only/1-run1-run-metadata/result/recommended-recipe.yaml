@@ -1,0 +1,37 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.weather.PR3Option2
+displayName: Comprehensive Java 17 upgrade with infrastructure updates
+description: |
+  Broad approach using OpenRewrite's comprehensive Java 17 migration recipe
+  (org.openrewrite.java.migrate.UpgradeToJava17) which handles build files,
+  language features, deprecated APIs, and dependency upgrades. Additionally
+  updates Gradle wrapper and Docker base images for complete infrastructure
+  modernization.
+tags:
+  - java17
+  - gradle
+  - docker
+  - migration
+recipeList:
+  # Core comprehensive Java 17 migration - handles build configuration,
+  # language features, deprecated APIs, dependency upgrades, and plugin updates
+  - org.openrewrite.java.migrate.UpgradeToJava17
+
+  # Update Gradle wrapper to version compatible with Java 17
+  # (Gradle 7.6 supports Java 17 compilation and runtime)
+  - org.openrewrite.gradle.UpdateGradleWrapper:
+      version: 7.x
+      distribution: all
+
+  # Update Dockerfile builder stage base image from OpenJDK 11 to Eclipse Temurin 17
+  - org.openrewrite.text.FindAndReplace:
+      find: "FROM openjdk:11-jdk-slim"
+      replace: "FROM eclipse-temurin:17-jdk-alpine"
+      filePattern: "**/Dockerfile"
+
+  # Update Dockerfile runtime stage base image from OpenJDK 11 to Eclipse Temurin 17
+  - org.openrewrite.text.FindAndReplace:
+      find: "FROM openjdk:11-jre-slim"
+      replace: "FROM eclipse-temurin:17-jre-alpine"
+      filePattern: "**/Dockerfile"

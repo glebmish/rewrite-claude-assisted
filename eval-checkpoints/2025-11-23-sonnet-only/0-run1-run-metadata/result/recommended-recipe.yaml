@@ -1,0 +1,55 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.ecommerce.catalog.PRRecipe2Option1
+displayName: Java 17 to 21 Upgrade - Broad Recipe Approach
+description: Comprehensive Java 21 migration using OpenRewrite's broad UpgradeToJava21 recipe with targeted gap-filling for Docker and step naming.
+recipeList:
+  # Primary broad recipe - handles Java version, build files, GitHub Actions java-version
+  - org.openrewrite.java.migrate.UpgradeToJava21
+
+  # Gap: Update Gradle wrapper from 8.1 to 8.5 (not included in UpgradeToJava21)
+  - org.openrewrite.gradle.UpdateGradleWrapper:
+      version: 8.5
+
+  # Gap: Convert sourceCompatibility/targetCompatibility to toolchain (UpgradeToJava21 only updates versions, not structure)
+  - org.openrewrite.text.FindAndReplace:
+      find: |
+        sourceCompatibility = '17'
+        targetCompatibility = '17'
+      replace: |
+        java {
+            toolchain {
+                languageVersion = JavaLanguageVersion.of(21)
+            }
+        }
+      filePattern: '**/build.gradle'
+
+  # Gap: Update Docker base images - JDK stage
+  - org.openrewrite.text.FindAndReplace:
+      find: 'FROM eclipse-temurin:17-jdk-alpine'
+      replace: 'FROM eclipse-temurin:21-jdk-alpine'
+      filePattern: '**/Dockerfile'
+
+  # Gap: Update Docker base images - JRE stage
+  - org.openrewrite.text.FindAndReplace:
+      find: 'FROM eclipse-temurin:17-jre-alpine'
+      replace: 'FROM eclipse-temurin:21-jre-alpine'
+      filePattern: '**/Dockerfile'
+
+  # Gap: Update GitHub Actions step name (SetupJavaUpgradeJavaVersion only updates java-version)
+  - org.openrewrite.text.FindAndReplace:
+      find: 'Set up JDK 17'
+      replace: 'Set up JDK 21'
+      filePattern: '**/.github/workflows/*.yml'
+
+  # Gap: Update README documentation
+  - org.openrewrite.text.FindAndReplace:
+      find: 'Java 17'
+      replace: 'Java 21'
+      filePattern: '**/README.md'
+
+  # Gap: Update Gradle version in README
+  - org.openrewrite.text.FindAndReplace:
+      find: 'Gradle 8.1'
+      replace: 'Gradle 8.5'
+      filePattern: '**/README.md'
