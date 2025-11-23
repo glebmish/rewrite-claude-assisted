@@ -226,3 +226,20 @@ dependency versions and Claude has to fix it by adding versions manually. On the
 successfully do that.
   * precision script is still incorrect - combination of weird rewrite.patch artifact produced by OpenRewrite dry run and 
 incorrect logic of counting total changes, true positives, false positives and false negatives.
+
+## 2025-11-23
+* Huge success with a new eval - fixes made the workflow much more efficient and robust (>35% efficiency increase)
+  * Run 2 is an outlier that had many issues, will rerun it again to check if it's random, but also will work on a fix (probably encoding)
+* Fixes made:
+  * Got rid of scratchpad and single-file detailed log.
+    * Significantly reduced write and edit issues and made results much more readable
+  * Moved most of the validation to a script
+    * More robust, allows for better control on run isolation and diff collection. As an added bonus, troubleshooting by the agent in case of error is easier
+  * Fixed an issue with encoding that corrupted git diffs in openrewrite runs
+    * As a side effect - logs are now polluted with encoding warns and it might've cause `yq` failure in run 2. Will investigate
+* An error that wasn't fixed: Claude Code subagents don't change working directory on `cd` even when `CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR=0` is set. Looks like a bug
+* This run showed some minor issues that I'll fix before MCP eval and some potential improvements for the future:
+  * minor: improve java version detection, allow a few more commands, simplify `yc` command, fix lingering encoding issue
+  * future:
+    * provide precision analysis for the agent to make better decisions on the final recipe
+    * provide data on which recipe belongs to which mvn dependency (and version) for dynamic list of dependencies in rewrite.gradle 

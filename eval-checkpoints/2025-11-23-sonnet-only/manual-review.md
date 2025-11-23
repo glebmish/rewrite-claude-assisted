@@ -12,6 +12,7 @@ https://github.com/glebmish/rewrite-claude-assisted/actions/runs/19611767789
     * More robust, better control on what files are included to the resulting diff, real recipe application instead of dry-run
   * Fixed precision script and aggregation script
   * Fixed a bizzare encoding error that led to corrupted diffs, but now I see this all over the logs `setlocale: LC_ALL: cannot change locale (en_US.UTF-8)`
+  * An error that wasn't fixed: Claude Code subagents don't change working directory on `cd` even when `CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR=0` is set. Looks like a bug
 * Overall improvement compared to [2025-11-17-sonnet-only](../2025-11-17-sonnet-only):
   * Average cost: -36.5% (more efficient)
   * Average time: -37% (quicker)
