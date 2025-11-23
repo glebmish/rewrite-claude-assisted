@@ -1,0 +1,58 @@
+diff --git a/Dockerfile b/Dockerfile
+index f56a901..ffd718e 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,4 +1,4 @@
+-FROM openjdk:17-jre-slim
++FROM eclipse-temurin:17-jre-alpine
+ 
+ WORKDIR /app
+ 
+diff --git a/build.gradle b/build.gradle
+index 1b80db0..a84a325 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -23,9 +23,6 @@ dependencies {
+     implementation 'io.dropwizard:dropwizard-jdbi3:2.1.12'
+     implementation 'io.dropwizard:dropwizard-migrations:2.1.12'
+     
+-    // H2 Database
+-    implementation 'com.h2database:h2:2.1.214'
+-    
+     // Authentication
+     implementation 'org.springframework.security:spring-security-crypto:5.7.2'
+     
+diff --git a/src/main/resources/config.yml b/src/main/resources/config.yml
+index 08c7166..ffd811b 100644
+--- a/src/main/resources/config.yml
++++ b/src/main/resources/config.yml
+@@ -7,13 +7,13 @@ server:
+       port: 8081
+ 
+ database:
+-  driverClass: org.h2.Driver
+-  user: sa
+-  password: ""
+-  url: jdbc:h2:mem:blog;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
++  driverClass: org.postgresql.Driver
++  user: {{ GET_ENV_VAR:DATABASE_USER }}
++  password: "{{ GET_ENV_VAR:DATABASE_PASSWORD }}"
++  url: {{ GET_ENV_VAR:DATABASE_URL }}
+   properties:
+     charSet: UTF-8
+-    hibernate.dialect: org.hibernate.dialect.H2Dialect
++    hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
+     hibernate.hbm2ddl.auto: create-drop
+     hibernate.show_sql: true
+     hibernate.format_sql: true
+diff --git a/src/main/resources/db/migration/V1__Create_posts_table.sql b/src/main/resources/db/migration/V1__Create_posts_table.sql
+index 7fa4b8d..32aa77c 100644
+--- a/src/main/resources/db/migration/V1__Create_posts_table.sql
++++ b/src/main/resources/db/migration/V1__Create_posts_table.sql
+@@ -1,5 +1,5 @@
+ CREATE TABLE posts (
+-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
++    id BIGSERIAL PRIMARY KEY,
+     title VARCHAR(255) NOT NULL,
+     content TEXT,
+     author VARCHAR(255) NOT NULL,

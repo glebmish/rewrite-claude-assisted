@@ -1,0 +1,35 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.weather.PR3Option1
+displayName: Java 17 Upgrade - Narrow/Specific Approach
+description: Upgrades Java version from 11 to 17 using targeted, specific recipes for precise control over Gradle build config, Gradle wrapper, and Dockerfile base images.
+tags:
+  - java17
+  - gradle
+  - docker
+recipeList:
+  # Step 1: Update Gradle build.gradle Java compatibility (sourceCompatibility/targetCompatibility)
+  - org.openrewrite.gradle.UpdateJavaCompatibility:
+      version: 17
+      addIfMissing: false
+
+  # Step 2: Update Gradle wrapper from 6.7 to 7.6 (required for Java 17 support)
+  - org.openrewrite.gradle.UpdateGradleWrapper:
+      version: 7.6
+      addIfMissing: false
+
+  # Step 3: Update Dockerfile builder base image (openjdk:11-jdk-slim -> eclipse-temurin:17-jdk-alpine)
+  - org.openrewrite.text.FindAndReplace:
+      find: "FROM openjdk:11-jdk-slim"
+      replace: "FROM eclipse-temurin:17-jdk-alpine"
+      regex: false
+      caseSensitive: true
+      filePattern: "**/Dockerfile"
+
+  # Step 4: Update Dockerfile runtime base image (openjdk:11-jre-slim -> eclipse-temurin:17-jre-alpine)
+  - org.openrewrite.text.FindAndReplace:
+      find: "FROM openjdk:11-jre-slim"
+      replace: "FROM eclipse-temurin:17-jre-alpine"
+      regex: false
+      caseSensitive: true
+      filePattern: "**/Dockerfile"

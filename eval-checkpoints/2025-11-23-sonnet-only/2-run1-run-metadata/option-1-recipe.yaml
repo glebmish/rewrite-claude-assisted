@@ -1,0 +1,37 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.example.UserManagementServiceUpgradeOption1
+displayName: User Management Service Upgrade - Broad Migration Approach
+description: Comprehensive upgrade from Java 11 to Java 17 with JUnit 5 migration and Gradle modernization using broad ecosystem recipes.
+recipeList:
+  # 1. Migrate to Java 17 - comprehensive Java migration
+  - org.openrewrite.java.migrate.UpgradeToJava17
+
+  # 2. JUnit 4 to JUnit 5 migration - comprehensive test framework migration
+  - org.openrewrite.java.testing.junit5.JUnit4to5Migration
+
+  # 3. Update Gradle wrapper to 7.6.4
+  - org.openrewrite.gradle.UpdateGradleWrapper:
+      version: 7.6.4
+      distribution: bin
+
+  # 4. Migrate to Java toolchain in Gradle
+  - org.openrewrite.gradle.plugins.UpgradePluginVersion:
+      pluginIdPattern: com.github.johnrengelman.shadow
+      newVersion: 7.1.2
+
+  # 5. Add Java toolchain configuration
+  - org.openrewrite.java.migrate.gradle.UpdateJavaCompatibilityToToolchain:
+      javaVersion: 17
+
+  # 6. Update deprecated Gradle properties
+  - org.openrewrite.gradle.UpdateJavaCompatibility:
+      version: 17
+      compatibilityType: source
+  - org.openrewrite.gradle.UpdateJavaCompatibility:
+      version: 17
+      compatibilityType: target
+
+  # 7. GitHub Actions Java version update
+  - org.openrewrite.github.SetupJavaUpgradeJavaVersion:
+      javaVersion: 17

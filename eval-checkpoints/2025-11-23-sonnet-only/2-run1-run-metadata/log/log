@@ -1,0 +1,32 @@
+Exit code 1
+/bin/bash: warning: setlocale: LC_ALL: cannot change locale (en_US.UTF-8)
+Picked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
+
+FAILURE: Build failed with an exception.
+
+* Where:
+Initialization script '/__w/rewrite-claude-assisted/rewrite-claude-assisted/scripts/rewrite.gradle' line: 17
+
+* What went wrong:
+A problem occurred evaluating initialization script.
+> 
+  Recipe name must be provided via system property.
+  Usage: ./gradlew --init-script rewrite.gradle rewriteDryRun -DrecipeName=com.yourorg.YourRecipe
+  
+  Make sure you have a rewrite.yml file in the repository root that defines this recipe.
+      
+
+* Try:
+Run with --stacktrace option to get the stack trace. Run with --info or --debug option to get more log output. Run with --scan to get full insights.
+
+* Get more help at https://help.gradle.org
+
+BUILD FAILED in 9s
+Error: OpenRewrite execution failed
+
+Recipe name: com.example.usermanagement.PRRecipe3Option2
+Creating isolated copy: /__w/rewrite-claude-assisted/rewrite-claude-assisted/.workspace/user-management-service-rewrite-1523
+HEAD is now at 76aa46b Initial commit: User Management Service with Dropwizard 2.0.x
+Executing OpenRewrite with recipe: com.example.usermanagement.PRRecipe3Option2
+Starting a Gradle Daemon, 1 incompatible Daemon could not be reused, use --status for details
+Cleaning up isolated repository: /__w/rewrite-claude-assisted/rewrite-claude-assisted/.workspace/user-management-service-rewrite-1523

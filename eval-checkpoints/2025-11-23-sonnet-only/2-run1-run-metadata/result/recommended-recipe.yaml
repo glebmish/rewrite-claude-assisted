@@ -1,0 +1,46 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.example.usermanagement.PRRecipe3Option2
+displayName: Narrow targeted Java 11 to 17 and JUnit 4 to 5 migration
+description: Surgical precision recipe targeting specific transformations for upgrading from Java 11 to Java 17, JUnit 4 to JUnit 5, and Gradle modernization
+recipeList:
+  # Java version upgrade - specific targeted changes
+  - org.openrewrite.gradle.UpdateJavaCompatibility:
+      version: 17
+      declarationStyle: TOOLCHAIN
+      compatibilityType: BOTH
+
+  # Gradle wrapper upgrade
+  - org.openrewrite.gradle.UpdateGradleWrapper:
+      version: 7.6.4
+      distribution: bin
+
+  # Gradle plugin upgrades
+  - org.openrewrite.gradle.plugins.UpgradePluginVersion:
+      pluginIdPattern: com.github.johnrengelman.shadow
+      newVersion: 7.1.2
+
+  # GitHub Actions Java version update
+  - org.openrewrite.github.SetupJavaUpgradeJavaVersion:
+      minimumJavaMajorVersion: 17
+
+  # JUnit 4 to JUnit 5 - specific test migration recipes
+  - org.openrewrite.java.testing.junit5.UpdateTestAnnotation
+
+  - org.openrewrite.java.testing.junit5.UpdateBeforeAfterAnnotations
+
+  - org.openrewrite.java.testing.junit5.AssertToAssertions
+
+  - org.openrewrite.java.testing.junit5.CleanupJUnitImports
+
+  - org.openrewrite.java.testing.junit5.AddJupiterDependencies
+
+  - org.openrewrite.java.testing.junit5.GradleUseJunitJupiter
+
+  - org.openrewrite.java.testing.junit5.ExcludeJUnit4UnlessUsingTestcontainers
+
+  # Gradle deprecated API migration - use text replacement as no semantic recipe exists
+  - org.openrewrite.text.FindAndReplace:
+      find: mainClassName
+      replace: mainClass
+      filePattern: "**/build.gradle"
