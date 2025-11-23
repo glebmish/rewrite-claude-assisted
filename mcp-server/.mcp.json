@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "openrewrite-mcp": {
+      "type": "stdio",
+      "command": "./scripts/startup.sh",
+      "args": [],
+      "env": {}
+    }
+  }
+}

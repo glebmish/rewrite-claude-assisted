@@ -15,6 +15,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gh \
     tree \
     bc \
+    apt-transport-https \
+    gnupg \
+    lsb-release \
     locales \
     && locale-gen en_US.UTF-8 \
     && rm -rf /var/lib/apt/lists/*
@@ -33,6 +36,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     python3-pip \
+    python3-venv \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
@@ -53,3 +57,18 @@ ENV LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 JAVA_TOOL_OPTIONS="-Dfile.encoding=UTF-8
 # Create working directory structure
 RUN mkdir -p /workspace
 WORKDIR /workspace
+
+# Copy MCP server requirements early to leverage Docker layer caching
+COPY mcp-server/requirements.txt /tmp/mcp-requirements.txt
+
+# Pre-install MCP Python dependencies in a system-wide venv
+# This avoids reinstalling heavy dependencies (like sentence-transformers) every time
+RUN python3 -m venv /opt/mcp-venv && \
+    . /opt/mcp-venv/bin/activate && \
+    pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r /tmp/mcp-requirements.txt && \
+    deactivate && \
+    rm /tmp/mcp-requirements.txt
+
+# Note: MCP server files will be copied at runtime from the mounted workspace
+# Note: PostgreSQL database image will be pulled at runtime when MCP server starts
