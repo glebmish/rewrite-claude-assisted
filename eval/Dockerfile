@@ -71,4 +71,3 @@ RUN python3 -m venv /opt/mcp-venv && \
     rm /tmp/mcp-requirements.txt
 
 # Note: MCP server files will be copied at runtime from the mounted workspace
-# Note: PostgreSQL database image will be pulled at runtime when MCP server starts
