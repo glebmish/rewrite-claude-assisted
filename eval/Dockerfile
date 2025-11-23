@@ -15,6 +15,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gh \
     tree \
     bc \
+    locales \
+    && locale-gen en_US.UTF-8 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install yq for YAML processing

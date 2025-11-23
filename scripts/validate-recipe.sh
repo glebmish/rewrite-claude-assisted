@@ -81,7 +81,7 @@ if [[ ! -d "$JAVA_HOME" ]]; then
 fi
 
 # Extract recipe name from YAML using yq
-RECIPE_NAME=$(yq eval '.name | select(. != null)' "$RECIPE_FILE" | head -n 1)
+RECIPE_NAME=$(yq eval '.name' "$RECIPE_FILE" | grep -v "null" | head -n 1)
 if [[ -z "$RECIPE_NAME" || "$RECIPE_NAME" == "null" ]]; then
     echo "Error: Could not extract recipe name from $RECIPE_FILE" >&2
     echo "Make sure the YAML file has a 'name' field" >&2
