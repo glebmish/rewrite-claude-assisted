@@ -244,3 +244,13 @@ incorrect logic of counting total changes, true positives, false positives and f
   * future:
     * provide precision analysis for the agent to make better decisions on the final recipe
     * provide data on which recipe belongs to which mvn dependency (and version) for dynamic list of dependencies in rewrite.gradle 
+* Now fiiinaly starting tests with MCP. It was already implemented in parallel with bug fixes and now I'm merging it
+  * The image is now incredibly fat because of embeddings library. Grew from 1.26GB to 8.75GB.
+  * Moving to external embedding model would help. I'd probably have to pay for it.
+  * MCP uses Postgres with embeddings for semantic search and documents for openrewrite recipes for detailed documentation.
+Both are initialized from `rewrite-recipe-markdown-generator` repository that generates docs on OpenRewrite site.
+  * Generator is used to get access to the structured data via gradle plugin and also so that it can later be extended with custom
+dependencies for both docs and embeddings.
+  * A data ingestion pipeline takes care of cloning repo, running postgres, generating and inserting data and creating a new image with data inside of it.
+    * Database weighs 510MB (+70MB over pgvector/pgvector) 
+  * MCP server connects to this database. Locally it also manages database lifecycle (start and stop). In tests, it's started separately by Github Actions
