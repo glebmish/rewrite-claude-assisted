@@ -1,0 +1,6 @@
+# Ignore everything by default
+*
+
+# Allow only what we need for the build
+!recipes-dump.sql
+!Dockerfile

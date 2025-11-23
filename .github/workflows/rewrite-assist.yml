@@ -52,12 +52,36 @@ jobs:
   rewrite-assist:
     runs-on: ubuntu-latest
     name: 'Analyze PR with OpenRewrite'
+
+    # PostgreSQL service for MCP server
+    services:
+      postgres:
+        image: bboygleb/openrewrite-recipes-db:latest
+        env:
+          POSTGRES_DB: openrewrite_recipes
+          POSTGRES_USER: mcp_user
+          POSTGRES_PASSWORD: changeme
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U mcp_user -d openrewrite_recipes"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     container:
       image: bboygleb/rewrite-assist
       env:
         CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        # MCP database connection to GitHub Actions service
+        MCP_DB_HOST: postgres
+        MCP_DB_PORT: 5432
+        MCP_DB_NAME: openrewrite_recipes
+        MCP_DB_USER: mcp_user
+        MCP_DB_PASSWORD: changeme
+        MCP_USE_EXTERNAL_DB: "true"
 
     steps:
       - name: 'Checkout repository'

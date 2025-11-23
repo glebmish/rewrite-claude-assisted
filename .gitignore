@@ -35,11 +35,12 @@ Thumbs.db
 # Assist workflow workspace
 .workspace
 .output
-.sessions__pycache__/
+.sessions
 
 # Python
-__pycache__/
 *.pyc
 *.pyo
-
 **/venv
+.env
+venv
+**/__pycache__
