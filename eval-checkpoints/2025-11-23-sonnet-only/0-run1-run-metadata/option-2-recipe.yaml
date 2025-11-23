@@ -1,0 +1,56 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.ecommerce.catalog.PRRecipe2Option2
+displayName: Java 17 to 21 Upgrade - Surgical Targeted Approach
+description: Precise Java 21 migration using narrow, specific recipes targeting each transformation individually without broad migration recipes.
+recipeList:
+  # Gradle build.gradle: Remove sourceCompatibility/targetCompatibility, add toolchain
+  - org.openrewrite.text.FindAndReplace:
+      find: |
+        sourceCompatibility = '17'
+        targetCompatibility = '17'
+      replace: |
+        java {
+            toolchain {
+                languageVersion = JavaLanguageVersion.of(21)
+            }
+        }
+      filePattern: '**/build.gradle'
+
+  # Gradle wrapper: Update from 8.1 to 8.5
+  - org.openrewrite.gradle.UpdateGradleWrapper:
+      version: 8.5
+
+  # Docker: Update JDK base image
+  - org.openrewrite.text.FindAndReplace:
+      find: 'FROM eclipse-temurin:17-jdk-alpine'
+      replace: 'FROM eclipse-temurin:21-jdk-alpine'
+      filePattern: '**/Dockerfile'
+
+  # Docker: Update JRE base image
+  - org.openrewrite.text.FindAndReplace:
+      find: 'FROM eclipse-temurin:17-jre-alpine'
+      replace: 'FROM eclipse-temurin:21-jre-alpine'
+      filePattern: '**/Dockerfile'
+
+  # GitHub Actions: Update step name
+  - org.openrewrite.text.FindAndReplace:
+      find: 'Set up JDK 17'
+      replace: 'Set up JDK 21'
+      filePattern: '**/.github/workflows/*.yml'
+
+  # GitHub Actions: Update java-version
+  - org.openrewrite.github.SetupJavaUpgradeJavaVersion:
+      minimumJavaMajorVersion: 21
+
+  # README: Update Java version references
+  - org.openrewrite.text.FindAndReplace:
+      find: 'Java 17'
+      replace: 'Java 21'
+      filePattern: '**/README.md'
+
+  # README: Update Gradle version references
+  - org.openrewrite.text.FindAndReplace:
+      find: 'Gradle 8.1'
+      replace: 'Gradle 8.5'
+      filePattern: '**/README.md'

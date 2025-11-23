@@ -1,0 +1,88 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.example.simpleblog.MigrateH2ToPostgreSQLComposite
+displayName: Migrate Simple Blog Platform from H2 to PostgreSQL with Infrastructure Updates
+description: >
+  Composite recipe that migrates the application from H2 embedded database to PostgreSQL
+  and updates infrastructure dependencies (GitHub Actions, Docker). This option uses a
+  layered approach: dependency management, configuration updates, and infrastructure changes.
+recipeList:
+  # Layer 1: Gradle Dependency Management
+  - org.openrewrite.gradle.RemoveDependency:
+      groupId: com.h2database
+      artifactId: h2
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.postgresql
+      artifactId: postgresql
+      version: 42.6.0
+      onlyIfUsing: org.h2.Driver
+      configuration: implementation
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.testcontainers
+      artifactId: testcontainers
+      version: 1.17.6
+      onlyIfUsing: org.h2.Driver
+      configuration: testImplementation
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.testcontainers
+      artifactId: postgresql
+      version: 1.17.6
+      onlyIfUsing: org.h2.Driver
+      configuration: testImplementation
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.testcontainers
+      artifactId: junit-jupiter
+      version: 1.17.6
+      onlyIfUsing: org.h2.Driver
+      configuration: testImplementation
+
+  # Layer 2: YAML Configuration Updates
+  - org.openrewrite.yaml.ChangePropertyValue:
+      propertyKey: database.driverClass
+      newValue: org.postgresql.Driver
+      oldValue: org.h2.Driver
+      fileMatcher: "**/config.yml"
+  - org.openrewrite.yaml.ChangePropertyValue:
+      propertyKey: database.user
+      newValue: "{{ GET_ENV_VAR:DATABASE_USER }}"
+      oldValue: sa
+      fileMatcher: "**/config.yml"
+  - org.openrewrite.yaml.ChangePropertyValue:
+      propertyKey: database.password
+      newValue: "{{ GET_ENV_VAR:DATABASE_PASSWORD }}"
+      oldValue: ""
+      fileMatcher: "**/config.yml"
+  - org.openrewrite.yaml.ChangePropertyValue:
+      propertyKey: database.url
+      newValue: "{{ GET_ENV_VAR:DATABASE_URL }}"
+      fileMatcher: "**/config.yml"
+  - org.openrewrite.yaml.ChangePropertyValue:
+      propertyKey: database.properties.hibernate.dialect
+      newValue: org.hibernate.dialect.PostgreSQLDialect
+      oldValue: org.hibernate.dialect.H2Dialect
+      fileMatcher: "**/config.yml"
+
+  # Layer 3: SQL Migration Script Updates
+  - org.openrewrite.text.FindAndReplace:
+      find: "BIGINT AUTO_INCREMENT PRIMARY KEY"
+      replace: "BIGSERIAL PRIMARY KEY"
+      filePattern: "**/db/migration/*.sql"
+
+  # Layer 4: Build File Comment Update
+  - org.openrewrite.text.FindAndReplace:
+      find: "// H2 Database"
+      replace: "// PostgreSQL"
+      filePattern: "**/build.gradle"
+
+  # Layer 5: GitHub Actions Version Bumps
+  - org.openrewrite.yaml.ChangePropertyValue:
+      propertyKey: "$.jobs.test.steps[?(@.uses =~ /actions\\/cache.*/i)].uses"
+      newValue: "actions/cache@v4"
+      oldValue: "actions/cache@v2"
+      fileMatcher: "**/.github/workflows/*.yml"
+
+  # Layer 6: Dockerfile Base Image Update
+  - org.openrewrite.text.FindAndReplace:
+      find: "FROM openjdk:17-jre-slim"
+      replace: "FROM eclipse-temurin:17-jre-alpine"
+      filePattern: "**/Dockerfile"
