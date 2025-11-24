@@ -133,7 +133,7 @@ fi
 echo "Executing OpenRewrite with recipe: $RECIPE_NAME"
 
 # Build gradle command with optional debug flags
-GRADLE_ARGS=(rewriteRun --init-script "$INIT_SCRIPT" -DrecipeName="$RECIPE_NAME")
+GRADLE_ARGS=(rewriteRun -DrecipeName="$RECIPE_NAME" --init-script "$INIT_SCRIPT")
 if [[ "$DEBUG_MODE" == true ]]; then
     echo "Debug mode enabled"
     GRADLE_ARGS+=(--debug --stacktrace)
