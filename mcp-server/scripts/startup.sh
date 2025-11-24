@@ -86,68 +86,74 @@ else
     docker-compose up -d postgres < /dev/null
 fi
 
-# Wait for database to be ready (works for both local and external mode)
-echo "Waiting for database to be ready..." >&2
-MAX_RETRIES=60
-RETRY_COUNT=0
+# Check if using external database - skip readiness checks if so
+if [[ "$USE_EXTERNAL_DB" == "true" ]]; then
+    echo "Using external database - skipping readiness checks" >&2
+    echo "Assuming external database at $DB_HOST:$DB_PORT is already ready" >&2
+else
+    # Wait for database to be ready (local docker-compose mode only)
+    echo "Waiting for database to be ready..." >&2
+    MAX_RETRIES=60
+    RETRY_COUNT=0
 
-while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-    if docker-compose exec -T postgres pg_isready -U "$DB_USER" -d "$DB_NAME" < /dev/null 2>/dev/null; then
-        echo "✅ PostgreSQL is accepting connections" >&2
-        break
-    fi
-    RETRY_COUNT=$((RETRY_COUNT + 1))
-    if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
-        echo "Error: Database failed to start after ${MAX_RETRIES} seconds" >&2
-        docker-compose logs postgres < /dev/null >&2
-        exit 1
-    fi
-    sleep 1
-done
+    while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        if docker-compose exec -T postgres pg_isready -U "$DB_USER" -d "$DB_NAME" < /dev/null 2>/dev/null; then
+            echo "✅ PostgreSQL is accepting connections" >&2
+            break
+        fi
+        RETRY_COUNT=$((RETRY_COUNT + 1))
+        if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+            echo "Error: Database failed to start after ${MAX_RETRIES} seconds" >&2
+            docker-compose logs postgres < /dev/null >&2
+            exit 1
+        fi
+        sleep 1
+    done
 
-# Wait for initialization scripts to complete
-# The database might be accepting connections but init scripts may still be running
-echo "Waiting for database initialization to complete..." >&2
-MAX_INIT_RETRIES=60
-INIT_RETRY_COUNT=0
+    # Wait for initialization scripts to complete
+    # The database might be accepting connections but init scripts may still be running
+    echo "Waiting for database initialization to complete..." >&2
+    MAX_INIT_RETRIES=60
+    INIT_RETRY_COUNT=0
 
-while [ $INIT_RETRY_COUNT -lt $MAX_INIT_RETRIES ]; do
-    # Check if the recipes table exists (means init scripts completed)
-    if docker-compose exec -T postgres psql -U "$DB_USER" -d "$DB_NAME" -tAc \
-        "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'recipes');" < /dev/null 2>/dev/null | grep -q "t"; then
-        echo "✅ Database initialization complete!" >&2
-        break
-    fi
-    INIT_RETRY_COUNT=$((INIT_RETRY_COUNT + 1))
-    if [ $INIT_RETRY_COUNT -eq $MAX_INIT_RETRIES ]; then
-        echo "Error: Database initialization failed after ${MAX_INIT_RETRIES} seconds" >&2
-        echo "Container logs:" >&2
-        docker-compose logs postgres < /dev/null >&2
-        exit 1
-    fi
-    sleep 1
-done
+    while [ $INIT_RETRY_COUNT -lt $MAX_INIT_RETRIES ]; do
+        # Check if the recipes table exists (means init scripts completed)
+        if docker-compose exec -T postgres psql -U "$DB_USER" -d "$DB_NAME" -tAc \
+            "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'recipes');" < /dev/null 2>/dev/null | grep -q "t"; then
+            echo "✅ Database initialization complete!" >&2
+            break
+        fi
+        INIT_RETRY_COUNT=$((INIT_RETRY_COUNT + 1))
+        if [ $INIT_RETRY_COUNT -eq $MAX_INIT_RETRIES ]; then
+            echo "Error: Database initialization failed after ${MAX_INIT_RETRIES} seconds" >&2
+            echo "Container logs:" >&2
+            docker-compose logs postgres < /dev/null >&2
+            exit 1
+        fi
+        sleep 1
+    done
 
-# After init scripts complete, database restarts. Wait a bit for it to be ready for external connections
-echo "Waiting for database to be ready for external connections..." >&2
-sleep 3
+    # After init scripts complete, database restarts. Wait a bit for it to be ready for external connections
+    echo "Waiting for database to be ready for external connections..." >&2
+    sleep 3
 
-# Verify database is accepting connections on the exposed port
-EXTERNAL_RETRY_COUNT=0
-MAX_EXTERNAL_RETRIES=10
-while [ $EXTERNAL_RETRY_COUNT -lt $MAX_EXTERNAL_RETRIES ]; do
-    if docker-compose exec -T postgres pg_isready -U "$DB_USER" -d "$DB_NAME" -h localhost < /dev/null 2>/dev/null; then
-        echo "✅ Database ready for external connections" >&2
-        break
-    fi
-    EXTERNAL_RETRY_COUNT=$((EXTERNAL_RETRY_COUNT + 1))
-    if [ $EXTERNAL_RETRY_COUNT -eq $MAX_EXTERNAL_RETRIES ]; then
-        echo "Error: Database not ready for external connections after ${MAX_EXTERNAL_RETRIES} attempts" >&2
-        docker-compose logs postgres < /dev/null >&2
-        exit 1
-    fi
-    sleep 1
-done
+    # Verify database is accepting connections on the exposed port
+    EXTERNAL_RETRY_COUNT=0
+    MAX_EXTERNAL_RETRIES=10
+    while [ $EXTERNAL_RETRY_COUNT -lt $MAX_EXTERNAL_RETRIES ]; do
+        if docker-compose exec -T postgres pg_isready -U "$DB_USER" -d "$DB_NAME" -h localhost < /dev/null 2>/dev/null; then
+            echo "✅ Database ready for external connections" >&2
+            break
+        fi
+        EXTERNAL_RETRY_COUNT=$((EXTERNAL_RETRY_COUNT + 1))
+        if [ $EXTERNAL_RETRY_COUNT -eq $MAX_EXTERNAL_RETRIES ]; then
+            echo "Error: Database not ready for external connections after ${MAX_EXTERNAL_RETRIES} attempts" >&2
+            docker-compose logs postgres < /dev/null >&2
+            exit 1
+        fi
+        sleep 1
+    done
+fi
 
 # Start MCP server
 echo "Starting MCP server..." >&2
