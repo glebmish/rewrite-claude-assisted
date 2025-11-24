@@ -84,7 +84,7 @@ If the script fails:
 - Review error output for specific failure reason
 - CRITICAL: If none of those is the reason for the failure, rerun the script with `--debug`
   ```
-  cd <rewrite-claude-assisted root directory> && scripts/validate-recipe.sh \
+  cd <rewrite-claude-assisted root directory> && bash -x scripts/validate-recipe.sh \
   --repo-path .workspace/<repo-name> \
   --recipe-file <output_dir_full_path>/option-1-recipe.yaml \
   --output-diff <output_dir_full_path>/option-1-recipe.diff \
