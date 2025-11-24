@@ -26,6 +26,7 @@ DB_PORT="${DB_PORT}"
 DB_NAME="${DB_NAME}"
 DB_USER="${DB_USER}"
 DB_PASSWORD="${DB_PASSWORD}"
+USE_EXTERNAL_DB="${USE_EXTERNAL_DB:-false}"
 
 # Export for docker-compose
 export DB_IMAGE_NAME DB_IMAGE_TAG

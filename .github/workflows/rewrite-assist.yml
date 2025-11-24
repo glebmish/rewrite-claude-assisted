@@ -93,7 +93,7 @@ jobs:
           PR_URL="${{ inputs.pr_url }}"
           STRICT_ARG="${{ inputs.strict_mode == true && '--strict' || '' }}"
           DEBUG_ARG="${{ inputs.debug == true && '--debug' || '' }}"
-          eval/entrypoint.sh $STRICT_ARG $DEBUG_ARG "$PR_URL"
+          bash -x eval/entrypoint.sh $STRICT_ARG $DEBUG_ARG "$PR_URL"
 
       - name: 'Analyze Claude Code workflow'
         id: analyze_claude_code_workflow
