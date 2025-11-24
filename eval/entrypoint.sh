@@ -105,7 +105,8 @@ log "SSH key configured successfully"
 
 # Setup MCP server environment
 log "Setting up MCP server environment"
-MCP_DIR="/workspace/mcp-server"
+MCP_DIR="$(cd "$(dirname "$0")/../mcp-server" && pwd)"
+SCRIPTS_DIR="$MCP_DIR/scripts"
 if [[ -d "$MCP_DIR" ]]; then
     # Create symlink to pre-installed venv if it doesn't exist
     if [[ ! -d "$MCP_DIR/venv" ]] && [[ -d "/opt/mcp-venv" ]]; then
@@ -114,7 +115,7 @@ if [[ -d "$MCP_DIR" ]]; then
     fi
 
     # Make scripts executable
-    chmod +x "$MCP_DIR/scripts"/*.sh 2>/dev/null || true
+    chmod +x "$SCRIPTS_DIR"/*.sh 2>/dev/null || true
 
     # Configure MCP database connection
     if [[ "${MCP_USE_EXTERNAL_DB:-false}" == "true" ]]; then
@@ -185,6 +186,9 @@ fi
 if [[ -n "$CLAUDE_DISALLOWED_TOOLS" ]]; then
     CLAUDE_CMD="$CLAUDE_CMD --disallowedTools \"$CLAUDE_DISALLOWED_TOOLS\""
 fi
+
+# Add MCP arguments
+CLAUDE_CMD="$CLAUDE_CMD --mcp-config '{\"mcpServers\":{\"openrewrite-mcp\":{\"type\":\"stdio\",\"command\":\"$SCRIPTS_DIR/startup.sh\",\"args\":[],\"env\":{}}}}' --strict-mcp-config"
 
 CLAUDE_PROMPT="/rewrite-assist $PR_URL."
 if [[ "$STRICT_MODE" == "true" ]]; then
