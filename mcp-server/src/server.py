@@ -2,6 +2,7 @@
 """OpenRewrite MCP Server - Main server implementation."""
 import sys
 import logging
+import json
 from typing import Optional
 from mcp.server import Server
 from mcp.types import Tool, TextContent
@@ -97,7 +98,7 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
 
         if name == "test_connection":
             result = await test_connection(arguments.get("message"))
-            return [TextContent(type="text", text=str(result))]
+            return [TextContent(type="text", text=json.dumps(result, indent=2))]
 
         elif name == "find_recipes":
             intent = arguments["intent"]
@@ -107,20 +108,30 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
             results = await find_recipes(intent, limit, min_score)
 
             if not results:
-                return [TextContent(
-                    type="text",
-                    text=f"No recipes found matching '{intent}' with the given criteria. Try lowering min_score or using different keywords."
-                )]
+                response = {
+                    "recipes": [],
+                    "total_count": 0,
+                    "query": intent,
+                    "message": "No recipes found matching the given criteria. Try lowering min_score or using different keywords."
+                }
+                return [TextContent(type="text", text=json.dumps(response, indent=2))]
 
-            # Format results as readable text
-            output = f"Found {len(results)} recipe(s) matching '{intent}':\n\n"
-            for i, recipe in enumerate(results, 1):
-                output += f"{i}. **{recipe['name']}** (score: {recipe['relevance_score']})\n"
-                output += f"   ID: `{recipe['recipe_id']}`\n"
-                output += f"   Description: {recipe['description']}\n"
-                output += f"   Tags: {', '.join(recipe['tags'])}\n\n"
-
-            return [TextContent(type="text", text=output)]
+            # Return structured JSON response
+            response = {
+                "recipes": [
+                    {
+                        "id": recipe["recipe_id"],
+                        "name": recipe["name"],
+                        "description": recipe["description"],
+                        "tags": recipe["tags"],
+                        "score": recipe["relevance_score"]
+                    }
+                    for recipe in results
+                ],
+                "total_count": len(results),
+                "query": intent
+            }
+            return [TextContent(type="text", text=json.dumps(response, indent=2))]
 
         elif name == "get_recipe":
             recipe_id = arguments["recipe_id"]
@@ -128,20 +139,27 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
             try:
                 recipe = await get_recipe(recipe_id)
             except ValueError as e:
-                return [TextContent(type="text", text=f"Error: {str(e)}")]
+                error_response = {
+                    "error": str(e),
+                    "recipe_id": recipe_id
+                }
+                return [TextContent(type="text", text=json.dumps(error_response, indent=2))]
 
-            # Return the markdown documentation directly
-            output = f"**Recipe ID:** `{recipe['recipe_id']}`\n\n"
-            output += recipe['markdown_documentation']
-
-            return [TextContent(type="text", text=output)]
+            # Return structured JSON with recipe details
+            response = {
+                "recipe_id": recipe["recipe_id"],
+                "markdown_documentation": recipe["markdown_documentation"]
+            }
+            return [TextContent(type="text", text=json.dumps(response, indent=2))]
 
         else:
-            return [TextContent(type="text", text=f"Unknown tool: {name}")]
+            error_response = {"error": f"Unknown tool: {name}"}
+            return [TextContent(type="text", text=json.dumps(error_response, indent=2))]
 
     except Exception as e:
         logger.error(f"Error executing tool {name}: {e}", exc_info=True)
-        return [TextContent(type="text", text=f"Error: {str(e)}")]
+        error_response = {"error": str(e), "tool": name}
+        return [TextContent(type="text", text=json.dumps(error_response, indent=2))]
 
 
 async def main():
