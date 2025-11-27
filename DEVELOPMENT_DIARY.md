@@ -254,3 +254,15 @@ dependencies for both docs and embeddings.
   * A data ingestion pipeline takes care of cloning repo, running postgres, generating and inserting data and creating a new image with data inside of it.
     * Database weighs 510MB (+70MB over pgvector/pgvector) 
   * MCP server connects to this database. Locally it also manages database lifecycle (start and stop). In tests, it's started separately by Github Actions
+
+## 2025-11-27
+* Ran and analyzed a new eval with MCP usage
+  * Overall quality of the result decreased - probably due to rigid and limited use of MCP tools
+  * Stability is great - no serious failures, few repeating issues that should be easy to fix with prompting.
+  * Price is the same, but faster due to fetching data locally instead of using web search.
+* Ideas where to go next to improve recipe quality:
+  * Instruct intent mapping phase to write the intent tree to yaml and nudge recipe mapping phase to check every intent. That should help with minor changes that are missing.
+  * Nudge to try and replicate every change in the PR, not only make it semantically the same. Also nudge to replicate complicated code changes (failing case now)
+  * Extend mcp to accept multiple strings for semantic match and return the best matches overall
+  * Include precision data to the workflow. Run precision calculation script as a part of validation and have Claude analyze it for actual coverage data.
+  * Include a new refinement phase after 2 recipes to create the 3 combined recipe that learns from validation and coverage data of the first two attempts.
