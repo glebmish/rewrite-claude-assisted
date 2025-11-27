@@ -19,7 +19,7 @@ https://github.com/glebmish/rewrite-claude-assisted/actions/runs/19611767789
   * Recipe correctness: small improvement, however this was not the goal of the improvements for this eval
     * Average precision: +10%
     * Average recall: -1%
-    * Average f1: +23
+    * Average f1: +23%
 * Outlier run 2 had many tool errors and additional work, will be retested.
   * Retry showed that it is still problematic, will be fixed and tested in the next eval.
 

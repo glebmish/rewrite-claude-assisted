@@ -1,0 +1,89 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.example.PR3Option2
+displayName: H2 to PostgreSQL Migration - Comprehensive Approach
+description: Migrate from H2 to PostgreSQL database with broader, declarative recipes and update infrastructure components
+recipeList:
+  # 1. Remove H2 dependency
+  - org.openrewrite.gradle.RemoveDependency:
+      groupId: com.h2database
+      artifactId: h2
+
+  # 2. Add PostgreSQL dependency
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.postgresql
+      artifactId: postgresql
+      version: 42.6.0
+      configuration: implementation
+
+  # 3. Add Testcontainers dependencies for testing
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.testcontainers
+      artifactId: testcontainers
+      version: 1.17.6
+      configuration: testImplementation
+
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.testcontainers
+      artifactId: postgresql
+      version: 1.17.6
+      configuration: testImplementation
+
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.testcontainers
+      artifactId: junit-jupiter
+      version: 1.17.6
+      configuration: testImplementation
+
+  # 4. Update YAML configuration - driver class
+  - org.openrewrite.yaml.ChangePropertyValue:
+      propertyKey: database.driverClass
+      newValue: org.postgresql.Driver
+      oldValue: org.h2.Driver
+      filePattern: "**/config.yml"
+
+  # 5. Update YAML configuration - hibernate dialect
+  - org.openrewrite.yaml.ChangePropertyValue:
+      propertyKey: database.properties.hibernate.dialect
+      newValue: org.hibernate.dialect.PostgreSQLDialect
+      oldValue: org.hibernate.dialect.H2Dialect
+      filePattern: "**/config.yml"
+
+  # 6. Update YAML configuration - database user (externalize to env var)
+  - org.openrewrite.yaml.ChangePropertyValue:
+      propertyKey: database.user
+      newValue: "{{ GET_ENV_VAR:DATABASE_USER }}"
+      oldValue: sa
+      filePattern: "**/config.yml"
+
+  # 7. Update YAML configuration - database password (externalize to env var)
+  - org.openrewrite.yaml.ChangePropertyValue:
+      propertyKey: database.password
+      newValue: "{{ GET_ENV_VAR:DATABASE_PASSWORD }}"
+      oldValue: ""
+      filePattern: "**/config.yml"
+
+  # 8. Update YAML configuration - database URL (externalize to env var)
+  - org.openrewrite.yaml.ChangePropertyValue:
+      propertyKey: database.url
+      newValue: "{{ GET_ENV_VAR:DATABASE_URL }}"
+      regex: true
+      oldValue: "jdbc:h2:.*"
+      filePattern: "**/config.yml"
+
+  # 9. Update GitHub Actions - bump actions/cache from v2 to v4
+  - org.openrewrite.github.ChangeActionVersion:
+      action: actions/cache
+      version: v4
+
+  # 10. SQL migration: Convert AUTO_INCREMENT to BIGSERIAL
+  - org.openrewrite.FindAndReplace:
+      find: "BIGINT AUTO_INCREMENT"
+      replace: "BIGSERIAL"
+      filePattern: "**/*.sql"
+
+  # 11. Dockerfile: Update base image
+  - org.openrewrite.FindAndReplace:
+      find: "openjdk:17-jre-slim"
+      replace: "eclipse-temurin:17-jre-alpine"
+      filePattern: "**/Dockerfile"

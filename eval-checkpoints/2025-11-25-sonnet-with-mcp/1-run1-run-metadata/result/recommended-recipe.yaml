@@ -1,0 +1,9 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.weather.PRRecipe3Option1
+displayName: PR Recipe 3 - Option 1 - Comprehensive Java 17 Migration
+description: Broad approach using comprehensive migration recipe for Java 17 upgrade with Gradle wrapper update
+recipeList:
+  - org.openrewrite.java.migrate.UpgradeToJava17
+  - org.openrewrite.gradle.UpdateGradleWrapper:
+      version: 7.6
