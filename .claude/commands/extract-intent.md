@@ -20,6 +20,8 @@ Your task is to analyze given PRs in the repositories and extracts intents in th
 
 ## PR Analysis and Intent Extraction
 
+You MUST strive to replicate given changes FULLY. That includes exact formatting, comments, string changes, complicated code changes.
+
 For each PR:
 * Analyze the PR title, description, and commit messages
 * Review the actual code changes (diffs) to understand the transformation patterns
@@ -59,12 +61,13 @@ For each PR:
 
 ## Output Format
 For each analyzed PR, provide:
-* Summary of strategic and tactical intents
-* Confidence levels for each extracted intent
-* Identified patterns and exceptions
-* Intents tree
+* A report with:
+  * brief summary of strategic and tactical intents
+  * confidence levels for each extracted intent
+  * identified patterns and exceptions
+* A structured `intent-tree.md` file
 
-### Intents tree example
+### `intent-tree.md` example
 
 ```
 * Upgrade Java 11 to Java 17
@@ -85,3 +88,4 @@ For each analyzed PR, provide:
 * Clear documentation of patterns and edge cases
 * Identification of potential automation challenges
 * Well-structured intent summaries ready for recipe mapping
+* report file and `intent-tree.md` files are present
