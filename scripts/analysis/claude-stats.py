@@ -112,6 +112,21 @@ def extract_tool_use(content_item: Dict, timestamp: str) -> ToolUse:
         tool_text = f"{tool_name}({shlex.quote(tool_input['pattern'])})"
     elif "query" in tool_input:
         tool_text = f"{tool_name}({shlex.quote(tool_input['query'])})"
+    elif "intent" in tool_input:
+        # Handle mcp__openrewrite-mcp__find_recipes
+        intent = tool_input['intent']
+        tool_text = f"{tool_name}({shlex.quote(intent)}"
+        # Add limit if present
+        if "limit" in tool_input:
+            limit = tool_input['limit']
+            tool_text += f", limit={limit}"
+        tool_text += ")"
+    elif "recipe_id" in tool_input:
+        # Handle mcp__openrewrite-mcp__get_recipe
+        tool_text = f"{tool_name}({shlex.quote(tool_input['recipe_id'])})"
+    elif "message" in tool_input:
+        # Handle tools with message parameter (e.g., mcp__openrewrite-mcp__test_connection)
+        tool_text = f"{tool_name}({shlex.quote(tool_input['message'])})"
     elif "subagent_type" in tool_input:
         tool_text = f"{tool_name}({shlex.quote(tool_input['subagent_type'])})"
     elif "url" in tool_input:

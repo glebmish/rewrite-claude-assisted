@@ -63,16 +63,35 @@ When analyzing refactoring intentions, categorize them into:
 
 ### Phase 2: Recipe Discovery Strategy
 
-You MUST search results for EACH of the intents in the intent tree and then intelligently decide which sub-recipes to use.
+You MUST search results for EACH of the intents on EVERY level of the intent tree and ONLY AFTER THIS IS DONE intelligently decide which recipes to use.
 
-**Search Hierarchy**:
-1. **Official Module Recipes** - Check org.openrewrite.recipe modules
-2. **Framework-Specific** - Spring, Quarkus, Micronaut recipe modules
-3. **Static Analysis** - Code quality and security recipes
-4. **Community Recipes** - Third-party and contributed recipes
+You CAN search something that is not included to the intent tree too if needed.
+
+For example, for the following intent tree at least 7 find commands must be executed:
+```
+* intent 1
+  * intent 1.1
+    * intent 1.1.1
+    * intent 1.1.2
+  * intent 1.2
+* intent 2
+  * intent 2.1
+```
+Expected commands (use your judgement to add limits):
+```
+mcp__openrewrite-mcp__find_recipes('intent 1')
+mcp__openrewrite-mcp__find_recipes('intent 1.1')
+mcp__openrewrite-mcp__find_recipes('intent 1.1.1')
+mcp__openrewrite-mcp__find_recipes('intent 1.1.2')
+mcp__openrewrite-mcp__find_recipes('intent 1.2')
+mcp__openrewrite-mcp__find_recipes('intent 2')
+mcp__openrewrite-mcp__find_recipes('intent 2.1')
+```
+
+Under no circumstances you can shortcut and skip any intents.
 
 **Discovery Patterns**:
-* Start with broadest applicable recipe
+* Start with the broadest applicable recipe
 * Identify what it covers vs. what you need
 * Search for complementary specific recipes
 * Look for recipes in related domains
