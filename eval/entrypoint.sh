@@ -6,11 +6,13 @@ log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"
 }
 
+GITHUB_OUTPUT="${GITHUB_OUTPUT:-/dev/null}"
 GITHUB_STEP_SUMMARY="${GITHUB_STEP_SUMMARY:-/dev/null}"
 
 # Parse arguments
 STRICT_MODE=false
 DEBUG_MODE=false
+FORCE_MCP=false
 PR_URL=""
 TIMEOUT_MINUTES=60
 SETTINGS_FILE="$(dirname "$0")/settings.json"
@@ -23,6 +25,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --debug)
             DEBUG_MODE=true
+            shift
+            ;;
+        --force-mcp)
+            FORCE_MCP=true
             shift
             ;;
         --timeout)
@@ -54,9 +60,6 @@ SSH_PRIVATE_KEY="${SSH_PRIVATE_KEY}"
 export CLAUDE_CODE_OAUTH_TOKEN
 export GH_TOKEN
 
-pwd
-tree -a .
-
 log "Setting up SSH key"
 mkdir -p /root/.ssh
 echo "$SSH_PRIVATE_KEY" > /root/.ssh/id_rsa
@@ -66,8 +69,10 @@ log "SSH key configured successfully"
 
 # Setup MCP server environment
 log "Setting up MCP server environment"
-ROOT_DIR="$(cd "$(dirname "$0")/..")"
+ENTRYPOINT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT_DIR="$(cd "$ENTRYPOINT_DIR/.." && pwd)"
 MCP_DIR="$ROOT_DIR/mcp-server"
+LOG_MCP_DIR="$ROOT_DIR/log-mcp-server"
 SCRIPTS_DIR="$MCP_DIR/scripts"
 if [[ -d "$MCP_DIR" ]]; then
     # Create symlink to pre-installed venv if it doesn't exist
@@ -147,11 +152,14 @@ if [[ -n "$CLAUDE_DISALLOWED_TOOLS" ]]; then
 fi
 
 # Add MCP arguments
-CLAUDE_CMD="$CLAUDE_CMD --mcp-config '{\"mcpServers\":{\"openrewrite-mcp\":{\"type\":\"stdio\",\"command\":\"$SCRIPTS_DIR/startup.sh\",\"args\":[],\"env\":{}},\"log-mcp-server\":{\"type\":\"stdio\",\"command\":\"python\",\"args\":[\"$ROOT_DIR/log-mcp-server/server.py\"],\"env\":{}}}}' --strict-mcp-config"
+CLAUDE_CMD="$CLAUDE_CMD --mcp-config '{\"mcpServers\":{\"openrewrite-mcp\":{\"type\":\"stdio\",\"command\":\"$SCRIPTS_DIR/startup.sh\",\"args\":[],\"env\":{}},\"log-mcp-server\":{\"type\":\"stdio\",\"command\":\"python\",\"args\":[\"$LOG_MCP_DIR/server.py\"],\"env\":{}}}}' --strict-mcp-config"
 
 CLAUDE_PROMPT="/rewrite-assist $PR_URL."
 if [[ "$STRICT_MODE" == "true" ]]; then
     CLAUDE_PROMPT="$CLAUDE_PROMPT Give up IMMEDIATELY when something fails (tool access is not granted, tool use failed). Finish the conversation and explicitly state the reason you did. Print full tool name and command."
+fi
+if [[ "$FORCE_MCP" == "true" ]]; then
+    CLAUDE_PROMPT="$CLAUDE_PROMPT This workflow requires the use of Openrewrite MCP. Test the connection at the very start and immediately fail if it is not available after 3 attempts"
 fi
 CLAUDE_CMD="$CLAUDE_CMD -p \"$CLAUDE_PROMPT\""
 
@@ -162,6 +170,10 @@ if timeout "${TIMEOUT_MINUTES}m" bash -c "$CLAUDE_CMD" 2>&1 | tee "$CLAUDE_OUTPU
 else
     EXIT_CODE=$?
 fi
+
+JSONL_FILE=$(find ~/.claude/projects -name "*.jsonl" -type f -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2-)
+CLAUDE_LOGS_DIR=$(dirname "$JSONL_FILE")
+echo "claude_logs=$CLAUDE_LOGS_DIR" >> $GITHUB_OUTPUT
 
 # Check for session limit in output
 if grep -qi "session limit reached" "$CLAUDE_OUTPUT_LOG"; then
