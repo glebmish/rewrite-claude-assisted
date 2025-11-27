@@ -170,7 +170,7 @@ if [[ "$STRICT_MODE" == "true" ]]; then
     CLAUDE_PROMPT="$CLAUDE_PROMPT Give up IMMEDIATELY when something fails (tool access is not granted, tool use failed). Finish the conversation and explicitly state the reason you did. Print full tool name and command."
 fi
 if [[ "$FORCE_MCP" == "true" ]]; then
-    CLAUDE_PROMPT="$CLAUDE_PROMPT This workflow requires the use of Openrewrite MCP. Test the connection at the very start and immediately fail if it is not available after 3 attempts"
+    CLAUDE_PROMPT="$CLAUDE_PROMPT This workflow requires the use of Openrewrite MCP and Log MCP. Test the connection to the Openrewrite MCP at the very start and immediately fail if it is not available after 3 attempts. Send initialization message to the Log tool to validate that it's available."
 fi
 CLAUDE_CMD="$CLAUDE_CMD -p \"$CLAUDE_PROMPT\""
 
