@@ -12,7 +12,8 @@ At the beginning of the workflow get current date and time and create `.output/<
 for the given session and subagent sessions must be saved to this directory.
 * Pass the context on what the current directory is to each subagent. They must use this existing directory.
 
-!!IMPORTANT!! At the beginning of main session retrieve session ID using and save it to the output directory:
+!!IMPORTANT!! At the beginning of main session retrieve session ID using and save it to the output directory.
+It is CRITICALLY important that you use relative path:
 `scripts/get-session-id.sh -o .output/<yyy-mm-dd-hh-MM>/session-id.txt`.
 * On failures, retry it with different path variations and ALWAYS fail fast if you are not able to execute this command.
 

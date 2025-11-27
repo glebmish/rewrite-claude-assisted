@@ -196,6 +196,9 @@ As a result two recipes must be created:
 
 Each file MUST be a correct OpenRewrite recipe and there MUST be exactly 1 recipe in each file.
 Confirm it by parsing files with `yq`, it must be parsed without errors.
+```
+yq eval <file>
+```
 
 When providing recipe recommendations document additional details in separate md files. Be brief.
 * <output_dir>/option-1-creation-analysis.md

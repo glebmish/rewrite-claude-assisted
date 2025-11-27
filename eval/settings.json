@@ -44,6 +44,7 @@
       "WebFetch(domain:github.com)",
       "Write",
       "Edit",
+      "Glob",
       "WebSearch",
       "WebFetch",
       "mcp__openrewrite-mcp__test_connection",
