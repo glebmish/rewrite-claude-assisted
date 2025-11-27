@@ -17,6 +17,11 @@ on:
         required: false
         default: false
         type: boolean
+      force_mcp:
+        description: 'Force MCP connection test at start (fail after 3 attempts)'
+        required: false
+        default: false
+        type: boolean
       artifact_prefix:
         description: 'Prefix for artifact names to ensure uniqueness'
         required: false
@@ -35,6 +40,11 @@ on:
         type: boolean
       debug:
         description: 'Enable debug mode for verbose logging'
+        required: false
+        default: false
+        type: boolean
+      force_mcp:
+        description: 'Force MCP connection test at start (fail after 3 attempts)'
         required: false
         default: false
         type: boolean
@@ -93,7 +103,8 @@ jobs:
           PR_URL="${{ inputs.pr_url }}"
           STRICT_ARG="${{ inputs.strict_mode == true && '--strict' || '' }}"
           DEBUG_ARG="${{ inputs.debug == true && '--debug' || '' }}"
-          bash -x eval/entrypoint.sh $STRICT_ARG $DEBUG_ARG "$PR_URL"
+          FORCE_MCP_ARG="${{ inputs.force_mcp == true && '--force-mcp' || '' }}"
+          bash -x eval/entrypoint.sh $STRICT_ARG $DEBUG_ARG $FORCE_MCP_ARG "$PR_URL"
 
       - name: 'Analyze Claude Code workflow'
         id: analyze_claude_code_workflow
