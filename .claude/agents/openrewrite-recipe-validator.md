@@ -54,7 +54,7 @@ Identify JAVA_HOME for this version
 
 ### Step 2: Execute Validation Script
 Run the validation script which handles all execution, diff capture, and cleanup
-IMPORTANT: use relative path for the script
+It is CRITICALLY important that you use FULL PATH for the arguments and RELATIVE PATH for the script
 IMPORTANT: if you aren't able to execute the script, fail early and report the failure. DO NOT try to perform
 validation in any other way. Failing early helps us troubleshoot and save resources.
 
@@ -79,7 +79,7 @@ If the script fails:
 - `Unsupported class file major version` - a wrong Java version was used
 - Check that repository path exists and is a git repository
 - Verify recipe YAML file exists and has valid `name` field
-- Ensure Java Home is available
+- Ensure Java Home is available. Use `Glob` tool to do that to satisfy security constraints.
 - Check Gradle wrapper is present and executable in repository
 - Review error output for specific failure reason
 - CRITICAL: If none of those is the reason for the failure, rerun the script with `--debug`
