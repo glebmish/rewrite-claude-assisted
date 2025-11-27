@@ -1,0 +1,20 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.example.PRRecipe2Option1
+displayName: Upgrade Java 17 to 21 - Comprehensive Approach
+description: |
+  Comprehensive Java 17 to 21 migration using broad migration recipes.
+  Covers GitHub Actions, Gradle build files, and Gradle wrapper upgrade.
+  Uses UpgradeToJava21 as foundation for comprehensive coverage.
+
+  NOTE: Dockerfile and README.md changes are identified as gaps requiring
+  manual updates or custom recipe implementation.
+
+recipeList:
+  # Primary broad migration recipe - handles most Java 21 changes
+  - org.openrewrite.java.migrate.UpgradeToJava21
+
+  # Gradle wrapper upgrade from 8.1 to 8.5
+  - org.openrewrite.gradle.UpdateGradleWrapper:
+      version: 8.5
+      distribution: bin

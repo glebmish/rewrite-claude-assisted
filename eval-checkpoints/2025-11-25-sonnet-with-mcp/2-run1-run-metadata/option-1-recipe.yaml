@@ -1,0 +1,62 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.example.PR3Option1
+displayName: Modernize Java project - Broad Migration Approach
+description: |
+  Comprehensive migration recipe for upgrading Java 11 to 17, JUnit 4 to JUnit 5,
+  and Gradle 6.9 to 7.6.4 using high-level migration recipes that provide extensive
+  coverage across multiple aspects of the codebase.
+
+  This recipe uses broad, comprehensive migration recipes that handle most transformation
+  needs automatically, minimizing the need for specific fine-grained recipes.
+
+tags:
+  - java17
+  - junit5
+  - gradle
+  - modernization
+
+recipeList:
+  # Phase 1: Core Java version upgrade
+  # This comprehensive recipe handles Java 8->11->17 migration including:
+  # - Build file updates (sourceCompatibility, targetCompatibility, toolchain)
+  # - Plugin upgrades to Java 17 compatible versions
+  # - API migrations for removed/deprecated APIs
+  # - Modern Java feature adoption (text blocks, pattern matching, etc.)
+  - org.openrewrite.java.migrate.UpgradeToJava17
+
+  # Phase 2: Test framework migration
+  # Comprehensive JUnit 4 to 5 migration including:
+  # - Annotation changes (@Test, @Before->@BeforeEach, etc.)
+  # - Import updates (org.junit.* -> org.junit.jupiter.api.*)
+  # - Assertion method migrations (Assert.* -> Assertions.*)
+  # - Test dependencies updates
+  # - Gradle test configuration (useJUnit() -> useJUnitPlatform())
+  - org.openrewrite.java.testing.junit5.JUnit4to5Migration
+
+  # Phase 3: Gradle wrapper upgrade
+  # Updates Gradle wrapper from 6.9 to 7.6.4
+  - org.openrewrite.gradle.UpdateGradleWrapper:
+      version: 7.6.4
+      distribution: bin
+
+  # Phase 4: Gradle Shadow plugin upgrade
+  # Updates Shadow plugin to version 7.1.2
+  - org.openrewrite.gradle.plugins.UpgradePluginVersion:
+      pluginIdPattern: com.github.johnrengelman.shadow
+      newVersion: 7.1.2
+
+  # Phase 5: GitHub Actions Java version update
+  # Updates actions/setup-java to use Java 17
+  - org.openrewrite.github.SetupJavaUpgradeJavaVersion:
+      minimumJavaMajorVersion: 17
+
+  # Phase 6: Code cleanup and formatting
+  # Ensures imports are properly organized after migrations
+  - org.openrewrite.java.OrderImports
+
+  # Removes unused imports that may result from migration
+  - org.openrewrite.java.RemoveUnusedImports
+
+  # Applies auto-formatting for consistency
+  - org.openrewrite.java.format.AutoFormat
