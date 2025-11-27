@@ -77,3 +77,4 @@ Never use gradle wrapper from a different location or assume gradle is globally 
 ## General direction
 * Do not use subagents unnecessarily
 * When tool use fails and this is a bash command with pipes, simplify it and try again before failing (even in strict mode)
+* If `log` tool is available, use it to report progress on the task (in addition to normal operation).
