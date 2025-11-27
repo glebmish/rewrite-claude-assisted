@@ -1,51 +1,12 @@
 #!/bin/bash
 set -euxo pipefail
 
-# Set up cleanup trap
-trap cleanup EXIT
-
 # Logging function
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"
 }
 
 GITHUB_STEP_SUMMARY="${GITHUB_STEP_SUMMARY:-/dev/null}"
-
-# Background workflow monitoring
-start_workflow_monitor() {
-    log "Starting background workflow monitor"
-    GITHUB_OUTPUT=${GITHUB_OUTPUT:-/dev/null}
-    CLAUDE_LOG_CMD="claude --model claude-haiku-4-5"
-    # Start background monitoring process
-    (
-        while [[ -z ${jsonl_file:-} ]]; do
-            sleep 5
-            # Find the earliest main JSONL file (exclude agent logs) in ~/.claude/projects and subdirectories
-            jsonl_file=$(find ~/.claude/projects -name "*.jsonl" ! -name "agent-*.jsonl" -type f -printf '%T@ %p\n' | sort -n | head -1 | cut -d' ' -f2- || echo "")
-            echo "claude_main_log=$jsonl_file" >> $GITHUB_OUTPUT
-            echo "claude_logs=$(dirname $jsonl_file)" >> $GITHUB_OUTPUT
-        done
-
-        while true; do
-            sleep 30
-            tail -n 4 "$jsonl_file" | $CLAUDE_LOG_CMD -p "Summarize last few messages from a Claude Code session as one short sentence of 10-20 words in the form of 'this is finished', 'doing something else now', 'accessing something'. Be specific." 2>/dev/null || true
-        done
-    ) &
-    
-    # Store PID for cleanup
-    MONITOR_PID=$!
-    export MONITOR_PID
-    log "Workflow monitor started with PID: $MONITOR_PID"
-}
-
-# Cleanup function
-cleanup() {
-    if [[ -n "${MONITOR_PID:-}" ]]; then
-        log "Stopping workflow monitor (PID: $MONITOR_PID)"
-        kill $MONITOR_PID 2>/dev/null || true
-        wait $MONITOR_PID 2>/dev/null || true
-    fi
-}
 
 # Parse arguments
 STRICT_MODE=false
@@ -105,7 +66,8 @@ log "SSH key configured successfully"
 
 # Setup MCP server environment
 log "Setting up MCP server environment"
-MCP_DIR="$(cd "$(dirname "$0")/../mcp-server" && pwd)"
+ROOT_DIR="$(cd "$(dirname "$0")/..")"
+MCP_DIR="$ROOT_DIR/mcp-server"
 SCRIPTS_DIR="$MCP_DIR/scripts"
 if [[ -d "$MCP_DIR" ]]; then
     # Create symlink to pre-installed venv if it doesn't exist
@@ -164,9 +126,6 @@ source "$(dirname "$0")/parse-settings.sh"
 log "Parsing settings file: $SETTINGS_FILE"
 parse_settings_file "$SETTINGS_FILE"
 
-# Start workflow monitor
-start_workflow_monitor
-
 # Execute rewrite-assist command
 log "Executing rewrite-assist command"
 START_TIME=$(date +%s)
@@ -188,7 +147,7 @@ if [[ -n "$CLAUDE_DISALLOWED_TOOLS" ]]; then
 fi
 
 # Add MCP arguments
-CLAUDE_CMD="$CLAUDE_CMD --mcp-config '{\"mcpServers\":{\"openrewrite-mcp\":{\"type\":\"stdio\",\"command\":\"$SCRIPTS_DIR/startup.sh\",\"args\":[],\"env\":{}}}}' --strict-mcp-config"
+CLAUDE_CMD="$CLAUDE_CMD --mcp-config '{\"mcpServers\":{\"openrewrite-mcp\":{\"type\":\"stdio\",\"command\":\"$SCRIPTS_DIR/startup.sh\",\"args\":[],\"env\":{}},\"log-mcp-server\":{\"type\":\"stdio\",\"command\":\"python\",\"args\":[\"$ROOT_DIR/log-mcp-server/server.py\"],\"env\":{}}}}' --strict-mcp-config"
 
 CLAUDE_PROMPT="/rewrite-assist $PR_URL."
 if [[ "$STRICT_MODE" == "true" ]]; then
