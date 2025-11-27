@@ -1,0 +1,40 @@
+Perfect! All required files exist. Let me create a final summary:
+
+## Workflow Complete
+
+Successfully executed rewrite-assist workflow for Dropwizard 2.x → 3.0 upgrade.
+
+### Output Directory
+`.output/2025-11-25-00-44/`
+
+### Phase Summaries
+
+**Phase 1**: Repository cloned, PR branch fetched, diff saved
+**Phase 2**: Extracted 4 major transformation intents with high confidence
+**Phase 3**: Generated 2 recipe options (comprehensive vs surgical)
+**Phase 4**: Validated both recipes - 90% and 83% coverage
+**Phase 5**: Selected Option 1 as final recommendation
+
+### Final Recommendation
+
+**Recipe**: `com.example.tasks.UpgradeDropwizard3Comprehensive`
+**Coverage**: 90% automated transformation
+**Status**: Production-ready with minor manual cleanup
+
+**Result Files**:
+- `result/pr.diff` - Original PR changes
+- `result/recommended-recipe.yaml` - Recommended recipe
+- `result/recommended-recipe.diff` - Recipe execution output
+
+### Success Criteria Verification
+
+✅ Session ID captured: `session-id.txt`
+✅ Option recipes created: `option-1-recipe.yaml`, `option-2-recipe.yaml`
+✅ Recipe diffs generated: `option-1-recipe.diff`, `option-2-recipe.diff`
+✅ Creation analyses: `option-1-creation-analysis.md`, `option-2-creation-analysis.md`
+✅ Validation analyses: `option-1-validation-analysis.md`, `option-2-validation-analysis.md`
+✅ PR diff saved: `pr-3.diff`
+✅ Phase reports: `phase1.md` through `phase5.md`
+✅ Final artifacts: `result/pr.diff`, `result/recommended-recipe.yaml`, `result/recommended-recipe.diff`
+
+All required files present. Workflow completed successfully.

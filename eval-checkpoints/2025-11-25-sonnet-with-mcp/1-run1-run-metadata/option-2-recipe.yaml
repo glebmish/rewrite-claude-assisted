@@ -1,0 +1,14 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.weather.PRRecipe3Option2
+displayName: PR Recipe 3 - Option 2 - Targeted Java 17 Migration
+description: Narrow approach using specific targeted recipes for Java 17 upgrade
+recipeList:
+  - org.openrewrite.gradle.UpdateJavaCompatibility:
+      version: 17
+      compatibilityType: source
+  - org.openrewrite.gradle.UpdateJavaCompatibility:
+      version: 17
+      compatibilityType: target
+  - org.openrewrite.gradle.UpdateGradleWrapper:
+      version: 7.6

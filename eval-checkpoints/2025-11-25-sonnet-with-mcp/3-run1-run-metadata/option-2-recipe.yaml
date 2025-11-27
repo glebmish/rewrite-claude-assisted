@@ -1,0 +1,55 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.example.DropwizardUpgrade30Surgical
+displayName: Dropwizard 2.x to 3.0 Upgrade - Surgical Approach
+description: Surgical upgrade of Dropwizard from 2.1.12 to 3.0.0 using narrow, targeted recipes for precise control over each transformation step.
+recipeList:
+  # Step 1: Update Java toolchain from 11 to 17
+  - org.openrewrite.java.migrate.UpgradeJavaVersion:
+      version: 17
+
+  # Step 2: Update Dropwizard core dependencies
+  - org.openrewrite.gradle.UpgradeDependencyVersion:
+      groupId: io.dropwizard
+      artifactId: dropwizard-core
+      newVersion: 3.0.0
+
+  - org.openrewrite.gradle.UpgradeDependencyVersion:
+      groupId: io.dropwizard
+      artifactId: dropwizard-jdbi3
+      newVersion: 3.0.0
+
+  - org.openrewrite.gradle.UpgradeDependencyVersion:
+      groupId: io.dropwizard
+      artifactId: dropwizard-auth
+      newVersion: 3.0.0
+
+  - org.openrewrite.gradle.UpgradeDependencyVersion:
+      groupId: io.dropwizard
+      artifactId: dropwizard-configuration
+      newVersion: 3.0.0
+
+  - org.openrewrite.gradle.UpgradeDependencyVersion:
+      groupId: io.dropwizard
+      artifactId: dropwizard-testing
+      newVersion: 3.0.0
+
+  # Step 3: Migrate package imports from io.dropwizard to io.dropwizard.core
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: io.dropwizard.Application
+      newFullyQualifiedTypeName: io.dropwizard.core.Application
+
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: io.dropwizard.Configuration
+      newFullyQualifiedTypeName: io.dropwizard.core.Configuration
+
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: io.dropwizard.setup.Bootstrap
+      newFullyQualifiedTypeName: io.dropwizard.core.setup.Bootstrap
+
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: io.dropwizard.setup.Environment
+      newFullyQualifiedTypeName: io.dropwizard.core.setup.Environment
+
+  # Step 4: Remove unnecessary @Override annotations from Application methods
+  - org.openrewrite.java.dropwizard.method.RemoveUnnecessaryOverride

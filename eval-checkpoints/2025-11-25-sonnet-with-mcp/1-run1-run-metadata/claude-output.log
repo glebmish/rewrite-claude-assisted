@@ -1,0 +1,39 @@
+## Workflow Complete
+
+Successfully completed rewrite-assist workflow for PR #3.
+
+**Output Directory**: `.output/2025-11-25-00-12/`
+
+### Results Summary
+
+**Recommended Recipe**: Option 1 (Comprehensive Java 17 Migration)
+- **Coverage**: 43% (6/14 files modified)
+- **Execution**: 2m 19s, no errors
+- **Recipe**: `org.openrewrite.java.migrate.UpgradeToJava17` + Gradle wrapper update
+
+**Changes Automated**:
+- Java compatibility: 11 → 17 (build.gradle)
+- Gradle wrapper: 6.7 → 7.6
+- CI/CD: GitHub Actions Java 17 update
+- Gradle scripts: wrapper updates
+
+**Manual Required** (57%):
+- Dockerfile base images (no Dockerfile LST support)
+- Authentication refactoring (application-specific logic)
+
+### Generated Files
+
+**Result artifacts** (`.output/2025-11-25-00-12/result/`):
+- `pr.diff` - Original PR changes
+- `recommended-recipe.yaml` - Final recipe
+- `recommended-recipe.diff` - Recipe output
+
+**Supporting files**:
+- `session-id.txt` - 13248fbd-6651-4a77-bcf0-5fbdbfc109d9
+- `phase1.md` through `phase5.md` - Phase reports
+- `option-1-recipe.yaml` / `option-2-recipe.yaml` - Both recipe options
+- `option-*-recipe.diff` - Validation outputs
+- `option-*-creation-analysis.md` - Recipe composition rationale
+- `option-*-validation-analysis.md` - Validation assessments
+
+All required files verified and present.

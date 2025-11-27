@@ -1,0 +1,48 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.example.PRRecipe2Option2
+displayName: Java 17 to 21 Upgrade - Surgical Approach
+description: Targeted upgrade using specific recipes for each file type transformation
+recipeList:
+  # GitHub Actions: Update java-version from 17 to 21
+  - org.openrewrite.github.SetupJavaUpgradeJavaVersion:
+      minimumJavaMajorVersion: 21
+
+  # Gradle: Update sourceCompatibility and targetCompatibility from 17 to 21
+  - org.openrewrite.gradle.UpdateJavaCompatibility:
+      version: 21
+      compatibilityType: source
+      declarationStyle: String
+  - org.openrewrite.gradle.UpdateJavaCompatibility:
+      version: 21
+      compatibilityType: target
+      declarationStyle: String
+
+  # Gradle Wrapper: Update from 8.1 to 8.5
+  - org.openrewrite.gradle.UpdateGradleWrapper:
+      version: 8.5
+      distribution: bin
+
+  # Dockerfile: Update eclipse-temurin from 17-jdk-alpine to 21-jdk-alpine
+  - org.openrewrite.FindAndReplace:
+      find: eclipse-temurin:17-jdk-alpine
+      replace: eclipse-temurin:21-jdk-alpine
+      filePattern: "**/Dockerfile"
+
+  # Dockerfile: Update eclipse-temurin from 17-jre-alpine to 21-jre-alpine
+  - org.openrewrite.FindAndReplace:
+      find: eclipse-temurin:17-jre-alpine
+      replace: eclipse-temurin:21-jre-alpine
+      filePattern: "**/Dockerfile"
+
+  # README.md: Update Java version references from 17 to 21
+  - org.openrewrite.FindAndReplace:
+      find: "Java 17"
+      replace: "Java 21"
+      filePattern: "**/README.md"
+
+  # README.md: Update Gradle version reference from 8.1 to 8.5
+  - org.openrewrite.FindAndReplace:
+      find: "Gradle 8.1"
+      replace: "Gradle 8.5"
+      filePattern: "**/README.md"

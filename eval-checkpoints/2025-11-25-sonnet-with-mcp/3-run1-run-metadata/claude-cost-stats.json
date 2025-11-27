@@ -1,0 +1,264 @@
+{
+  "log_file": "/__w/rewrite-claude-assisted/rewrite-claude-assisted/.output/2025-11-25-00-44/log/63c1ff3b-6e0f-43d9-b4bb-086ab2930bd3.jsonl",
+  "analysis_timestamp": "2025-11-25T00:54:12.827729Z",
+  "main_agent": {
+    "agent_id": "main",
+    "usage": {
+      "input_tokens": 274,
+      "output_tokens": 7937,
+      "cache_creation_input_tokens": 114999,
+      "cache_read_input_tokens": 2016799
+    },
+    "costs": {
+      "input_tokens_cost": 0.000822,
+      "output_tokens_cost": 0.119055,
+      "cache_creation_cost": 0.431246,
+      "cache_read_cost": 0.60504,
+      "total_cost": 1.156163
+    },
+    "by_model": {
+      "claude-sonnet-4-5-20250929": {
+        "usage": {
+          "input_tokens": 274,
+          "output_tokens": 7937,
+          "cache_creation_input_tokens": 114999,
+          "cache_read_input_tokens": 2016799
+        },
+        "costs": {
+          "input_tokens_cost": 0.000822,
+          "output_tokens_cost": 0.119055,
+          "cache_creation_cost": 0.431246,
+          "cache_read_cost": 0.60504,
+          "total_cost": 1.156163
+        }
+      }
+    }
+  },
+  "subagents": [
+    {
+      "agent_id": "a96c0a0d",
+      "subagent_type": "unknown",
+      "description": "Sidechain agent",
+      "usage": {
+        "input_tokens": 2,
+        "output_tokens": 1,
+        "cache_creation_input_tokens": 2011,
+        "cache_read_input_tokens": 0
+      },
+      "costs": {
+        "input_tokens_cost": 6e-06,
+        "output_tokens_cost": 1.5e-05,
+        "cache_creation_cost": 0.007541,
+        "cache_read_cost": 0.0,
+        "total_cost": 0.007562
+      },
+      "by_model": {
+        "claude-sonnet-4-5-20250929": {
+          "usage": {
+            "input_tokens": 2,
+            "output_tokens": 1,
+            "cache_creation_input_tokens": 2011,
+            "cache_read_input_tokens": 0
+          },
+          "costs": {
+            "input_tokens_cost": 6e-06,
+            "output_tokens_cost": 1.5e-05,
+            "cache_creation_cost": 0.007541,
+            "cache_read_cost": 0.0,
+            "total_cost": 0.007562
+          }
+        }
+      }
+    },
+    {
+      "agent_id": "0dbdf7f3",
+      "subagent_type": "openrewrite-recipe-validator",
+      "description": "Validate option-1 recipe",
+      "usage": {
+        "input_tokens": 7395,
+        "output_tokens": 2703,
+        "cache_creation_input_tokens": 34141,
+        "cache_read_input_tokens": 300843
+      },
+      "costs": {
+        "input_tokens_cost": 0.022185,
+        "output_tokens_cost": 0.040545,
+        "cache_creation_cost": 0.128029,
+        "cache_read_cost": 0.090253,
+        "total_cost": 0.281012
+      },
+      "by_model": {
+        "claude-sonnet-4-5-20250929": {
+          "usage": {
+            "input_tokens": 7395,
+            "output_tokens": 2703,
+            "cache_creation_input_tokens": 34141,
+            "cache_read_input_tokens": 300843
+          },
+          "costs": {
+            "input_tokens_cost": 0.022185,
+            "output_tokens_cost": 0.040545,
+            "cache_creation_cost": 0.128029,
+            "cache_read_cost": 0.090253,
+            "total_cost": 0.281012
+          }
+        }
+      }
+    },
+    {
+      "agent_id": "a587db25",
+      "subagent_type": "unknown",
+      "description": "Sidechain agent",
+      "usage": {
+        "input_tokens": 2002,
+        "output_tokens": 3,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0
+      },
+      "costs": {
+        "input_tokens_cost": 0.002002,
+        "output_tokens_cost": 1.5e-05,
+        "cache_creation_cost": 0.0,
+        "cache_read_cost": 0.0,
+        "total_cost": 0.002017
+      },
+      "by_model": {
+        "claude-haiku-4-5-20251001": {
+          "usage": {
+            "input_tokens": 2002,
+            "output_tokens": 3,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 0
+          },
+          "costs": {
+            "input_tokens_cost": 0.002002,
+            "output_tokens_cost": 1.5e-05,
+            "cache_creation_cost": 0.0,
+            "cache_read_cost": 0.0,
+            "total_cost": 0.002017
+          }
+        }
+      }
+    },
+    {
+      "agent_id": "86c28453",
+      "subagent_type": "openrewrite-recipe-validator",
+      "description": "Validate option-2 recipe",
+      "usage": {
+        "input_tokens": 42,
+        "output_tokens": 2183,
+        "cache_creation_input_tokens": 33017,
+        "cache_read_input_tokens": 215074
+      },
+      "costs": {
+        "input_tokens_cost": 0.000126,
+        "output_tokens_cost": 0.032745,
+        "cache_creation_cost": 0.123814,
+        "cache_read_cost": 0.064522,
+        "total_cost": 0.221207
+      },
+      "by_model": {
+        "claude-sonnet-4-5-20250929": {
+          "usage": {
+            "input_tokens": 42,
+            "output_tokens": 2183,
+            "cache_creation_input_tokens": 33017,
+            "cache_read_input_tokens": 215074
+          },
+          "costs": {
+            "input_tokens_cost": 0.000126,
+            "output_tokens_cost": 0.032745,
+            "cache_creation_cost": 0.123814,
+            "cache_read_cost": 0.064522,
+            "total_cost": 0.221207
+          }
+        }
+      }
+    },
+    {
+      "agent_id": "3fc2cee9",
+      "subagent_type": "openrewrite-expert",
+      "description": "Map Dropwizard upgrade to recipes (Option 2)",
+      "usage": {
+        "input_tokens": 89,
+        "output_tokens": 3333,
+        "cache_creation_input_tokens": 177774,
+        "cache_read_input_tokens": 1304333
+      },
+      "costs": {
+        "input_tokens_cost": 0.000267,
+        "output_tokens_cost": 0.049995,
+        "cache_creation_cost": 0.666652,
+        "cache_read_cost": 0.3913,
+        "total_cost": 1.108214
+      },
+      "by_model": {
+        "claude-sonnet-4-5-20250929": {
+          "usage": {
+            "input_tokens": 89,
+            "output_tokens": 3333,
+            "cache_creation_input_tokens": 177774,
+            "cache_read_input_tokens": 1304333
+          },
+          "costs": {
+            "input_tokens_cost": 0.000267,
+            "output_tokens_cost": 0.049995,
+            "cache_creation_cost": 0.666652,
+            "cache_read_cost": 0.3913,
+            "total_cost": 1.108214
+          }
+        }
+      }
+    },
+    {
+      "agent_id": "c0374680",
+      "subagent_type": "openrewrite-expert",
+      "description": "Map Dropwizard upgrade to recipes (Option 1)",
+      "usage": {
+        "input_tokens": 115,
+        "output_tokens": 3408,
+        "cache_creation_input_tokens": 196378,
+        "cache_read_input_tokens": 1743310
+      },
+      "costs": {
+        "input_tokens_cost": 0.000345,
+        "output_tokens_cost": 0.05112,
+        "cache_creation_cost": 0.736417,
+        "cache_read_cost": 0.522993,
+        "total_cost": 1.310875
+      },
+      "by_model": {
+        "claude-sonnet-4-5-20250929": {
+          "usage": {
+            "input_tokens": 115,
+            "output_tokens": 3408,
+            "cache_creation_input_tokens": 196378,
+            "cache_read_input_tokens": 1743310
+          },
+          "costs": {
+            "input_tokens_cost": 0.000345,
+            "output_tokens_cost": 0.05112,
+            "cache_creation_cost": 0.736417,
+            "cache_read_cost": 0.522993,
+            "total_cost": 1.310875
+          }
+        }
+      }
+    }
+  ],
+  "totals": {
+    "usage": {
+      "input_tokens": 9919,
+      "output_tokens": 19568,
+      "cache_creation_input_tokens": 558320,
+      "cache_read_input_tokens": 5580359
+    },
+    "costs": {
+      "input_tokens_cost": 0.025753,
+      "output_tokens_cost": 0.29349,
+      "cache_creation_cost": 2.093699,
+      "cache_read_cost": 1.674108,
+      "total_cost": 4.08705
+    }
+  }
+}

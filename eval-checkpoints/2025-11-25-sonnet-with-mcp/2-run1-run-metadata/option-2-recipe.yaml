@@ -1,0 +1,54 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.example.PR3Option2
+displayName: Surgical Java 11 to 17 and JUnit 4 to 5 Migration
+description: |
+  Narrow, surgical approach using specific targeted recipes for precise control.
+  Migrates Java 11 to 17, JUnit 4 to JUnit 5, updates Gradle wrapper, and modernizes
+  deprecated Gradle configurations with minimal, predictable changes.
+
+recipeList:
+  # Java Version Upgrade - Gradle Build Configuration
+  - org.openrewrite.java.migrate.UpgradeJavaVersion:
+      version: 17
+
+  # Gradle Wrapper Version Update
+  - org.openrewrite.gradle.UpdateGradleWrapper:
+      version: 7.6.4
+
+  # GitHub Actions Java Version Update
+  - org.openrewrite.github.SetupJavaUpgradeJavaVersion:
+      minimumJavaMajorVersion: 17
+
+  # JUnit 4 to JUnit 5 - Test Annotations
+  - org.openrewrite.java.testing.junit5.UpdateTestAnnotation
+
+  # JUnit 4 to JUnit 5 - Lifecycle Annotations (@Before -> @BeforeEach)
+  - org.openrewrite.java.testing.junit5.UpdateBeforeAfterAnnotations
+
+  # JUnit 4 to JUnit 5 - Assertions (Assert -> Assertions)
+  - org.openrewrite.java.testing.junit5.AssertToAssertions
+
+  # JUnit Dependencies - Change from JUnit 4 to JUnit 5
+  - org.openrewrite.gradle.ChangeDependency:
+      oldGroupId: junit
+      oldArtifactId: junit
+      newGroupId: org.junit.jupiter
+      newArtifactId: junit-jupiter-api
+      newVersion: 5.8.1
+
+  # Add JUnit 5 Runtime Engine
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.junit.jupiter
+      artifactId: junit-jupiter-engine
+      version: 5.8.1
+      onlyIfUsing: org.junit.jupiter.api.Test
+      configuration: testRuntimeOnly
+
+  # Gradle Test Configuration - useJUnit() -> useJUnitPlatform()
+  - org.openrewrite.java.testing.junit5.GradleUseJunitJupiter
+
+  # Shadow Plugin Version Update
+  - org.openrewrite.gradle.plugins.UpgradePluginVersion:
+      pluginId: com.github.johnrengelman.shadow
+      newVersion: 7.1.2
