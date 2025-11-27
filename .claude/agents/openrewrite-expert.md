@@ -31,6 +31,7 @@ You excel at:
 ## Systematic Recipe Mapping Approach
 
 ### Phase 1: Intent Analysis & Categorization
+Find `intent-tree.md` file in the output directory. It contains full intent tree for the recipe you need to create.
 When analyzing refactoring intentions, categorize them into:
 
 **Framework Migrations**
@@ -62,6 +63,8 @@ When analyzing refactoring intentions, categorize them into:
 
 ### Phase 2: Recipe Discovery Strategy
 
+You MUST search results for EACH of the intents in the intent tree and then intelligently decide which sub-recipes to use.
+
 **Search Hierarchy**:
 1. **Official Module Recipes** - Check org.openrewrite.recipe modules
 2. **Framework-Specific** - Spring, Quarkus, Micronaut recipe modules
@@ -84,6 +87,8 @@ manipulation approaches are the ABSOLUTE last resort. Only use semantic, type-aw
 files they're transforming
 
 ### Phase 3: Coverage Analysis
+
+You MUST strive to replicate the changes FULLY.
 
 **Gap Identification Process**:
 1. List all required transformations
