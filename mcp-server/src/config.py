@@ -30,6 +30,10 @@ class Config:
     DEFAULT_RECIPE_LIMIT: int = 5
     MIN_SIMILARITY_SCORE: float = 0.5
 
+    # Multi-query settings
+    RRF_CONSTANT: int = 60              # Reciprocal Rank Fusion k constant
+    MAX_QUERIES_PER_REQUEST: int = 5    # Maximum query variations per request
+
     @classmethod
     def get_db_url(cls) -> str:
         """Get database connection URL."""

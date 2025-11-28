@@ -145,6 +145,99 @@ async def find_recipes_by_semantic_search(
         ]
 
 
+async def find_recipes_by_multi_query_search(
+    intents: List[str],
+    limit: int = 5,
+    min_score: float = 0.0,
+    k: int = 60
+) -> List[Dict]:
+    """
+    Find recipes using multiple query variations with Reciprocal Rank Fusion.
+
+    Uses RRF to merge results from multiple semantic searches, giving higher
+    scores to recipes that appear in results for multiple query variations.
+
+    Args:
+        intents: List of query variations (different phrasings of same intent)
+        limit: Maximum number of results after fusion
+        min_score: Minimum similarity score for individual queries
+        k: RRF constant (default: 60, based on literature)
+
+    Returns:
+        Fused and re-ranked list of recipes with fusion metadata
+
+    Algorithm:
+        1. Execute semantic search for each query
+        2. Build rank mapping for each recipe
+        3. Apply RRF: score = Σ(1/(k + rank)) for each query
+        4. Sort by fusion score and return top N
+    """
+    from collections import defaultdict
+
+    logger.info(f"Multi-query search with {len(intents)} queries (limit={limit}, min_score={min_score})")
+
+    # Step 1: Execute search for each query
+    all_results = []
+    for idx, intent in enumerate(intents):
+        logger.debug(f"Query {idx+1}/{len(intents)}: '{intent}'")
+        try:
+            results = await find_recipes_by_semantic_search(
+                intent=intent,
+                limit=limit * 2,  # Get more results per query for better fusion
+                min_score=min_score
+            )
+            all_results.append(results)
+            logger.debug(f"Query {idx+1} returned {len(results)} results")
+        except Exception as e:
+            logger.error(f"Query {idx+1} failed: {e}", exc_info=True)
+            # Continue with other queries
+            all_results.append([])
+
+    # Check if all queries failed
+    if all(len(r) == 0 for r in all_results):
+        logger.warning("All queries returned no results")
+        return []
+
+    # Step 2: Build rank mapping and collect recipe metadata
+    recipe_ranks = defaultdict(list)  # {recipe_id: [(query_idx, rank, score), ...]}
+    recipe_metadata = {}  # {recipe_id: full_recipe_dict}
+
+    for query_idx, results in enumerate(all_results):
+        for rank, recipe in enumerate(results, start=1):
+            recipe_id = recipe['recipe_id']
+            recipe_ranks[recipe_id].append((query_idx, rank, recipe['relevance_score']))
+
+            # Store metadata from first occurrence
+            if recipe_id not in recipe_metadata:
+                recipe_metadata[recipe_id] = recipe
+
+    # Step 3: Apply RRF fusion
+    fused_recipes = []
+    for recipe_id, rank_data in recipe_ranks.items():
+        # Calculate RRF score
+        rrf_score = sum(1.0 / (k + rank) for _, rank, _ in rank_data)
+
+        # Get max original score and query match count
+        max_score = max(score for _, _, score in rank_data)
+        query_matches = len(rank_data)
+
+        # Build result with fusion metadata
+        recipe = recipe_metadata[recipe_id].copy()
+        recipe['relevance_score'] = max_score
+        recipe['fusion_score'] = rrf_score
+        recipe['query_matches'] = query_matches
+
+        fused_recipes.append(recipe)
+
+    # Step 4: Sort by RRF score and apply limit
+    fused_recipes.sort(key=lambda r: r['fusion_score'], reverse=True)
+    final_results = fused_recipes[:limit]
+
+    logger.info(f"Fusion complete: {len(fused_recipes)} unique recipes, returning top {len(final_results)}")
+
+    return final_results
+
+
 async def get_recipe_details(recipe_name: str) -> Optional[Dict]:
     """
     Get full recipe documentation.
