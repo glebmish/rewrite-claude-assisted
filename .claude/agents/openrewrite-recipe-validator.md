@@ -96,11 +96,20 @@ If the script fails:
 
 ## Phase 2: Diff Analysis & Metrics
 
-Analyze the generated diff file at `<output_dir_full_path>/option-1-recipe.diff`
+### Step 1: Execute analysis script
 
-Compare against PR diff available in `<output_dir_full_path>` to identify gaps and over-applications
+```
+cd <rewrite-claude-assisted root directory> && ./scripts/analysis/recipe-diff-precision.sh \
+<output_dir_full_path>/pr-<N>.diff <output_dir_full_path>/option-1-recipe.diff <output_dir_full_path>/option-1-stats.json
+```
 
-Succinctly document your analysis in <output_dir_full_path>/option-1-recipe-validation-analysis.md
+
+### Step 2: Analyze results
+* Analyze stats in `<output_dir_full_path>/option-1-stats.json`
+* Analyze the generated diff file at `<output_dir_full_path>/option-1-recipe.diff`
+* Compare against PR diff available in `<output_dir_full_path>` to identify gaps and over-applications
+
+Succinctly document your analysis in `<output_dir_full_path>/option-1-recipe-validation-analysis.md`
 
 ### Over-application troubleshooting
 
