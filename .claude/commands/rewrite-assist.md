@@ -62,7 +62,14 @@ Test each recipe produced on the previous phase and make the final decision on w
 ALWAYS use specialized subagents to perform the validation. You MUST let subagent know what options current task belongs to
 (e.g. `this recipe is called option 1`, `this recipe is called option 2`)
 
-### Phase 5: Final decision
+### Phase 5: Recipe refinement
+
+Based on the results from 2 recipe alternative, combine the learnings to the final 3rd recipe.
+Reuse the same openrewrite-expert subagent and point it to the resulting files to create a new recipe 3 (`option-3-recipe.yaml`)
+
+Then use a new openrewrite-recipe-validator subagent to validate the new recipe
+
+### Phase 6: Final decision
 
 Based on the results, choose the final recommended recipe and generate result artifacts.
 This step is CRITICAL and must never be skipped. Even when results are not conclusive and none of the tested recipes
