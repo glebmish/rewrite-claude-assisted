@@ -149,6 +149,15 @@ START_TIME=$(date +%s)
 # Build the claude command
 CLAUDE_CMD="claude --model claude-sonnet-4-5"
 
+# Define MCP log file
+MCP_LOG_FILE="/tmp/mcp-claude-log-$$.txt"
+touch "$MCP_LOG_FILE"  # Create empty file
+
+# Start background tail to follow MCP log file
+tail -f "$MCP_LOG_FILE" &
+TAIL_PID=$!
+log "Started background tail for MCP logs (PID: $TAIL_PID)"
+
 # Add debug flag if enabled
 if [[ "$DEBUG_MODE" == "true" ]]; then
     CLAUDE_CMD="$CLAUDE_CMD --debug"
@@ -163,7 +172,7 @@ if [[ -n "$CLAUDE_DISALLOWED_TOOLS" ]]; then
 fi
 
 # Add MCP arguments
-CLAUDE_CMD="$CLAUDE_CMD --mcp-config '{\"mcpServers\":{\"openrewrite-mcp\":{\"type\":\"stdio\",\"command\":\"$SCRIPTS_DIR/startup.sh\",\"args\":[],\"env\":{}},\"log-mcp-server\":{\"type\":\"stdio\",\"command\":\"$LOG_MCP_DIR/venv/bin/python\",\"args\":[\"$LOG_MCP_DIR/server.py\"],\"env\":{}}}}' --strict-mcp-config"
+CLAUDE_CMD="$CLAUDE_CMD --mcp-config '{\"mcpServers\":{\"openrewrite-mcp\":{\"type\":\"stdio\",\"command\":\"$SCRIPTS_DIR/startup.sh\",\"args\":[],\"env\":{}},\"log-mcp-server\":{\"type\":\"stdio\",\"command\":\"$LOG_MCP_DIR/venv/bin/python\",\"args\":[\"$LOG_MCP_DIR/server.py\",\"--log-file\",\"$MCP_LOG_FILE\"],\"env\":{}}}}' --strict-mcp-config"
 
 CLAUDE_PROMPT="/rewrite-assist $PR_URL."
 if [[ "$STRICT_MODE" == "true" ]]; then
@@ -211,6 +220,12 @@ echo "output_dir=$OUTPUT_DIR" >> $GITHUB_OUTPUT
 if [ -f "$CLAUDE_OUTPUT_LOG" ]; then
     mv "$CLAUDE_OUTPUT_LOG" "$OUTPUT_DIR/claude-output.log"
     log "Claude output saved to: $OUTPUT_DIR/claude-output.log"
+fi
+
+# Move MCP log to the output directory
+if [ -f "$MCP_LOG_FILE" ]; then
+    mv "$MCP_LOG_FILE" "$OUTPUT_DIR/mcp-log.txt"
+    log "MCP log saved to: $OUTPUT_DIR/mcp-log.txt"
 fi
 
 # Create final metadata
