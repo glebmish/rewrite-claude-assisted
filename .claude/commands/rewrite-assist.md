@@ -134,12 +134,14 @@ cp .output/<yyyy-mm-dd-hh-MM>/<subagent-recipe-diff-file> .output/<yyyy-mm-dd-hh
 * All phases complete successfully
 * Actionable recommendations for recipe deployment or refinement
 * **CRITICAL**: Before reporting success, verify ALL expected files exist:
-  * `.output/<yyyy-mm-dd-hh-MM>/session-id.txt` - captured Session ID
+  - `.output/<yyyy-mm-dd-hh-MM>/session-id.txt` - captured Session ID
+  - `.output/<yyyy-mm-dd-hh-MM>/intent-tree.md` - results of PR intents extraction
   - `.output/<yyyy-mm-dd-hh-MM>/option-<N>-recipe.yaml` - generated OpenRewrite recipes
   - `.output/<yyyy-mm-dd-hh-MM>/option-<N>-recipe.diff` - diffs from recipe validation
+  - `.output/<yyyy-mm-dd-hh-MM>/option-<N>-stats.json` - recipe effectiveness stats
   - `.output/<yyyy-mm-dd-hh-MM>/option-<N>-creation-analysis.diff` - analysis by openrewrite expert who created the recipe
   - `.output/<yyyy-mm-dd-hh-MM>/option-<N>-validation-analysis.diff` - analysis based on recipe validation results
-  - `.output/<yyyy-mm-dd-hh-MM>/pr.diff` - original PR diff
+  - `.output/<yyyy-mm-dd-hh-MM>/pr-<N>.diff` - original PR diff
   - `.output/<yyyy-mm-dd-hh-MM>/phase<N>.md` - reports for each phase
   - `.output/<yyyy-mm-dd-hh-MM>/result/pr.diff` - PR diff, must be copied from `.output/<yyyy-mm-dd-hh-MM>`
   - `.output/<yyyy-mm-dd-hh-MM>/result/recommended-recipe.yaml` - recommended recipe, must be one of the options available in `.output/<yyyy-mm-dd-hh-MM>`
