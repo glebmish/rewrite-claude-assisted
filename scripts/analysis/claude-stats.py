@@ -115,7 +115,17 @@ def extract_tool_use(content_item: Dict, timestamp: str) -> ToolUse:
     elif "intent" in tool_input:
         # Handle mcp__openrewrite-mcp__find_recipes
         intent = tool_input['intent']
-        tool_text = f"{tool_name}({shlex.quote(intent)}"
+
+        # Handle both string and array formats
+        if isinstance(intent, list):
+            # Format array as ["query1", "query2", ...]
+            quoted_intents = [shlex.quote(q) for q in intent]
+            intent_repr = "[" + ", ".join(quoted_intents) + "]"
+            tool_text = f"{tool_name}({intent_repr}"
+        else:
+            # Single string query
+            tool_text = f"{tool_name}({shlex.quote(intent)}"
+
         # Add limit if present
         if "limit" in tool_input:
             limit = tool_input['limit']
