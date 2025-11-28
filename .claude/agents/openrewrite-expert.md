@@ -61,11 +61,17 @@ When analyzing refactoring intentions, categorize them into:
 * Dockerfile modifications
 * IaaC files changes
 
+**String manipulations**
+* Code comments
+* String values
+* Anything that's not covered by semantic recipes
+
 ### Phase 2: Recipe Discovery Strategy
 
 You MUST search results for EACH of the intents on EVERY level of the intent tree and ONLY AFTER THIS IS DONE intelligently decide which recipes to use.
 To improve performance and recall, use multi-query searches. Intelligently reword each intent 2-4 other ways and use
-all variants in a single multi-query search.
+all variants in a single multi-query search. Simplify and generalize to cover more possible options, e.g. strip semantic changes
+and formulate it as file/string manipulation changes. For example `Change job step name in GitHub Actions` -> `Change Github Actions step name`, `Modify Github Action`, `Replace value in yaml`
 
 You CAN search something that is not included to the intent tree too if needed.
 
@@ -187,7 +193,7 @@ recipeList:
       newFullyQualifiedTypeName: jakarta.servlet.http.HttpServlet
 ```
 
-### Phase 5: Alternative Evaluation
+### Phase 5: Filling the gaps
 
 **Evaluation Criteria**:
 1. **Coverage completeness** - What percentage of changes covered?
@@ -200,6 +206,18 @@ recipeList:
 * Broad recipe: Comprehensive amd simple to use but less control
 * Multiple narrow: More control but complex and verbose
 * Mixed approach: Balance of both
+
+**Cross-reference recipe description and arguments with actual code changes**
+Pay attention to the correctness
+* File paths
+* Class names
+* Positioning within the file
+* YAML/JSON path
+* Versions
+
+**Recipe modification to handle gaps that were discovered during analysis**
+* Fix argument inconsistencies
+* Add gap filling low-level recipes
 
 ## Recipe Ecosystem Knowledge
 
