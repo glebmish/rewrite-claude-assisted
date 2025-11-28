@@ -124,6 +124,17 @@ else
     log "Warning: MCP server directory not found at $MCP_DIR"
 fi
 
+# Setup log-mcp-server environment
+if [[ -d "$LOG_MCP_DIR" ]]; then
+    # Create symlink to pre-installed venv if it doesn't exist
+    if [[ ! -d "$LOG_MCP_DIR/venv" ]] && [[ -d "/opt/mcp-venv" ]]; then
+        log "Creating symlink to pre-installed venv for log-mcp-server"
+        ln -s /opt/mcp-venv "$LOG_MCP_DIR/venv"
+    fi
+else
+    log "Warning: log-mcp-server directory not found at $LOG_MCP_DIR"
+fi
+
 # Source shared settings parser
 source "$(dirname "$0")/parse-settings.sh"
 
@@ -152,7 +163,7 @@ if [[ -n "$CLAUDE_DISALLOWED_TOOLS" ]]; then
 fi
 
 # Add MCP arguments
-CLAUDE_CMD="$CLAUDE_CMD --mcp-config '{\"mcpServers\":{\"openrewrite-mcp\":{\"type\":\"stdio\",\"command\":\"$SCRIPTS_DIR/startup.sh\",\"args\":[],\"env\":{}},\"log-mcp-server\":{\"type\":\"stdio\",\"command\":\"python\",\"args\":[\"$LOG_MCP_DIR/server.py\"],\"env\":{}}}}' --strict-mcp-config"
+CLAUDE_CMD="$CLAUDE_CMD --mcp-config '{\"mcpServers\":{\"openrewrite-mcp\":{\"type\":\"stdio\",\"command\":\"$SCRIPTS_DIR/startup.sh\",\"args\":[],\"env\":{}},\"log-mcp-server\":{\"type\":\"stdio\",\"command\":\"$LOG_MCP_DIR/venv/bin/python\",\"args\":[\"$LOG_MCP_DIR/server.py\"],\"env\":{}}}}' --strict-mcp-config"
 
 CLAUDE_PROMPT="/rewrite-assist $PR_URL."
 if [[ "$STRICT_MODE" == "true" ]]; then
