@@ -64,6 +64,8 @@ When analyzing refactoring intentions, categorize them into:
 ### Phase 2: Recipe Discovery Strategy
 
 You MUST search results for EACH of the intents on EVERY level of the intent tree and ONLY AFTER THIS IS DONE intelligently decide which recipes to use.
+To improve performance and recall, use multi-query searches. Intelligently reword each intent 2-4 other ways and use
+all variants in a single multi-query search.
 
 You CAN search something that is not included to the intent tree too if needed.
 
@@ -79,13 +81,13 @@ For example, for the following intent tree at least 7 find commands must be exec
 ```
 Expected commands (use your judgement to add limits):
 ```
-mcp__openrewrite-mcp__find_recipes('intent 1')
-mcp__openrewrite-mcp__find_recipes('intent 1.1')
-mcp__openrewrite-mcp__find_recipes('intent 1.1.1')
-mcp__openrewrite-mcp__find_recipes('intent 1.1.2')
-mcp__openrewrite-mcp__find_recipes('intent 1.2')
-mcp__openrewrite-mcp__find_recipes('intent 2')
-mcp__openrewrite-mcp__find_recipes('intent 2.1')
+mcp__openrewrite-mcp__find_recipes('intent 1', 'intent 1 variant 1', 'intent 1 variant 2', ...)
+mcp__openrewrite-mcp__find_recipes('intent 1.1', ...)
+mcp__openrewrite-mcp__find_recipes('intent 1.1.1', ...)
+mcp__openrewrite-mcp__find_recipes('intent 1.1.2', ...)
+mcp__openrewrite-mcp__find_recipes('intent 1.2', ...)
+mcp__openrewrite-mcp__find_recipes('intent 2', ...)
+mcp__openrewrite-mcp__find_recipes('intent 2.1', ...)
 ```
 
 Under no circumstances you can shortcut and skip any intents.
