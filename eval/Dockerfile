@@ -70,4 +70,14 @@ RUN python3 -m venv /opt/mcp-venv && \
     deactivate && \
     rm /tmp/mcp-requirements.txt
 
+# Copy log-mcp-server requirements
+COPY log-mcp-server/requirements.txt /tmp/log-mcp-requirements.txt
+
+# Install log-mcp-server dependencies in the same venv
+# (log-mcp-server is simple and shares the venv with mcp-server)
+RUN . /opt/mcp-venv/bin/activate && \
+    pip install --no-cache-dir -r /tmp/log-mcp-requirements.txt && \
+    deactivate && \
+    rm /tmp/log-mcp-requirements.txt
+
 # Note: MCP server files will be copied at runtime from the mounted workspace
