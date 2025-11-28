@@ -47,13 +47,25 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="find_recipes",
-            description="Find OpenRewrite recipes based on user intent. Uses semantic search to discover relevant recipes for code transformations, migrations, and refactorings.",
+            description="Find OpenRewrite recipes based on user intent. Uses semantic search to discover relevant recipes. SUPPORTS MULTI-QUERY: Pass 'intent' as a STRING for single query OR as an ARRAY of 2-5 query variations for batched search with improved recall.",
             inputSchema={
                 "type": "object",
                 "properties": {
                     "intent": {
-                        "type": "string",
-                        "description": "Description of what you want to accomplish (e.g., 'migrate to Spring Boot 3', 'upgrade to Java 17', 'fix security issues')"
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "description": "Single query describing what you want to accomplish"
+                            },
+                            {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "minItems": 1,
+                                "maxItems": 5,
+                                "description": "Multiple query variations for improved recall"
+                            }
+                        ],
+                        "description": "Description of what you want to accomplish. Provide a SINGLE STRING for simple searches, or an ARRAY OF 2-5 QUERY VARIATIONS for improved recall. When using multiple queries, provide different phrasings of the same intent (e.g., ['migrate to Spring Boot 3', 'upgrade Spring Boot version', 'Spring Boot 3.x migration']). Multiple queries use Reciprocal Rank Fusion to find recipes that match any variation."
                     },
                     "limit": {
                         "type": "integer",
@@ -124,12 +136,18 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                         "name": recipe["name"],
                         "description": recipe["description"],
                         "tags": recipe["tags"],
-                        "score": recipe["relevance_score"]
+                        "score": recipe["relevance_score"],
+                        # Include fusion metadata if present
+                        **({
+                            "fusion_score": recipe["fusion_score"],
+                            "query_matches": recipe["query_matches"]
+                        } if "fusion_score" in recipe else {})
                     }
                     for recipe in results
                 ],
                 "total_count": len(results),
-                "query": intent
+                "query": intent if isinstance(intent, str) else f"{len(intent)} query variations",
+                "is_multi_query": isinstance(intent, list) and len(intent) > 1
             }
             return [TextContent(type="text", text=json.dumps(response, indent=2))]
 
