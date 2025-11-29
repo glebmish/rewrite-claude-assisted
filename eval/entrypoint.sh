@@ -180,6 +180,8 @@ if [[ "$STRICT_MODE" == "true" ]]; then
 fi
 if [[ "$FORCE_MCP" == "true" ]]; then
     CLAUDE_PROMPT="$CLAUDE_PROMPT This workflow requires the use of Openrewrite MCP and Log MCP. Test the connection to the Openrewrite MCP at the very start and immediately fail if it is not available after 3 attempts. Send initialization message to the Log tool to validate that it's available."
+else
+    CLAUDE_PROMPT="$CLAUDE_PROMPT Use Log tool throughout to document the progress."
 fi
 CLAUDE_CMD="$CLAUDE_CMD -p \"$CLAUDE_PROMPT\""
 
