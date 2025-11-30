@@ -114,7 +114,7 @@ if [[ -d "$MCP_DIR" ]]; then
         # Pre-pull PostgreSQL image to avoid delay on first MCP call
         if command -v docker &> /dev/null; then
             log "Pre-pulling PostgreSQL image for MCP server..."
-            docker pull bboygleb/openrewrite-recipes-db:latest 2>&1 | grep -E "(Pulling|Downloaded|Status:|Digest:)" || true
+            docker pull glebmish/openrewrite-recipes-db:latest 2>&1 | grep -E "(Pulling|Downloaded|Status:|Digest:)" || true
             log "MCP PostgreSQL image ready"
         else
             log "Warning: Docker not available, assuming PostgreSQL will be started externally"

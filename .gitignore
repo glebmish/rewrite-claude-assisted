@@ -44,3 +44,5 @@ Thumbs.db
 .env
 venv
 **/__pycache__
+
+.mcp.json

@@ -206,14 +206,14 @@ To push images to DockerHub:
 
 - **Checks out:** `main` branch
 - **Runs:** Execute ingestion pipeline
-- **Produces:** `bboygleb/openrewrite-recipes-db:latest` and date-tagged images
+- **Produces:** `glebmish/openrewrite-recipes-db:latest` and date-tagged images
 - **Uploads:** Pipeline logs as artifacts on failure
 
 ## Image Usage
 
 ```bash
-docker pull bboygleb/openrewrite-recipes-db:latest
-docker run -d -p 5432:5432 bboygleb/openrewrite-recipes-db:latest
+docker pull glebmish/openrewrite-recipes-db:latest
+docker run -d -p 5432:5432 glebmish/openrewrite-recipes-db:latest
 ```
 
 See [data-ingestion/README.md](../../data-ingestion/README.md) for complete pipeline documentation.

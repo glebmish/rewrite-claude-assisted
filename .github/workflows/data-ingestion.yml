@@ -55,7 +55,7 @@ jobs:
         if: inputs.push_to_registry == true || github.event_name == 'schedule'
         uses: docker/login-action@v3
         with:
-          username: bboygleb
+          username: glebmish
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: 'Configure pipeline environment'
@@ -105,13 +105,13 @@ jobs:
 
             if [ "${{ inputs.push_to_registry }}" == "true" ] || [ "${{ github.event_name }}" == "schedule" ]; then
               DATE_TAG=$(date +%Y-%m-%d)
-              echo "- \`bboygleb/openrewrite-recipes-db:latest\`" >> $GITHUB_STEP_SUMMARY
-              echo "- \`bboygleb/openrewrite-recipes-db:$DATE_TAG\`" >> $GITHUB_STEP_SUMMARY
+              echo "- \`glebmish/openrewrite-recipes-db:latest\`" >> $GITHUB_STEP_SUMMARY
+              echo "- \`glebmish/openrewrite-recipes-db:$DATE_TAG\`" >> $GITHUB_STEP_SUMMARY
               echo "" >> $GITHUB_STEP_SUMMARY
               echo "### Usage" >> $GITHUB_STEP_SUMMARY
               echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-              echo "docker pull bboygleb/openrewrite-recipes-db:latest" >> $GITHUB_STEP_SUMMARY
-              echo "docker run -p 5432:5432 bboygleb/openrewrite-recipes-db:latest" >> $GITHUB_STEP_SUMMARY
+              echo "docker pull glebmish/openrewrite-recipes-db:latest" >> $GITHUB_STEP_SUMMARY
+              echo "docker run -p 5432:5432 glebmish/openrewrite-recipes-db:latest" >> $GITHUB_STEP_SUMMARY
               echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
             else
               echo "- \`openrewrite-recipes-db:${{ inputs.image_tag || 'latest' }}\` (local only)" >> $GITHUB_STEP_SUMMARY

@@ -63,7 +63,7 @@ fi
 # Configuration with defaults
 DB_IMAGE_NAME="${DB_IMAGE_NAME}"
 DB_IMAGE_TAG="${DB_IMAGE_TAG}"
-FULL_IMAGE_NAME="${DB_IMAGE_NAME}/${DB_IMAGE_TAG}"
+FULL_IMAGE_NAME="${DB_IMAGE_NAME}:${DB_IMAGE_TAG}"
 
 echo "Configuration:"
 echo "  Database image: $FULL_IMAGE_NAME"
