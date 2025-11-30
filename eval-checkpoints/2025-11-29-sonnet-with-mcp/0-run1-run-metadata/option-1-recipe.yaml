@@ -1,0 +1,50 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.ecommerce.catalog.UpgradeJava17To21Option1
+displayName: Upgrade E-commerce Catalog from Java 17 to Java 21 (Comprehensive)
+description: |
+  Comprehensive upgrade from Java 17 to Java 21 using broad migration recipes.
+  This approach uses the official UpgradeToJava21 recipe which handles most Java version
+  changes, plus additional recipes for Gradle wrapper, Docker images, and documentation.
+
+recipeList:
+  # Core Java 21 migration - handles Java version in build files, deprecated APIs, and GitHub Actions
+  - org.openrewrite.java.migrate.UpgradeToJava21
+
+  # Upgrade Gradle wrapper version from 8.1 to 8.5
+  - org.openrewrite.gradle.UpdateGradleWrapper:
+      version: 8.5
+
+  # Update Docker base images in Dockerfile
+  - org.openrewrite.text.FindAndReplace:
+      find: "eclipse-temurin:17-jdk-alpine"
+      replace: "eclipse-temurin:21-jdk-alpine"
+      caseSensitive: true
+      filePattern: "**/Dockerfile"
+
+  - org.openrewrite.text.FindAndReplace:
+      find: "eclipse-temurin:17-jre-alpine"
+      replace: "eclipse-temurin:21-jre-alpine"
+      caseSensitive: true
+      filePattern: "**/Dockerfile"
+
+  # Update GitHub Actions step name
+  - org.openrewrite.text.FindAndReplace:
+      find: "Set up JDK 17"
+      replace: "Set up JDK 21"
+      caseSensitive: true
+      filePattern: "**/.github/workflows/*.yml"
+
+  # Update README documentation - Technology Stack section
+  - org.openrewrite.text.FindAndReplace:
+      find: "- **Java**: Java 17"
+      replace: "- **Java**: Java 21"
+      caseSensitive: true
+      filePattern: "**/README.md"
+
+  # Update README documentation - Prerequisites section
+  - org.openrewrite.text.FindAndReplace:
+      find: "- Java 17"
+      replace: "- Java 21"
+      caseSensitive: true
+      filePattern: "**/README.md"

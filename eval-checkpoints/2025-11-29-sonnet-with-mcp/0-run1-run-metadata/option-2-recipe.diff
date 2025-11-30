@@ -1,0 +1,211 @@
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index f2eb61e..b52f6e2 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -29,10 +29,10 @@ jobs:
+     steps:
+     - uses: actions/checkout@v4
+     
+-    - name: Set up JDK 17
++    - name: Set up JDK 21
+       uses: actions/setup-java@v4
+       with:
+-        java-version: '17'
++        java-version: '21'
+         distribution: 'temurin'
+     
+     - name: Cache Gradle packages
+diff --git a/Dockerfile b/Dockerfile
+index 328c7cd..03046ff 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,5 +1,5 @@
+ # Multi-stage build
+-FROM eclipse-temurin:17-jdk-alpine as builder
++FROM eclipse-temurin:21-jdk-alpine as builder
+ 
+ WORKDIR /app
+ 
+@@ -15,7 +15,7 @@ COPY src/ ./src/
+ RUN ./gradlew clean build -x test
+ 
+ # Runtime stage
+-FROM eclipse-temurin:17-jre-alpine
++FROM eclipse-temurin:21-jre-alpine
+ 
+ WORKDIR /app
+ 
+diff --git a/README.md b/README.md
+index eb3f882..1fd9805 100644
+--- a/README.md
++++ b/README.md
+@@ -14,7 +14,7 @@ This service provides a comprehensive API for managing product catalogs, includi
+ ## Technology Stack
+ 
+ - **Framework**: Dropwizard 3.0.x
+-- **Java**: Java 17
++- **Java**: Java 21
+ - **Build Tool**: Gradle 8.1
+ - **Database**: MySQL with Flyway migrations
+ - **ORM**: Hibernate with Criteria Queries
+@@ -140,7 +140,7 @@ GET /catalog/v2/categories/{id}/products?offset=0&limit=20
+ ## Setup Instructions
+ 
+ ### Prerequisites
+-- Java 17
++- Java 21
+ - MySQL 8.0
+ - Gradle 8.1
+ 
+diff --git a/build.gradle b/build.gradle
+index 342f071..5d8c096 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -8,8 +8,8 @@ repositories {
+     jcenter()
+ }
+ 
+-sourceCompatibility = '17'
+-targetCompatibility = '17'
++sourceCompatibility = '21'
++targetCompatibility = '21'
+ 
+ dependencies {
+     implementation 'io.dropwizard:dropwizard-core:3.0.7'
+diff --git a/gradle/wrapper/gradle-wrapper.jar b/gradle/wrapper/gradle-wrapper.jar
+index 1b33c55..d64cd49 100644
+Binary files a/gradle/wrapper/gradle-wrapper.jar and b/gradle/wrapper/gradle-wrapper.jar differ
+diff --git a/gradle/wrapper/gradle-wrapper.properties b/gradle/wrapper/gradle-wrapper.properties
+index 0e1ae8c..48338a4 100644
+--- a/gradle/wrapper/gradle-wrapper.properties
++++ b/gradle/wrapper/gradle-wrapper.properties
+@@ -1,7 +1,8 @@
+ distributionBase=GRADLE_USER_HOME
+ distributionPath=wrapper/dists
+-distributionUrl=https\://services.gradle.org/distributions/gradle-8.1-bin.zip
++distributionUrl=https\://services.gradle.org/distributions/gradle-8.5-bin.zip
+ networkTimeout=10000
+ validateDistributionUrl=true
+ zipStoreBase=GRADLE_USER_HOME
+ zipStorePath=wrapper/dists
++distributionSha256Sum=9d926787066a081739e8200858338b4a69e837c3a821a33aca9db09dd4a41026
+diff --git a/gradlew b/gradlew
+index 23d15a9..1aa94a4 100755
+--- a/gradlew
++++ b/gradlew
+@@ -15,8 +15,6 @@
+ # See the License for the specific language governing permissions and
+ # limitations under the License.
+ #
+-# SPDX-License-Identifier: Apache-2.0
+-#
+ 
+ ##############################################################################
+ #
+@@ -57,7 +55,7 @@
+ #       Darwin, MinGW, and NonStop.
+ #
+ #   (3) This script is generated from the Groovy template
+-#       https://github.com/gradle/gradle/blob/HEAD/platforms/jvm/plugins-application/src/main/resources/org/gradle/api/internal/plugins/unixStartScript.txt
++#       https://github.com/gradle/gradle/blob/HEAD/subprojects/plugins/src/main/resources/org/gradle/api/internal/plugins/unixStartScript.txt
+ #       within the Gradle project.
+ #
+ #       You can find Gradle at https://github.com/gradle/gradle/.
+@@ -86,7 +84,7 @@ done
+ # shellcheck disable=SC2034
+ APP_BASE_NAME=${0##*/}
+ # Discard cd standard output in case $CDPATH is set (https://github.com/gradle/gradle/issues/25036)
+-APP_HOME=$( cd -P "${APP_HOME:-./}" > /dev/null && printf '%s\n' "$PWD" ) || exit
++APP_HOME=$( cd "${APP_HOME:-./}" > /dev/null && pwd -P ) || exit
+ 
+ # Use the maximum available, or set MAX_FD != -1 to use that value.
+ MAX_FD=maximum
+@@ -114,7 +112,7 @@ case "$( uname )" in                #(
+   NONSTOP* )        nonstop=true ;;
+ esac
+ 
+-CLASSPATH="\\\"\\\""
++CLASSPATH=$APP_HOME/gradle/wrapper/gradle-wrapper.jar
+ 
+ 
+ # Determine the Java command to use to start the JVM.
+@@ -205,7 +203,7 @@ fi
+ DEFAULT_JVM_OPTS='"-Xmx64m" "-Xms64m"'
+ 
+ # Collect all arguments for the java command:
+-#   * DEFAULT_JVM_OPTS, JAVA_OPTS, and optsEnvironmentVar are not allowed to contain shell fragments,
++#   * DEFAULT_JVM_OPTS, JAVA_OPTS, JAVA_OPTS, and optsEnvironmentVar are not allowed to contain shell fragments,
+ #     and any embedded shellness will be escaped.
+ #   * For example: A user cannot expect ${Hostname} to be expanded, as it is an environment variable and will be
+ #     treated as '${Hostname}' itself on the command line.
+@@ -213,7 +211,7 @@ DEFAULT_JVM_OPTS='"-Xmx64m" "-Xms64m"'
+ set -- \
+         "-Dorg.gradle.appname=$APP_BASE_NAME" \
+         -classpath "$CLASSPATH" \
+-        -jar "$APP_HOME/gradle/wrapper/gradle-wrapper.jar" \
++        org.gradle.wrapper.GradleWrapperMain \
+         "$@"
+ 
+ # Stop when "xargs" is not available.
+diff --git a/gradlew.bat b/gradlew.bat
+old mode 100644
+new mode 100755
+index 5eed7ee..6689b85
+--- a/gradlew.bat
++++ b/gradlew.bat
+@@ -13,8 +13,6 @@
+ @rem See the License for the specific language governing permissions and
+ @rem limitations under the License.
+ @rem
+-@rem SPDX-License-Identifier: Apache-2.0
+-@rem
+ 
+ @if "%DEBUG%"=="" @echo off
+ @rem ##########################################################################
+@@ -45,11 +43,11 @@ set JAVA_EXE=java.exe
+ %JAVA_EXE% -version >NUL 2>&1
+ if %ERRORLEVEL% equ 0 goto execute
+ 
+-echo. 1>&2
+-echo ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH. 1>&2
+-echo. 1>&2
+-echo Please set the JAVA_HOME variable in your environment to match the 1>&2
+-echo location of your Java installation. 1>&2
++echo.
++echo ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH.
++echo.
++echo Please set the JAVA_HOME variable in your environment to match the
++echo location of your Java installation.
+ 
+ goto fail
+ 
+@@ -59,22 +57,22 @@ set JAVA_EXE=%JAVA_HOME%/bin/java.exe
+ 
+ if exist "%JAVA_EXE%" goto execute
+ 
+-echo. 1>&2
+-echo ERROR: JAVA_HOME is set to an invalid directory: %JAVA_HOME% 1>&2
+-echo. 1>&2
+-echo Please set the JAVA_HOME variable in your environment to match the 1>&2
+-echo location of your Java installation. 1>&2
++echo.
++echo ERROR: JAVA_HOME is set to an invalid directory: %JAVA_HOME%
++echo.
++echo Please set the JAVA_HOME variable in your environment to match the
++echo location of your Java installation.
+ 
+ goto fail
+ 
+ :execute
+ @rem Setup the command line
+ 
+-set CLASSPATH=
++set CLASSPATH=%APP_HOME%\gradle\wrapper\gradle-wrapper.jar
+ 
+ 
+ @rem Execute Gradle
+-"%JAVA_EXE%" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %GRADLE_OPTS% "-Dorg.gradle.appname=%APP_BASE_NAME%" -classpath "%CLASSPATH%" -jar "%APP_HOME%\gradle\wrapper\gradle-wrapper.jar" %*
++"%JAVA_EXE%" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %GRADLE_OPTS% "-Dorg.gradle.appname=%APP_BASE_NAME%" -classpath "%CLASSPATH%" org.gradle.wrapper.GradleWrapperMain %*
+ 
+ :end
+ @rem End local scope for the variables with windows NT shell

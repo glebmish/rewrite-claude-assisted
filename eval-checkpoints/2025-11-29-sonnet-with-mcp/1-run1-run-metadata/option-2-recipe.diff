@@ -1,0 +1,838 @@
+diff --git a/Dockerfile b/Dockerfile
+index ae04ef6..8896c45 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,5 +1,5 @@
+ # Multi-stage build with outdated base image
+-FROM openjdk:11-jdk-slim as builder
++FROM eclipse-temurin:17-jdk-alpine as builder
+ 
+ WORKDIR /app
+ 
+@@ -17,7 +17,7 @@ COPY data-collector/ ./data-collector/
+ RUN ./gradlew clean build -x test
+ 
+ # Runtime stage with outdated JRE
+-FROM openjdk:11-jre-slim
++FROM eclipse-temurin:17-jre-alpine
+ 
+ WORKDIR /app
+ 
+diff --git a/build.gradle b/build.gradle
+index 79b8892..bc99458 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -8,8 +8,8 @@ subprojects {
+     apply plugin: 'java'
+     apply plugin: 'application'
+ 
+-    sourceCompatibility = '11'
+-    targetCompatibility = '11'
++    sourceCompatibility = '17'
++    targetCompatibility = '17'
+ 
+     dependencies {
+         implementation 'io.dropwizard:dropwizard-core:2.0.34'
+diff --git a/common/src/main/java/com/weather/common/model/WeatherData.java b/common/src/main/java/com/weather/common/model/WeatherData.java
+index 057b917..bb60ee5 100644
+--- a/common/src/main/java/com/weather/common/model/WeatherData.java
++++ b/common/src/main/java/com/weather/common/model/WeatherData.java
+@@ -8,19 +8,19 @@ public class WeatherData {
+     @JsonProperty
+     @NotNull
+     private String location;
+-    
++
+     @JsonProperty
+     private double temperature;
+-    
++
+     @JsonProperty
+     private double humidity;
+-    
++
+     @JsonProperty
+     private double pressure;
+-    
++
+     @JsonProperty
+     private Date timestamp;
+-    
++
+     @JsonProperty
+     private String source;
+ 
+@@ -37,21 +37,51 @@ public class WeatherData {
+         this.timestamp = new Date();
+     }
+ 
+-    public String getLocation() { return location; }
+-    public void setLocation(String location) { this.location = location; }
+-    
+-    public double getTemperature() { return temperature; }
+-    public void setTemperature(double temperature) { this.temperature = temperature; }
+-    
+-    public double getHumidity() { return humidity; }
+-    public void setHumidity(double humidity) { this.humidity = humidity; }
+-    
+-    public double getPressure() { return pressure; }
+-    public void setPressure(double pressure) { this.pressure = pressure; }
+-    
+-    public Date getTimestamp() { return timestamp; }
+-    public void setTimestamp(Date timestamp) { this.timestamp = timestamp; }
+-    
+-    public String getSource() { return source; }
+-    public void setSource(String source) { this.source = source; }
++    public String getLocation() {
++        return location;
++    }
++
++    public void setLocation(String location) {
++        this.location = location;
++    }
++
++    public double getTemperature() {
++        return temperature;
++    }
++
++    public void setTemperature(double temperature) {
++        this.temperature = temperature;
++    }
++
++    public double getHumidity() {
++        return humidity;
++    }
++
++    public void setHumidity(double humidity) {
++        this.humidity = humidity;
++    }
++
++    public double getPressure() {
++        return pressure;
++    }
++
++    public void setPressure(double pressure) {
++        this.pressure = pressure;
++    }
++
++    public Date getTimestamp() {
++        return timestamp;
++    }
++
++    public void setTimestamp(Date timestamp) {
++        this.timestamp = timestamp;
++    }
++
++    public String getSource() {
++        return source;
++    }
++
++    public void setSource(String source) {
++        this.source = source;
++    }
+ }
+\ No newline at end of file
+diff --git a/common/src/main/java/com/weather/common/util/DateUtils.java b/common/src/main/java/com/weather/common/util/DateUtils.java
+index fafa0b1..deaaf35 100644
+--- a/common/src/main/java/com/weather/common/util/DateUtils.java
++++ b/common/src/main/java/com/weather/common/util/DateUtils.java
+@@ -5,11 +5,11 @@ import java.util.Date;
+ 
+ public class DateUtils {
+     private static final SimpleDateFormat ISO_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+-    
++
+     public static String formatDate(Date date) {
+         return ISO_FORMAT.format(date);
+     }
+-    
++
+     public static Date parseDate(String dateString) {
+         try {
+             return ISO_FORMAT.parse(dateString);
+@@ -17,7 +17,7 @@ public class DateUtils {
+             return new Date();
+         }
+     }
+-    
++
+     public static Date getCurrentDate() {
+         return new Date();
+     }
+diff --git a/data-collector/src/main/java/com/weather/collector/DataCollectorMain.java b/data-collector/src/main/java/com/weather/collector/DataCollectorMain.java
+index 5ff91c9..469c3e2 100644
+--- a/data-collector/src/main/java/com/weather/collector/DataCollectorMain.java
++++ b/data-collector/src/main/java/com/weather/collector/DataCollectorMain.java
+@@ -7,9 +7,9 @@ public class DataCollectorMain {
+     public static void main(String[] args) {
+         WeatherDataCollector collector = new WeatherDataCollector();
+         CollectionScheduler scheduler = new CollectionScheduler(collector);
+-        
++
+         Runtime.getRuntime().addShutdownHook(new Thread(scheduler::shutdown));
+-        
++
+         scheduler.start();
+     }
+ }
+\ No newline at end of file
+diff --git a/data-collector/src/main/java/com/weather/collector/scheduler/CollectionScheduler.java b/data-collector/src/main/java/com/weather/collector/scheduler/CollectionScheduler.java
+index 201fbe7..3fa5bb7 100644
+--- a/data-collector/src/main/java/com/weather/collector/scheduler/CollectionScheduler.java
++++ b/data-collector/src/main/java/com/weather/collector/scheduler/CollectionScheduler.java
+@@ -9,15 +9,15 @@ import java.util.concurrent.TimeUnit;
+ public class CollectionScheduler {
+     private final WeatherDataCollector collector;
+     private final ScheduledExecutorService scheduler;
+-    
++
+     public CollectionScheduler(WeatherDataCollector collector) {
+         this.collector = collector;
+         this.scheduler = Executors.newScheduledThreadPool(1);
+     }
+-    
++
+     public void start() {
+         System.out.println("Starting weather data collection scheduler...");
+-        
++
+         // Collect data every 5 minutes
+         scheduler.scheduleAtFixedRate(() -> {
+             try {
+@@ -26,7 +26,7 @@ public class CollectionScheduler {
+                 System.err.println("Error in scheduled data collection: " + e.getMessage());
+             }
+         }, 0, 5, TimeUnit.MINUTES);
+-        
++
+         // Keep the main thread alive
+         try {
+             Thread.currentThread().join();
+@@ -34,7 +34,7 @@ public class CollectionScheduler {
+             Thread.currentThread().interrupt();
+         }
+     }
+-    
++
+     public void shutdown() {
+         System.out.println("Shutting down weather data collection scheduler...");
+         scheduler.shutdown();
+diff --git a/data-collector/src/main/java/com/weather/collector/service/WeatherDataCollector.java b/data-collector/src/main/java/com/weather/collector/service/WeatherDataCollector.java
+index ccdfae7..c6957b8 100644
+--- a/data-collector/src/main/java/com/weather/collector/service/WeatherDataCollector.java
++++ b/data-collector/src/main/java/com/weather/collector/service/WeatherDataCollector.java
+@@ -2,14 +2,10 @@ package com.weather.collector.service;
+ 
+ import com.weather.common.model.WeatherData;
+ import com.fasterxml.jackson.databind.ObjectMapper;
+-import org.apache.http.client.methods.CloseableHttpResponse;
+-import org.apache.http.client.methods.HttpGet;
+ import org.apache.http.impl.client.CloseableHttpClient;
+ import org.apache.http.impl.client.HttpClients;
+-import org.apache.http.util.EntityUtils;
+ 
+ import java.util.Arrays;
+-import java.util.Date;
+ import java.util.List;
+ import java.util.Random;
+ 
+@@ -18,14 +14,14 @@ public class WeatherDataCollector {
+     private final ObjectMapper objectMapper;
+     private final Random random;
+     private final List<String> locations;
+-    
++
+     public WeatherDataCollector() {
+         this.httpClient = HttpClients.createDefault();
+         this.objectMapper = new ObjectMapper();
+         this.random = new Random();
+         this.locations = Arrays.asList("New York", "London", "Tokyo", "Sydney", "Paris");
+     }
+-    
++
+     public void collectAndStore() {
+         for (String location : locations) {
+             try {
+@@ -36,30 +32,30 @@ public class WeatherDataCollector {
+             }
+         }
+     }
+-    
++
+     private WeatherData collectWeatherData(String location) throws Exception {
+         // Simulate API call with mock data
+         double temperature = 15.0 + (random.nextDouble() * 20.0);
+         double humidity = 40.0 + (random.nextDouble() * 40.0);
+         double pressure = 1000.0 + (random.nextDouble() * 50.0);
+-        
++
+         return new WeatherData(location, temperature, humidity, pressure, "external-api");
+     }
+-    
++
+     private void storeWeatherData(WeatherData weatherData) throws Exception {
+         // Simulate HTTP POST to weather-api
+         String weatherApiUrl = System.getenv("WEATHER_API_URL");
+         if (weatherApiUrl == null) {
+             weatherApiUrl = "http://localhost:8080";
+         }
+-        
++
+         String json = objectMapper.writeValueAsString(weatherData);
+         System.out.println("Collected weather data for " + weatherData.getLocation() + ": " + json);
+-        
++
+         // In a real implementation, this would POST to the weather-api
+         // For now, just log the data
+     }
+-    
++
+     public void shutdown() {
+         try {
+             httpClient.close();
+diff --git a/gradle/wrapper/gradle-wrapper.jar b/gradle/wrapper/gradle-wrapper.jar
+index 1b33c55..943f0cb 100644
+Binary files a/gradle/wrapper/gradle-wrapper.jar and b/gradle/wrapper/gradle-wrapper.jar differ
+diff --git a/gradle/wrapper/gradle-wrapper.properties b/gradle/wrapper/gradle-wrapper.properties
+index 472a41c..9b1b7b4 100644
+--- a/gradle/wrapper/gradle-wrapper.properties
++++ b/gradle/wrapper/gradle-wrapper.properties
+@@ -1,7 +1,8 @@
+ distributionBase=GRADLE_USER_HOME
+ distributionPath=wrapper/dists
+-distributionUrl=https\://services.gradle.org/distributions/gradle-6.7-all.zip
++distributionUrl=https\://services.gradle.org/distributions/gradle-7.6-bin.zip
+ networkTimeout=10000
+ validateDistributionUrl=true
+ zipStoreBase=GRADLE_USER_HOME
+ zipStorePath=wrapper/dists
++distributionSha256Sum=7ba68c54029790ab444b39d7e293d3236b2632631fb5f2e012bb28b4ff669e4b
+diff --git a/gradlew b/gradlew
+index 23d15a9..65dcd68 100755
+--- a/gradlew
++++ b/gradlew
+@@ -15,8 +15,6 @@
+ # See the License for the specific language governing permissions and
+ # limitations under the License.
+ #
+-# SPDX-License-Identifier: Apache-2.0
+-#
+ 
+ ##############################################################################
+ #
+@@ -57,7 +55,7 @@
+ #       Darwin, MinGW, and NonStop.
+ #
+ #   (3) This script is generated from the Groovy template
+-#       https://github.com/gradle/gradle/blob/HEAD/platforms/jvm/plugins-application/src/main/resources/org/gradle/api/internal/plugins/unixStartScript.txt
++#       https://github.com/gradle/gradle/blob/HEAD/subprojects/plugins/src/main/resources/org/gradle/api/internal/plugins/unixStartScript.txt
+ #       within the Gradle project.
+ #
+ #       You can find Gradle at https://github.com/gradle/gradle/.
+@@ -85,8 +83,10 @@ done
+ # This is normally unused
+ # shellcheck disable=SC2034
+ APP_BASE_NAME=${0##*/}
+-# Discard cd standard output in case $CDPATH is set (https://github.com/gradle/gradle/issues/25036)
+-APP_HOME=$( cd -P "${APP_HOME:-./}" > /dev/null && printf '%s\n' "$PWD" ) || exit
++APP_HOME=$( cd "${APP_HOME:-./}" && pwd -P ) || exit
++
++# Add default JVM options here. You can also use JAVA_OPTS and GRADLE_OPTS to pass JVM options to this script.
++DEFAULT_JVM_OPTS='"-Xmx64m" "-Xms64m"'
+ 
+ # Use the maximum available, or set MAX_FD != -1 to use that value.
+ MAX_FD=maximum
+@@ -114,7 +114,7 @@ case "$( uname )" in                #(
+   NONSTOP* )        nonstop=true ;;
+ esac
+ 
+-CLASSPATH="\\\"\\\""
++CLASSPATH=$APP_HOME/gradle/wrapper/gradle-wrapper.jar
+ 
+ 
+ # Determine the Java command to use to start the JVM.
+@@ -133,13 +133,10 @@ location of your Java installation."
+     fi
+ else
+     JAVACMD=java
+-    if ! command -v java >/dev/null 2>&1
+-    then
+-        die "ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH.
++    which java >/dev/null 2>&1 || die "ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH.
+ 
+ Please set the JAVA_HOME variable in your environment to match the
+ location of your Java installation."
+-    fi
+ fi
+ 
+ # Increase the maximum file descriptors if we can.
+@@ -147,7 +144,7 @@ if ! "$cygwin" && ! "$darwin" && ! "$nonstop" ; then
+     case $MAX_FD in #(
+       max*)
+         # In POSIX sh, ulimit -H is undefined. That's why the result is checked to see if it worked.
+-        # shellcheck disable=SC2039,SC3045
++        # shellcheck disable=SC3045 
+         MAX_FD=$( ulimit -H -n ) ||
+             warn "Could not query maximum file descriptor limit"
+     esac
+@@ -155,7 +152,7 @@ if ! "$cygwin" && ! "$darwin" && ! "$nonstop" ; then
+       '' | soft) :;; #(
+       *)
+         # In POSIX sh, ulimit -n is undefined. That's why the result is checked to see if it worked.
+-        # shellcheck disable=SC2039,SC3045
++        # shellcheck disable=SC3045 
+         ulimit -n "$MAX_FD" ||
+             warn "Could not set maximum file descriptor limit to $MAX_FD"
+     esac
+@@ -200,20 +197,16 @@ if "$cygwin" || "$msys" ; then
+     done
+ fi
+ 
+-
+-# Add default JVM options here. You can also use JAVA_OPTS and GRADLE_OPTS to pass JVM options to this script.
+-DEFAULT_JVM_OPTS='"-Xmx64m" "-Xms64m"'
+-
+-# Collect all arguments for the java command:
+-#   * DEFAULT_JVM_OPTS, JAVA_OPTS, and optsEnvironmentVar are not allowed to contain shell fragments,
+-#     and any embedded shellness will be escaped.
+-#   * For example: A user cannot expect ${Hostname} to be expanded, as it is an environment variable and will be
+-#     treated as '${Hostname}' itself on the command line.
++# Collect all arguments for the java command;
++#   * $DEFAULT_JVM_OPTS, $JAVA_OPTS, and $GRADLE_OPTS can contain fragments of
++#     shell script including quotes and variable substitutions, so put them in
++#     double quotes to make sure that they get re-expanded; and
++#   * put everything else in single quotes, so that it's not re-expanded.
+ 
+ set -- \
+         "-Dorg.gradle.appname=$APP_BASE_NAME" \
+         -classpath "$CLASSPATH" \
+-        -jar "$APP_HOME/gradle/wrapper/gradle-wrapper.jar" \
++        org.gradle.wrapper.GradleWrapperMain \
+         "$@"
+ 
+ # Stop when "xargs" is not available.
+diff --git a/weather-api/src/main/java/com/weather/api/WeatherApiApplication.java b/weather-api/src/main/java/com/weather/api/WeatherApiApplication.java
+index 56ad61a..9a79c2f 100644
+--- a/weather-api/src/main/java/com/weather/api/WeatherApiApplication.java
++++ b/weather-api/src/main/java/com/weather/api/WeatherApiApplication.java
+@@ -15,11 +15,10 @@ import io.dropwizard.setup.Bootstrap;
+ import io.dropwizard.setup.Environment;
+ import org.jdbi.v3.core.Jdbi;
+ 
+-import javax.ws.rs.container.ContainerRequestFilter;
+ import java.util.List;
+ 
+ public class WeatherApiApplication extends Application<WeatherApiConfiguration> {
+-    
++
+     public static void main(String[] args) throws Exception {
+         new WeatherApiApplication().run(args);
+     }
+@@ -38,9 +37,9 @@ public class WeatherApiApplication extends Application<WeatherApiConfiguration>
+     public void run(WeatherApiConfiguration configuration, Environment environment) {
+         final JdbiFactory factory = new JdbiFactory();
+         final Jdbi jdbi = factory.build(environment, configuration.getDataSourceFactory(), "postgresql");
+-        
++
+         final WeatherDAO weatherDAO = jdbi.onDemand(WeatherDAO.class);
+-        
++
+         // Deprecated auth chaining pattern
+         final JwtAuthFilter jwtFilter = JwtAuthFilter.createFilter(
+             new com.weather.api.auth.JwtAuthenticator(configuration.getJwtSecret()),
+@@ -59,10 +58,10 @@ public class WeatherApiApplication extends Application<WeatherApiConfiguration>
+ 
+         environment.jersey().register(new AuthDynamicFeature(chainedAuthFilter));
+         environment.jersey().register(new AuthValueFactoryProvider.Binder<>(com.weather.api.auth.User.class));
+-        
++
+         // Register resources
+         environment.jersey().register(new WeatherResource(weatherDAO));
+-        
++
+         // Register health checks
+         environment.healthChecks().register("database", new DatabaseHealthCheck(jdbi));
+     }
+diff --git a/weather-api/src/main/java/com/weather/api/auth/ApiKeyAuthFilter.java b/weather-api/src/main/java/com/weather/api/auth/ApiKeyAuthFilter.java
+deleted file mode 100644
+index f0c251f..0000000
+--- a/weather-api/src/main/java/com/weather/api/auth/ApiKeyAuthFilter.java
++++ /dev/null
+@@ -1,46 +0,0 @@
+-package com.weather.api.auth;
+-
+-import io.dropwizard.auth.AuthFilter;
+-import io.dropwizard.auth.Authenticator;
+-
+-import javax.annotation.Priority;
+-import javax.ws.rs.Priorities;
+-import javax.ws.rs.WebApplicationException;
+-import javax.ws.rs.container.ContainerRequestContext;
+-import java.io.IOException;
+-import java.util.Optional;
+-
+-@Priority(Priorities.AUTHENTICATION)
+-public class ApiKeyAuthFilter extends AuthFilter<String, User> {
+-
+-    private ApiKeyAuthFilter() {}
+-
+-    @Override
+-    public void filter(ContainerRequestContext requestContext) throws IOException {
+-        final String apiKey = requestContext.getHeaders().getFirst("X-API-Key");
+-
+-        if (apiKey == null) {
+-            throw new WebApplicationException(unauthorizedHandler.buildResponse(prefix, realm));
+-        }
+-
+-        try {
+-            final Optional<User> result = authenticator.authenticate(apiKey);
+-            if (result.isPresent()) {
+-                requestContext.setSecurityContext(new AuthSecurityContext(result.get(), prefix, requestContext));
+-                return;
+-            }
+-        } catch (Exception e) {
+-            logger.warn("Error authenticating API key", e);
+-        }
+-
+-        throw new WebApplicationException(unauthorizedHandler.buildResponse(prefix, realm));
+-    }
+-
+-    public static ApiKeyAuthFilter createFilter(Authenticator<String, User> authenticator, String prefix, String realm) {
+-        ApiKeyAuthFilter filter = new ApiKeyAuthFilter();
+-        filter.authenticator = authenticator;
+-        filter.prefix = prefix;
+-        filter.realm = realm;
+-        return filter;
+-    }
+-}
+\ No newline at end of file
+diff --git a/weather-api/src/main/java/com/weather/api/auth/JwtAuthFilter.java b/weather-api/src/main/java/com/weather/api/auth/JwtAuthFilter.java
+deleted file mode 100644
+index 5bc0183..0000000
+--- a/weather-api/src/main/java/com/weather/api/auth/JwtAuthFilter.java
++++ /dev/null
+@@ -1,59 +0,0 @@
+-package com.weather.api.auth;
+-
+-import io.dropwizard.auth.AuthFilter;
+-import io.dropwizard.auth.Authenticator;
+-
+-import javax.annotation.Priority;
+-import javax.ws.rs.Priorities;
+-import javax.ws.rs.WebApplicationException;
+-import javax.ws.rs.container.ContainerRequestContext;
+-import javax.ws.rs.core.HttpHeaders;
+-import java.io.IOException;
+-import java.util.Optional;
+-
+-@Priority(Priorities.AUTHENTICATION)
+-public class JwtAuthFilter extends AuthFilter<String, User> {
+-
+-    private JwtAuthFilter() {}
+-
+-    @Override
+-    public void filter(ContainerRequestContext requestContext) throws IOException {
+-        final String header = requestContext.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+-
+-        if (header == null) {
+-            throw new WebApplicationException(unauthorizedHandler.buildResponse(prefix, realm));
+-        }
+-
+-        final int space = header.indexOf(' ');
+-        if (space <= 0) {
+-            throw new WebApplicationException(unauthorizedHandler.buildResponse(prefix, realm));
+-        }
+-
+-        final String method = header.substring(0, space);
+-        if (!prefix.equalsIgnoreCase(method)) {
+-            throw new WebApplicationException(unauthorizedHandler.buildResponse(prefix, realm));
+-        }
+-
+-        final String token = header.substring(space + 1);
+-
+-        try {
+-            final Optional<User> result = authenticator.authenticate(token);
+-            if (result.isPresent()) {
+-                requestContext.setSecurityContext(new AuthSecurityContext(result.get(), prefix, requestContext));
+-                return;
+-            }
+-        } catch (Exception e) {
+-            logger.warn("Error authenticating credentials", e);
+-        }
+-
+-        throw new WebApplicationException(unauthorizedHandler.buildResponse(prefix, realm));
+-    }
+-
+-    public static JwtAuthFilter createFilter(Authenticator<String, User> authenticator, String prefix, String realm) {
+-        JwtAuthFilter filter = new JwtAuthFilter();
+-        filter.authenticator = authenticator;
+-        filter.prefix = prefix;
+-        filter.realm = realm;
+-        return filter;
+-    }
+-}
+\ No newline at end of file
+diff --git a/weather-api/src/main/java/com/weather/api/auth/JwtAuthenticator.java b/weather-api/src/main/java/com/weather/api/auth/JwtAuthenticator.java
+deleted file mode 100644
+index bf8cf37..0000000
+--- a/weather-api/src/main/java/com/weather/api/auth/JwtAuthenticator.java
++++ /dev/null
+@@ -1,36 +0,0 @@
+-package com.weather.api.auth;
+-
+-import io.dropwizard.auth.Authenticator;
+-import io.jsonwebtoken.Claims;
+-import io.jsonwebtoken.Jwts;
+-import io.jsonwebtoken.SignatureException;
+-
+-import java.util.Optional;
+-
+-public class JwtAuthenticator implements Authenticator<String, User> {
+-    private final String secret;
+-
+-    public JwtAuthenticator(String secret) {
+-        this.secret = secret;
+-    }
+-
+-    @Override
+-    public Optional<User> authenticate(String token) {
+-        try {
+-            Claims claims = Jwts.parser()
+-                .setSigningKey(secret)
+-                .parseClaimsJws(token)
+-                .getBody();
+-
+-            String username = claims.getSubject();
+-            if (username != null && !username.isEmpty()) {
+-                return Optional.of(new User(username));
+-            }
+-        } catch (SignatureException e) {
+-            // Invalid token
+-        } catch (Exception e) {
+-            // Other JWT parsing errors
+-        }
+-        return Optional.empty();
+-    }
+-}
+\ No newline at end of file
+diff --git a/weather-api/src/main/java/com/weather/api/config/WeatherApiConfiguration.java b/weather-api/src/main/java/com/weather/api/config/WeatherApiConfiguration.java
+index 90e6cbd..8a68645 100644
+--- a/weather-api/src/main/java/com/weather/api/config/WeatherApiConfiguration.java
++++ b/weather-api/src/main/java/com/weather/api/config/WeatherApiConfiguration.java
+@@ -9,21 +9,21 @@ import javax.validation.constraints.NotNull;
+ import java.util.List;
+ 
+ public class WeatherApiConfiguration extends Configuration {
+-    
++
+     @Valid
+     @NotNull
+     @JsonProperty("database")
+     private DataSourceFactory database = new DataSourceFactory();
+-    
++
+     @JsonProperty("jwtSecret")
+     private String jwtSecret = "weather-secret-key-2021";
+-    
++
+     @JsonProperty("apiKeys")
+     private List<String> apiKeys = List.of("weather-api-key-001", "weather-api-key-002");
+-    
++
+     @JsonProperty("weatherApiUrl")
+     private String weatherApiUrl = "https://api.weather.com/v1";
+-    
++
+     @JsonProperty("dataRetentionDays")
+     private int dataRetentionDays = 30;
+ 
+diff --git a/weather-api/src/main/java/com/weather/api/db/WeatherDAO.java b/weather-api/src/main/java/com/weather/api/db/WeatherDAO.java
+index 5955525..3c9a73b 100644
+--- a/weather-api/src/main/java/com/weather/api/db/WeatherDAO.java
++++ b/weather-api/src/main/java/com/weather/api/db/WeatherDAO.java
+@@ -13,24 +13,24 @@ import java.util.Optional;
+ 
+ @RegisterBeanMapper(WeatherData.class)
+ public interface WeatherDAO {
+-    
++
+     @SqlUpdate("INSERT INTO weather_data (location, temperature, humidity, pressure, timestamp, source) " +
+-               "VALUES (:location, :temperature, :humidity, :pressure, :timestamp, :source)")
++        "VALUES (:location, :temperature, :humidity, :pressure, :timestamp, :source)")
+     void insertWeatherData(@BindBean WeatherData weatherData);
+-    
++
+     @SqlQuery("SELECT * FROM weather_data WHERE location = :location ORDER BY timestamp DESC LIMIT 1")
+     Optional<WeatherData> getCurrentWeather(@Bind("location") String location);
+-    
++
+     @SqlQuery("SELECT * FROM weather_data WHERE location = :location " +
+-              "AND timestamp >= :startDate AND timestamp <= :endDate " +
+-              "ORDER BY timestamp DESC")
+-    List<WeatherData> getHistoricalWeather(@Bind("location") String location, 
+-                                          @Bind("startDate") Date startDate, 
+-                                          @Bind("endDate") Date endDate);
+-    
++        "AND timestamp >= :startDate AND timestamp <= :endDate " +
++        "ORDER BY timestamp DESC")
++    List<WeatherData> getHistoricalWeather(@Bind("location") String location,
++        @Bind("startDate") Date startDate,
++        @Bind("endDate") Date endDate);
++
+     @SqlQuery("SELECT DISTINCT location FROM weather_data ORDER BY location")
+     List<String> getAllLocations();
+-    
++
+     @SqlUpdate("DELETE FROM weather_data WHERE timestamp < :cutoffDate")
+     int deleteOldData(@Bind("cutoffDate") Date cutoffDate);
+ }
+\ No newline at end of file
+diff --git a/weather-api/src/main/java/com/weather/api/resources/WeatherResource.java b/weather-api/src/main/java/com/weather/api/resources/WeatherResource.java
+index 8b7eca9..697d9cf 100644
+--- a/weather-api/src/main/java/com/weather/api/resources/WeatherResource.java
++++ b/weather-api/src/main/java/com/weather/api/resources/WeatherResource.java
+@@ -20,20 +20,20 @@ import java.util.Optional;
+ @Produces(MediaType.APPLICATION_JSON)
+ @Consumes(MediaType.APPLICATION_JSON)
+ public class WeatherResource {
+-    
++
+     private final WeatherDAO weatherDAO;
+-    
++
+     public WeatherResource(WeatherDAO weatherDAO) {
+         this.weatherDAO = weatherDAO;
+     }
+-    
++
+     @GET
+     @Path("/current/{location}")
+     public Response getCurrentWeather(@Auth String user,
+-                                    @PathParam("location") @NotNull String location,
+-                                    @Context UriInfo uriInfo) {
++        @PathParam("location") @NotNull String location,
++        @Context UriInfo uriInfo) {
+         Optional<WeatherData> weatherData = weatherDAO.getCurrentWeather(location);
+-        
++
+         if (weatherData.isPresent()) {
+             return Response.ok(weatherData.get()).build();
+         } else {
+@@ -42,28 +42,28 @@ public class WeatherResource {
+                 .build();
+         }
+     }
+-    
++
+     @GET
+     @Path("/historical/{location}")
+     public Response getHistoricalWeather(@Auth String user,
+-                                       @PathParam("location") @NotNull String location,
+-                                       @QueryParam("startDate") String startDateStr,
+-                                       @QueryParam("endDate") String endDateStr,
+-                                       @Context UriInfo uriInfo) {
+-        Date startDate = startDateStr != null ? DateUtils.parseDate(startDateStr) : 
+-                        new Date(System.currentTimeMillis() - (7 * 24 * 60 * 60 * 1000L));
++        @PathParam("location") @NotNull String location,
++        @QueryParam("startDate") String startDateStr,
++        @QueryParam("endDate") String endDateStr,
++        @Context UriInfo uriInfo) {
++        Date startDate = startDateStr != null ? DateUtils.parseDate(startDateStr) :
++            new Date(System.currentTimeMillis() - (7 * 24 * 60 * 60 * 1000L));
+         Date endDate = endDateStr != null ? DateUtils.parseDate(endDateStr) : new Date();
+-        
++
+         List<WeatherData> historicalData = weatherDAO.getHistoricalWeather(location, startDate, endDate);
+-        
++
+         return Response.ok(historicalData).build();
+     }
+-    
++
+     @POST
+     @Path("/data")
+     public Response submitWeatherData(@Auth String user,
+-                                    @Valid @NotNull WeatherData weatherData,
+-                                    @Context UriInfo uriInfo) {
++        @Valid @NotNull WeatherData weatherData,
++        @Context UriInfo uriInfo) {
+         try {
+             weatherDAO.insertWeatherData(weatherData);
+             return Response.status(Response.Status.CREATED)
+@@ -75,11 +75,11 @@ public class WeatherResource {
+                 .build();
+         }
+     }
+-    
++
+     @GET
+     @Path("/locations")
+     public Response getAllLocations(@Auth String user,
+-                                  @Context UriInfo uriInfo) {
++        @Context UriInfo uriInfo) {
+         List<String> locations = weatherDAO.getAllLocations();
+         return Response.ok(locations).build();
+     }
+diff --git a/weather-api/src/test/java/com/weather/api/auth/JwtAuthenticatorTest.java b/weather-api/src/test/java/com/weather/api/auth/JwtAuthenticatorTest.java
+deleted file mode 100644
+index e9d9784..0000000
+--- a/weather-api/src/test/java/com/weather/api/auth/JwtAuthenticatorTest.java
++++ /dev/null
+@@ -1,56 +0,0 @@
+-package com.weather.api.auth;
+-
+-import org.junit.jupiter.api.BeforeEach;
+-import org.junit.jupiter.api.Test;
+-
+-import java.util.Optional;
+-
+-import static org.junit.jupiter.api.Assertions.assertFalse;
+-import static org.junit.jupiter.api.Assertions.assertTrue;
+-
+-class JwtAuthenticatorTest {
+-
+-    private JwtAuthenticator jwtAuthenticator;
+-    private final String secret = "test-secret-key";
+-
+-    @BeforeEach
+-    void setUp() {
+-        jwtAuthenticator = new JwtAuthenticator(secret);
+-    }
+-
+-    @Test
+-    void authenticate_ReturnsEmpty_WhenTokenIsInvalid() {
+-        // Given
+-        String invalidToken = "invalid.token.here";
+-
+-        // When
+-        Optional<User> result = jwtAuthenticator.authenticate(invalidToken);
+-
+-        // Then
+-        assertFalse(result.isPresent());
+-    }
+-
+-    @Test
+-    void authenticate_ReturnsEmpty_WhenTokenIsNull() {
+-        // Given
+-        String nullToken = null;
+-
+-        // When
+-        Optional<User> result = jwtAuthenticator.authenticate(nullToken);
+-
+-        // Then
+-        assertFalse(result.isPresent());
+-    }
+-
+-    @Test
+-    void authenticate_ReturnsEmpty_WhenTokenIsEmpty() {
+-        // Given
+-        String emptyToken = "";
+-
+-        // When
+-        Optional<User> result = jwtAuthenticator.authenticate(emptyToken);
+-
+-        // Then
+-        assertFalse(result.isPresent());
+-    }
+-}
+\ No newline at end of file

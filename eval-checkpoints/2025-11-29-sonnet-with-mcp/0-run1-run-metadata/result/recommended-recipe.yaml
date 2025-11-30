@@ -1,0 +1,71 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.example.PRRecipe2Option3
+displayName: Java 17 to 21 Upgrade - Toolchain Migration Fix
+description: |
+  Hybrid upgrade from Java 17 to Java 21 addressing the toolchain API migration gap.
+  This recipe combines targeted semantic recipes with text-based transformations to
+  achieve complete coverage matching PR #2.
+
+  Key improvements over Options 1 & 2:
+  - Properly migrates from sourceCompatibility/targetCompatibility to Java toolchain API
+  - Maintains high precision by avoiding unnecessary code modernizations
+  - Updates all configuration files (Gradle, Docker, CI/CD, documentation)
+
+recipeList:
+  # 1. Remove old sourceCompatibility/targetCompatibility and add Java toolchain configuration
+  # This is the critical gap fix - no semantic recipe exists for this migration
+  - org.openrewrite.text.FindAndReplace:
+      find: "sourceCompatibility = '17'\ntargetCompatibility = '17'"
+      replace: "java {\n    toolchain {\n        languageVersion = JavaLanguageVersion.of(21)\n    }\n}"
+      regex: false
+      caseSensitive: true
+      filePattern: "**/build.gradle"
+
+  # 2. Update Gradle wrapper version and properties
+  - org.openrewrite.gradle.UpdateGradleWrapper:
+      version: 8.5
+
+  # 3. Update GitHub Actions java-version (semantic recipe, not text replacement)
+  - org.openrewrite.github.SetupJavaUpgradeJavaVersion:
+      minimumJavaMajorVersion: 21
+
+  # 4. Update GitHub Actions step name
+  - org.openrewrite.text.FindAndReplace:
+      find: "Set up JDK 17"
+      replace: "Set up JDK 21"
+      regex: false
+      caseSensitive: true
+      filePattern: ".github/workflows/*.yml"
+
+  # 5. Update Dockerfile builder stage JDK image
+  - org.openrewrite.text.FindAndReplace:
+      find: "eclipse-temurin:17-jdk-alpine"
+      replace: "eclipse-temurin:21-jdk-alpine"
+      regex: false
+      caseSensitive: true
+      filePattern: "**/Dockerfile"
+
+  # 6. Update Dockerfile runtime stage JRE image
+  - org.openrewrite.text.FindAndReplace:
+      find: "eclipse-temurin:17-jre-alpine"
+      replace: "eclipse-temurin:21-jre-alpine"
+      regex: false
+      caseSensitive: true
+      filePattern: "**/Dockerfile"
+
+  # 7. Update README.md Java version references (both Technology Stack and Prerequisites)
+  - org.openrewrite.text.FindAndReplace:
+      find: "Java 17"
+      replace: "Java 21"
+      regex: false
+      caseSensitive: true
+      filePattern: "**/README.md"
+
+  # 8. Update README.md Gradle version (missed in Option 2)
+  - org.openrewrite.text.FindAndReplace:
+      find: "Gradle 8.1"
+      replace: "Gradle 8.5"
+      regex: false
+      caseSensitive: true
+      filePattern: "**/README.md"

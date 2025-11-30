@@ -1,0 +1,25 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.yourorg.UpgradeDropwizard2to3Option1
+displayName: Upgrade Dropwizard 2.1.12 to 3.0.0 - Broad Approach
+description: Upgrades Dropwizard from version 2.1.12 to 3.0.0 using broad recipes where possible and targeted recipes for specific transformations.
+recipeList:
+  # Update Java version to 17
+  - org.openrewrite.java.migrate.UpgradeJavaVersion:
+      version: 17
+
+  # Update all Dropwizard dependencies
+  - org.openrewrite.gradle.UpgradeDependencyVersion:
+      groupId: io.dropwizard
+      artifactId: "*"
+      newVersion: 3.0.0
+
+  # Migrate package imports from io.dropwizard to io.dropwizard.core
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: io.dropwizard
+      newPackageName: io.dropwizard.core
+      recursive: false
+
+  # Remove unnecessary @Override annotations
+  - org.openrewrite.java.dropwizard.method.RemoveUnnecessaryOverride:
+      ignoreAnonymousClassMethods: false

@@ -1,0 +1,69 @@
+Perfect! All phases complete. Let me create a final summary:
+
+## Workflow Complete
+
+**Session ID**: 1d90a0f9-7293-423b-8929-fe58ee677b5f
+**Output Directory**: `.output/2025-11-28-19-03/`
+
+### Execution Summary
+
+**PR Analyzed**: https://github.com/openrewrite-assist-testing-dataset/weather-monitoring-service/pull/3
+- Java 11→17 upgrade + authentication simplification
+- 295 expected line changes across 11 files
+
+### Results by Phase
+
+**Phase 1**: Repository setup ✓
+- Cloned weather-monitoring-service
+- Fetched PR #3 branch
+- Saved PR diff
+
+**Phase 2**: Intent extraction ✓
+- Strategic intent: Dual-purpose migration
+- Tactical intents: Java upgrade + auth refactoring
+- Created detailed intent tree
+
+**Phase 3**: Recipe mapping ✓
+- Option 1: Broad migration (UpgradeToJava17)
+- Option 2: Targeted hybrid (10 explicit recipes)
+
+**Phase 4**: Recipe validation ✓
+- Option 1: 62.46% precision, fatal ChangeType flaw
+- Option 2: 52.59% precision, compilation failures
+
+**Phase 5**: Recipe refinement ✓
+- Option 3: Combined learnings, removed fatal flaws
+- 98.57% precision, 70.17% recall
+
+**Phase 6**: Final decision ✓
+- **Recommended**: Option 3 (com.weather.api.PRRecipe3Option3)
+- Production-ready for infrastructure changes
+- Requires manual auth refactoring (88 lines)
+
+### Performance Comparison
+
+| Metric | Option 1 | Option 2 | **Option 3** |
+|--------|----------|----------|--------------|
+| Precision | 62.46% | 52.59% | **98.57%** |
+| F1 Score | 66.98% | 60.86% | **81.98%** |
+| False Positives | 128 | 192 | **3** |
+| Safe for Production | ❌ | ❌ | ✅ |
+
+### Deliverables
+
+**Result Directory** (`result/`):
+- `pr.diff` - Original PR diff
+- `recommended-recipe.yaml` - Option 3 recipe
+- `recommended-recipe.diff` - Recipe execution output
+
+**All Required Files Verified** (27 files):
+- ✓ Session ID
+- ✓ Intent tree
+- ✓ Phase reports (1-6)
+- ✓ Recipe YAMLs (options 1-3)
+- ✓ Recipe diffs (options 1-3)
+- ✓ Stats JSONs (options 1-3)
+- ✓ Creation analyses (options 1-3)
+- ✓ Validation analyses (options 1-3)
+- ✓ PR diff
+- ✓ Result artifacts
