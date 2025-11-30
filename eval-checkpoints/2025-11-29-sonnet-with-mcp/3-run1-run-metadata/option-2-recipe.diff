@@ -1,0 +1,172 @@
+diff --git a/build.gradle b/build.gradle
+index 9efba2a..3ff8ee3 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -19,10 +19,10 @@ repositories {
+ 
+ dependencies {
+     // Dropwizard 2.1.x
+-    implementation 'io.dropwizard:dropwizard-core:2.1.12'
+-    implementation 'io.dropwizard:dropwizard-jdbi3:2.1.12'
+-    implementation 'io.dropwizard:dropwizard-auth:2.1.12'
+-    implementation 'io.dropwizard:dropwizard-configuration:2.1.12'
++    implementation 'io.dropwizard:dropwizard-core:3.0.0'
++    implementation 'io.dropwizard:dropwizard-jdbi3:3.0.0'
++    implementation 'io.dropwizard:dropwizard-auth:3.0.0'
++    implementation 'io.dropwizard:dropwizard-configuration:3.0.0'
+     
+     // MySQL
+     implementation 'mysql:mysql-connector-java:8.0.33'
+@@ -46,7 +46,7 @@ dependencies {
+     
+     // JUnit 4 for tests
+     testImplementation 'junit:junit:4.13.2'
+-    testImplementation 'io.dropwizard:dropwizard-testing:2.1.12'
++    testImplementation 'io.dropwizard:dropwizard-testing:3.0.0'
+     testImplementation 'org.mockito:mockito-core:4.6.1'
+     testImplementation 'org.testcontainers:mysql:1.17.6'
+ }
+diff --git a/src/main/java/com/example/tasks/DatabaseHealthCheck.java b/src/main/java/com/example/tasks/DatabaseHealthCheck.java
+index 68e2895..472ca7b 100644
+--- a/src/main/java/com/example/tasks/DatabaseHealthCheck.java
++++ b/src/main/java/com/example/tasks/DatabaseHealthCheck.java
+@@ -16,7 +16,6 @@ public class DatabaseHealthCheck extends HealthCheck {
+         this.dataSourceFactory = dataSourceFactory;
+     }
+     
+-    @Override
+     protected Result check() throws Exception {
+         try (Connection connection = DriverManager.getConnection(
+                 dataSourceFactory.getUrl(),
+diff --git a/src/main/java/com/example/tasks/TaskApplication.java b/src/main/java/com/example/tasks/TaskApplication.java
+index 4af92f5..4cb5011 100644
+--- a/src/main/java/com/example/tasks/TaskApplication.java
++++ b/src/main/java/com/example/tasks/TaskApplication.java
+@@ -4,15 +4,15 @@ import com.example.tasks.api.TaskResource;
+ import com.example.tasks.auth.BasicAuthenticator;
+ import com.example.tasks.auth.ApiKeyAuthenticator;
+ import com.example.tasks.db.TaskDAO;
+-import io.dropwizard.Application;
+ import io.dropwizard.auth.AuthDynamicFeature;
+ import io.dropwizard.auth.AuthValueFactoryProvider;
+ import io.dropwizard.auth.basic.BasicCredentialAuthFilter;
+ import io.dropwizard.auth.chained.ChainedAuthFilter;
++import io.dropwizard.core.Application;
++import io.dropwizard.core.setup.Bootstrap;
++import io.dropwizard.core.setup.Environment;
+ import io.dropwizard.db.DataSourceFactory;
+ import io.dropwizard.jdbi3.JdbiFactory;
+-import io.dropwizard.setup.Bootstrap;
+-import io.dropwizard.setup.Environment;
+ import io.swagger.jaxrs.config.BeanConfig;
+ import io.swagger.jaxrs.listing.ApiListingResource;
+ import io.swagger.jaxrs.listing.SwaggerSerializers;
+@@ -28,17 +28,14 @@ public class TaskApplication extends Application<TaskConfiguration> {
+         new TaskApplication().run(args);
+     }
+     
+-    @Override
+     public String getName() {
+         return "task-management-api";
+     }
+     
+-    @Override
+     public void initialize(Bootstrap<TaskConfiguration> bootstrap) {
+         // Add any bundles here
+     }
+     
+-    @Override
+     public void run(TaskConfiguration configuration, Environment environment) {
+         final JdbiFactory factory = new JdbiFactory();
+         final Jdbi jdbi = factory.build(environment, configuration.getDataSourceFactory(), "mysql");
+diff --git a/src/main/java/com/example/tasks/TaskConfiguration.java b/src/main/java/com/example/tasks/TaskConfiguration.java
+index aed98f3..8fcac2e 100644
+--- a/src/main/java/com/example/tasks/TaskConfiguration.java
++++ b/src/main/java/com/example/tasks/TaskConfiguration.java
+@@ -1,7 +1,7 @@
+ package com.example.tasks;
+ 
+ import com.fasterxml.jackson.annotation.JsonProperty;
+-import io.dropwizard.Configuration;
++import io.dropwizard.core.Configuration;
+ import io.dropwizard.db.DataSourceFactory;
+ 
+ import javax.validation.Valid;
+diff --git a/src/main/java/com/example/tasks/auth/ApiKeyAuthenticator.java b/src/main/java/com/example/tasks/auth/ApiKeyAuthenticator.java
+index 0b85e67..14b9029 100644
+--- a/src/main/java/com/example/tasks/auth/ApiKeyAuthenticator.java
++++ b/src/main/java/com/example/tasks/auth/ApiKeyAuthenticator.java
+@@ -18,7 +18,6 @@ public class ApiKeyAuthenticator implements Authenticator<BasicCredentials, Prin
+         "task-manager-key-999"
+     );
+     
+-    @Override
+     public Optional<Principal> authenticate(BasicCredentials credentials) throws AuthenticationException {
+         String apiKey = credentials.getUsername();
+         String password = credentials.getPassword();
+@@ -42,7 +41,6 @@ public class ApiKeyAuthenticator implements Authenticator<BasicCredentials, Prin
+             this.apiKey = apiKey;
+         }
+         
+-        @Override
+         public String getName() {
+             return apiKey;
+         }
+@@ -51,7 +49,6 @@ public class ApiKeyAuthenticator implements Authenticator<BasicCredentials, Prin
+             return apiKey;
+         }
+         
+-        @Override
+         public String toString() {
+             return "ApiKeyPrincipal{" + "apiKey='" + apiKey + '\'' + '}';
+         }
+diff --git a/src/main/java/com/example/tasks/auth/BasicAuthenticator.java b/src/main/java/com/example/tasks/auth/BasicAuthenticator.java
+index 3d87805..43b6590 100644
+--- a/src/main/java/com/example/tasks/auth/BasicAuthenticator.java
++++ b/src/main/java/com/example/tasks/auth/BasicAuthenticator.java
+@@ -18,7 +18,6 @@ public class BasicAuthenticator implements Authenticator<BasicCredentials, Princ
+         put("taskmaster", "tasks789");
+     }};
+     
+-    @Override
+     public Optional<Principal> authenticate(BasicCredentials credentials) throws AuthenticationException {
+         String username = credentials.getUsername();
+         String password = credentials.getPassword();
+@@ -37,12 +36,10 @@ public class BasicAuthenticator implements Authenticator<BasicCredentials, Princ
+             this.name = name;
+         }
+         
+-        @Override
+         public String getName() {
+             return name;
+         }
+         
+-        @Override
+         public String toString() {
+             return "BasicPrincipal{" + "name='" + name + '\'' + '}';
+         }
+diff --git a/src/main/java/com/example/tasks/core/Task.java b/src/main/java/com/example/tasks/core/Task.java
+index 7811f98..a63402c 100644
+--- a/src/main/java/com/example/tasks/core/Task.java
++++ b/src/main/java/com/example/tasks/core/Task.java
+@@ -105,7 +105,6 @@ public class Task {
+         this.updatedAt = LocalDateTime.now();
+     }
+     
+-    @Override
+     public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+@@ -114,12 +113,10 @@ public class Task {
+                Objects.equals(title, task.title);
+     }
+     
+-    @Override
+     public int hashCode() {
+         return Objects.hash(id, title);
+     }
+     
+-    @Override
+     public String toString() {
+         return "Task{" +
+                "id=" + id +

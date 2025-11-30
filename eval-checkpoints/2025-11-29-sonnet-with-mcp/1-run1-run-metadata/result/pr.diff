@@ -1,0 +1,484 @@
+diff --git a/Dockerfile b/Dockerfile
+index ae04ef6..8896c45 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,5 +1,5 @@
+ # Multi-stage build with outdated base image
+-FROM openjdk:11-jdk-slim as builder
++FROM eclipse-temurin:17-jdk-alpine as builder
+ 
+ WORKDIR /app
+ 
+@@ -17,7 +17,7 @@ COPY data-collector/ ./data-collector/
+ RUN ./gradlew clean build -x test
+ 
+ # Runtime stage with outdated JRE
+-FROM openjdk:11-jre-slim
++FROM eclipse-temurin:17-jre-alpine
+ 
+ WORKDIR /app
+ 
+diff --git a/build.gradle b/build.gradle
+index 79b8892..bc99458 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -8,8 +8,8 @@ subprojects {
+     apply plugin: 'java'
+     apply plugin: 'application'
+ 
+-    sourceCompatibility = '11'
+-    targetCompatibility = '11'
++    sourceCompatibility = '17'
++    targetCompatibility = '17'
+ 
+     dependencies {
+         implementation 'io.dropwizard:dropwizard-core:2.0.34'
+diff --git a/gradle/wrapper/gradle-wrapper.properties b/gradle/wrapper/gradle-wrapper.properties
+index 472a41c..68c4db4 100644
+--- a/gradle/wrapper/gradle-wrapper.properties
++++ b/gradle/wrapper/gradle-wrapper.properties
+@@ -1,6 +1,6 @@
+ distributionBase=GRADLE_USER_HOME
+ distributionPath=wrapper/dists
+-distributionUrl=https\://services.gradle.org/distributions/gradle-6.7-all.zip
++distributionUrl=https\://services.gradle.org/distributions/gradle-7.6-all.zip
+ networkTimeout=10000
+ validateDistributionUrl=true
+ zipStoreBase=GRADLE_USER_HOME
+diff --git a/weather-api/src/main/java/com/weather/api/WeatherApiApplication.java b/weather-api/src/main/java/com/weather/api/WeatherApiApplication.java
+index 56ad61a..2cade26 100644
+--- a/weather-api/src/main/java/com/weather/api/WeatherApiApplication.java
++++ b/weather-api/src/main/java/com/weather/api/WeatherApiApplication.java
+@@ -3,20 +3,16 @@ package com.weather.api;
+ import com.weather.api.config.WeatherApiConfiguration;
+ import com.weather.api.health.DatabaseHealthCheck;
+ import com.weather.api.resources.WeatherResource;
+-import com.weather.api.auth.JwtAuthFilter;
+-import com.weather.api.auth.ApiKeyAuthFilter;
++import com.weather.api.auth.User;
+ import com.weather.api.db.WeatherDAO;
+ import io.dropwizard.Application;
+ import io.dropwizard.auth.AuthDynamicFeature;
+ import io.dropwizard.auth.AuthValueFactoryProvider;
+-import io.dropwizard.auth.chained.ChainedAuthFilter;
+ import io.dropwizard.jdbi3.JdbiFactory;
+ import io.dropwizard.setup.Bootstrap;
+ import io.dropwizard.setup.Environment;
+ import org.jdbi.v3.core.Jdbi;
+ 
+-import javax.ws.rs.container.ContainerRequestFilter;
+-import java.util.List;
+ 
+ public class WeatherApiApplication extends Application<WeatherApiConfiguration> {
+     
+@@ -38,31 +34,21 @@ public class WeatherApiApplication extends Application<WeatherApiConfiguration>
+     public void run(WeatherApiConfiguration configuration, Environment environment) {
+         final JdbiFactory factory = new JdbiFactory();
+         final Jdbi jdbi = factory.build(environment, configuration.getDataSourceFactory(), "postgresql");
+-        
++
+         final WeatherDAO weatherDAO = jdbi.onDemand(WeatherDAO.class);
+-        
+-        // Deprecated auth chaining pattern
+-        final JwtAuthFilter jwtFilter = JwtAuthFilter.createFilter(
+-            new com.weather.api.auth.JwtAuthenticator(configuration.getJwtSecret()),
+-            "Bearer",
+-            "realm"
+-        );
+ 
+-        final ApiKeyAuthFilter apiKeyFilter = ApiKeyAuthFilter.createFilter(
+-            new com.weather.api.auth.ApiKeyAuthenticator(configuration.getApiKeys()),
+-            "ApiKey",
+-            "realm"
+-        );
++        // Configure authentication using standard Dropwizard approach
++        environment.jersey().register(new AuthDynamicFeature(
++            new io.dropwizard.auth.basic.BasicCredentialAuthFilter.Builder<User>()
++                .setAuthenticator(new com.weather.api.auth.ApiKeyAuthenticator(configuration.getApiKeys()))
++                .setRealm("weather-api")
++                .buildAuthFilter()));
+ 
+-        final ChainedAuthFilter<String, com.weather.api.auth.User> chainedAuthFilter = new ChainedAuthFilter<>(
+-            List.of(jwtFilter, apiKeyFilter));
++        environment.jersey().register(new AuthValueFactoryProvider.Binder<>(User.class));
+ 
+-        environment.jersey().register(new AuthDynamicFeature(chainedAuthFilter));
+-        environment.jersey().register(new AuthValueFactoryProvider.Binder<>(com.weather.api.auth.User.class));
+-        
+         // Register resources
+         environment.jersey().register(new WeatherResource(weatherDAO));
+-        
++
+         // Register health checks
+         environment.healthChecks().register("database", new DatabaseHealthCheck(jdbi));
+     }
+diff --git a/weather-api/src/main/java/com/weather/api/auth/ApiKeyAuthFilter.java b/weather-api/src/main/java/com/weather/api/auth/ApiKeyAuthFilter.java
+deleted file mode 100644
+index f0c251f..0000000
+--- a/weather-api/src/main/java/com/weather/api/auth/ApiKeyAuthFilter.java
++++ /dev/null
+@@ -1,46 +0,0 @@
+-package com.weather.api.auth;
+-
+-import io.dropwizard.auth.AuthFilter;
+-import io.dropwizard.auth.Authenticator;
+-
+-import javax.annotation.Priority;
+-import javax.ws.rs.Priorities;
+-import javax.ws.rs.WebApplicationException;
+-import javax.ws.rs.container.ContainerRequestContext;
+-import java.io.IOException;
+-import java.util.Optional;
+-
+-@Priority(Priorities.AUTHENTICATION)
+-public class ApiKeyAuthFilter extends AuthFilter<String, User> {
+-
+-    private ApiKeyAuthFilter() {}
+-
+-    @Override
+-    public void filter(ContainerRequestContext requestContext) throws IOException {
+-        final String apiKey = requestContext.getHeaders().getFirst("X-API-Key");
+-
+-        if (apiKey == null) {
+-            throw new WebApplicationException(unauthorizedHandler.buildResponse(prefix, realm));
+-        }
+-
+-        try {
+-            final Optional<User> result = authenticator.authenticate(apiKey);
+-            if (result.isPresent()) {
+-                requestContext.setSecurityContext(new AuthSecurityContext(result.get(), prefix, requestContext));
+-                return;
+-            }
+-        } catch (Exception e) {
+-            logger.warn("Error authenticating API key", e);
+-        }
+-
+-        throw new WebApplicationException(unauthorizedHandler.buildResponse(prefix, realm));
+-    }
+-
+-    public static ApiKeyAuthFilter createFilter(Authenticator<String, User> authenticator, String prefix, String realm) {
+-        ApiKeyAuthFilter filter = new ApiKeyAuthFilter();
+-        filter.authenticator = authenticator;
+-        filter.prefix = prefix;
+-        filter.realm = realm;
+-        return filter;
+-    }
+-}
+\ No newline at end of file
+diff --git a/weather-api/src/main/java/com/weather/api/auth/ApiKeyAuthenticator.java b/weather-api/src/main/java/com/weather/api/auth/ApiKeyAuthenticator.java
+index 207332b..1c2c295 100644
+--- a/weather-api/src/main/java/com/weather/api/auth/ApiKeyAuthenticator.java
++++ b/weather-api/src/main/java/com/weather/api/auth/ApiKeyAuthenticator.java
+@@ -1,11 +1,12 @@
+ package com.weather.api.auth;
+ 
+ import io.dropwizard.auth.Authenticator;
++import io.dropwizard.auth.basic.BasicCredentials;
+ 
+ import java.util.List;
+ import java.util.Optional;
+ 
+-public class ApiKeyAuthenticator implements Authenticator<String, User> {
++public class ApiKeyAuthenticator implements Authenticator<BasicCredentials, User> {
+     private final List<String> validApiKeys;
+ 
+     public ApiKeyAuthenticator(List<String> validApiKeys) {
+@@ -13,9 +14,11 @@ public class ApiKeyAuthenticator implements Authenticator<String, User> {
+     }
+ 
+     @Override
+-    public Optional<User> authenticate(String apiKey) {
+-        if (validApiKeys.contains(apiKey)) {
+-            return Optional.of(new User("api-user"));
++    public Optional<User> authenticate(BasicCredentials credentials) {
++        // Use username as the API key
++        String username = credentials.getUsername();
++        if (username != null && validApiKeys.contains(username)) {
++            return Optional.of(new User(username, "api-key"));
+         }
+         return Optional.empty();
+     }
+diff --git a/weather-api/src/main/java/com/weather/api/auth/JwtAuthFilter.java b/weather-api/src/main/java/com/weather/api/auth/JwtAuthFilter.java
+deleted file mode 100644
+index 5bc0183..0000000
+--- a/weather-api/src/main/java/com/weather/api/auth/JwtAuthFilter.java
++++ /dev/null
+@@ -1,59 +0,0 @@
+-package com.weather.api.auth;
+-
+-import io.dropwizard.auth.AuthFilter;
+-import io.dropwizard.auth.Authenticator;
+-
+-import javax.annotation.Priority;
+-import javax.ws.rs.Priorities;
+-import javax.ws.rs.WebApplicationException;
+-import javax.ws.rs.container.ContainerRequestContext;
+-import javax.ws.rs.core.HttpHeaders;
+-import java.io.IOException;
+-import java.util.Optional;
+-
+-@Priority(Priorities.AUTHENTICATION)
+-public class JwtAuthFilter extends AuthFilter<String, User> {
+-
+-    private JwtAuthFilter() {}
+-
+-    @Override
+-    public void filter(ContainerRequestContext requestContext) throws IOException {
+-        final String header = requestContext.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+-
+-        if (header == null) {
+-            throw new WebApplicationException(unauthorizedHandler.buildResponse(prefix, realm));
+-        }
+-
+-        final int space = header.indexOf(' ');
+-        if (space <= 0) {
+-            throw new WebApplicationException(unauthorizedHandler.buildResponse(prefix, realm));
+-        }
+-
+-        final String method = header.substring(0, space);
+-        if (!prefix.equalsIgnoreCase(method)) {
+-            throw new WebApplicationException(unauthorizedHandler.buildResponse(prefix, realm));
+-        }
+-
+-        final String token = header.substring(space + 1);
+-
+-        try {
+-            final Optional<User> result = authenticator.authenticate(token);
+-            if (result.isPresent()) {
+-                requestContext.setSecurityContext(new AuthSecurityContext(result.get(), prefix, requestContext));
+-                return;
+-            }
+-        } catch (Exception e) {
+-            logger.warn("Error authenticating credentials", e);
+-        }
+-
+-        throw new WebApplicationException(unauthorizedHandler.buildResponse(prefix, realm));
+-    }
+-
+-    public static JwtAuthFilter createFilter(Authenticator<String, User> authenticator, String prefix, String realm) {
+-        JwtAuthFilter filter = new JwtAuthFilter();
+-        filter.authenticator = authenticator;
+-        filter.prefix = prefix;
+-        filter.realm = realm;
+-        return filter;
+-    }
+-}
+\ No newline at end of file
+diff --git a/weather-api/src/main/java/com/weather/api/auth/JwtAuthenticator.java b/weather-api/src/main/java/com/weather/api/auth/JwtAuthenticator.java
+deleted file mode 100644
+index bf8cf37..0000000
+--- a/weather-api/src/main/java/com/weather/api/auth/JwtAuthenticator.java
++++ /dev/null
+@@ -1,36 +0,0 @@
+-package com.weather.api.auth;
+-
+-import io.dropwizard.auth.Authenticator;
+-import io.jsonwebtoken.Claims;
+-import io.jsonwebtoken.Jwts;
+-import io.jsonwebtoken.SignatureException;
+-
+-import java.util.Optional;
+-
+-public class JwtAuthenticator implements Authenticator<String, User> {
+-    private final String secret;
+-
+-    public JwtAuthenticator(String secret) {
+-        this.secret = secret;
+-    }
+-
+-    @Override
+-    public Optional<User> authenticate(String token) {
+-        try {
+-            Claims claims = Jwts.parser()
+-                .setSigningKey(secret)
+-                .parseClaimsJws(token)
+-                .getBody();
+-
+-            String username = claims.getSubject();
+-            if (username != null && !username.isEmpty()) {
+-                return Optional.of(new User(username));
+-            }
+-        } catch (SignatureException e) {
+-            // Invalid token
+-        } catch (Exception e) {
+-            // Other JWT parsing errors
+-        }
+-        return Optional.empty();
+-    }
+-}
+\ No newline at end of file
+diff --git a/weather-api/src/main/java/com/weather/api/auth/User.java b/weather-api/src/main/java/com/weather/api/auth/User.java
+index f723166..4567081 100644
+--- a/weather-api/src/main/java/com/weather/api/auth/User.java
++++ b/weather-api/src/main/java/com/weather/api/auth/User.java
+@@ -4,9 +4,11 @@ import java.security.Principal;
+ 
+ public class User implements Principal {
+     private final String name;
++    private final String type;
+ 
+-    public User(String name) {
++    public User(String name, String type) {
+         this.name = name;
++        this.type = type;
+     }
+ 
+     @Override
+@@ -14,16 +16,15 @@ public class User implements Principal {
+         return name;
+     }
+ 
+-    @Override
+-    public boolean equals(Object o) {
+-        if (this == o) return true;
+-        if (!(o instanceof User)) return false;
+-        User user = (User) o;
+-        return name != null ? name.equals(user.name) : user.name == null;
++    public String getType() {
++        return type;
+     }
+ 
+     @Override
+-    public int hashCode() {
+-        return name != null ? name.hashCode() : 0;
++    public String toString() {
++        return "User{" +
++                "name='" + name + '\'' +
++                ", type='" + type + '\'' +
++                '}';
+     }
+-}
++}
+\ No newline at end of file
+diff --git a/weather-api/src/test/java/com/weather/api/auth/ApiKeyAuthenticatorTest.java b/weather-api/src/test/java/com/weather/api/auth/ApiKeyAuthenticatorTest.java
+index d52a213..8b4c255 100644
+--- a/weather-api/src/test/java/com/weather/api/auth/ApiKeyAuthenticatorTest.java
++++ b/weather-api/src/test/java/com/weather/api/auth/ApiKeyAuthenticatorTest.java
+@@ -1,5 +1,6 @@
+ package com.weather.api.auth;
+ 
++import io.dropwizard.auth.basic.BasicCredentials;
+ import org.junit.jupiter.api.BeforeEach;
+ import org.junit.jupiter.api.Test;
+ 
+@@ -24,23 +25,24 @@ class ApiKeyAuthenticatorTest {
+     @Test
+     void authenticate_ReturnsUser_WhenApiKeyIsValid() {
+         // Given
+-        String validApiKey = "key1";
++        BasicCredentials validCredentials = new BasicCredentials("key1", "password");
+ 
+         // When
+-        Optional<User> result = apiKeyAuthenticator.authenticate(validApiKey);
++        Optional<User> result = apiKeyAuthenticator.authenticate(validCredentials);
+ 
+         // Then
+         assertTrue(result.isPresent());
+-        assertEquals("api-user", result.get().getName());
++        assertEquals("key1", result.get().getName());
++        assertEquals("api-key", result.get().getType());
+     }
+ 
+     @Test
+     void authenticate_ReturnsEmpty_WhenApiKeyIsInvalid() {
+         // Given
+-        String invalidApiKey = "invalid-key";
++        BasicCredentials invalidCredentials = new BasicCredentials("invalid-key", "password");
+ 
+         // When
+-        Optional<User> result = apiKeyAuthenticator.authenticate(invalidApiKey);
++        Optional<User> result = apiKeyAuthenticator.authenticate(invalidCredentials);
+ 
+         // Then
+         assertFalse(result.isPresent());
+@@ -48,11 +50,11 @@ class ApiKeyAuthenticatorTest {
+ 
+     @Test
+     void authenticate_ReturnsEmpty_WhenApiKeyIsNull() {
+-        // Given
+-        String nullApiKey = null;
++        // Given - BasicCredentials doesn't allow null username, so we test with invalid key
++        BasicCredentials invalidCredentials = new BasicCredentials("null-key", "password");
+ 
+         // When
+-        Optional<User> result = apiKeyAuthenticator.authenticate(nullApiKey);
++        Optional<User> result = apiKeyAuthenticator.authenticate(invalidCredentials);
+ 
+         // Then
+         assertFalse(result.isPresent());
+@@ -61,10 +63,10 @@ class ApiKeyAuthenticatorTest {
+     @Test
+     void authenticate_ReturnsEmpty_WhenApiKeyIsEmpty() {
+         // Given
+-        String emptyApiKey = "";
++        BasicCredentials emptyCredentials = new BasicCredentials("", "password");
+ 
+         // When
+-        Optional<User> result = apiKeyAuthenticator.authenticate(emptyApiKey);
++        Optional<User> result = apiKeyAuthenticator.authenticate(emptyCredentials);
+ 
+         // Then
+         assertFalse(result.isPresent());
+diff --git a/weather-api/src/test/java/com/weather/api/auth/JwtAuthenticatorTest.java b/weather-api/src/test/java/com/weather/api/auth/JwtAuthenticatorTest.java
+deleted file mode 100644
+index e9d9784..0000000
+--- a/weather-api/src/test/java/com/weather/api/auth/JwtAuthenticatorTest.java
++++ /dev/null
+@@ -1,56 +0,0 @@
+-package com.weather.api.auth;
+-
+-import org.junit.jupiter.api.BeforeEach;
+-import org.junit.jupiter.api.Test;
+-
+-import java.util.Optional;
+-
+-import static org.junit.jupiter.api.Assertions.assertFalse;
+-import static org.junit.jupiter.api.Assertions.assertTrue;
+-
+-class JwtAuthenticatorTest {
+-
+-    private JwtAuthenticator jwtAuthenticator;
+-    private final String secret = "test-secret-key";
+-
+-    @BeforeEach
+-    void setUp() {
+-        jwtAuthenticator = new JwtAuthenticator(secret);
+-    }
+-
+-    @Test
+-    void authenticate_ReturnsEmpty_WhenTokenIsInvalid() {
+-        // Given
+-        String invalidToken = "invalid.token.here";
+-
+-        // When
+-        Optional<User> result = jwtAuthenticator.authenticate(invalidToken);
+-
+-        // Then
+-        assertFalse(result.isPresent());
+-    }
+-
+-    @Test
+-    void authenticate_ReturnsEmpty_WhenTokenIsNull() {
+-        // Given
+-        String nullToken = null;
+-
+-        // When
+-        Optional<User> result = jwtAuthenticator.authenticate(nullToken);
+-
+-        // Then
+-        assertFalse(result.isPresent());
+-    }
+-
+-    @Test
+-    void authenticate_ReturnsEmpty_WhenTokenIsEmpty() {
+-        // Given
+-        String emptyToken = "";
+-
+-        // When
+-        Optional<User> result = jwtAuthenticator.authenticate(emptyToken);
+-
+-        // Then
+-        assertFalse(result.isPresent());
+-    }
+-}
+\ No newline at end of file

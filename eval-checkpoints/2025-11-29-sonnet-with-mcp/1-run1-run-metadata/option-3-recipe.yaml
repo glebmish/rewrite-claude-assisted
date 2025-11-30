@@ -1,0 +1,54 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.weather.api.PRRecipe3Option3
+displayName: Upgrade to Java 17 - Safe Infrastructure Changes
+description: |
+  Conservative approach using only proven recipes from Options 1 and 2.
+  Focuses on safe infrastructure changes: Java version, Gradle wrapper, Dockerfile, CI config.
+  Excludes authentication refactoring (requires custom recipes).
+
+recipeList:
+  # 1. Gradle Java Compatibility - precise control over version updates
+  - org.openrewrite.gradle.UpdateJavaCompatibility:
+      version: 17
+      compatibilityType: source
+      declarationStyle: String
+  - org.openrewrite.gradle.UpdateJavaCompatibility:
+      version: 17
+      compatibilityType: target
+      declarationStyle: String
+
+  # 2. Gradle Wrapper Upgrade - required for Java 17
+  - org.openrewrite.gradle.UpdateGradleWrapper:
+      version: 7.6
+      distribution: all
+
+  # 3. CI Configuration - update GitHub Actions Java version
+  - org.openrewrite.github.SetupJavaUpgradeJavaVersion:
+      minimumJavaMajorVersion: 17
+
+  # 4. Dockerfile Base Image Updates - text-based (no semantic recipe exists)
+  - org.openrewrite.text.FindAndReplace:
+      find: "FROM openjdk:11-jdk-slim"
+      replace: "FROM eclipse-temurin:17-jdk-alpine"
+      regex: false
+      caseSensitive: true
+      filePattern: "**/Dockerfile"
+  - org.openrewrite.text.FindAndReplace:
+      find: "FROM openjdk:11-jre-slim"
+      replace: "FROM eclipse-temurin:17-jre-alpine"
+      regex: false
+      caseSensitive: true
+      filePattern: "**/Dockerfile"
+
+  # 5. Delete Obsolete Authentication Files
+  # NOTE: Deleting these files will break compilation until authentication
+  # refactoring is completed manually or with custom recipes
+  - org.openrewrite.DeleteSourceFiles:
+      filePattern: "weather-api/src/main/java/com/weather/api/auth/JwtAuthFilter.java"
+  - org.openrewrite.DeleteSourceFiles:
+      filePattern: "weather-api/src/main/java/com/weather/api/auth/JwtAuthenticator.java"
+  - org.openrewrite.DeleteSourceFiles:
+      filePattern: "weather-api/src/main/java/com/weather/api/auth/ApiKeyAuthFilter.java"
+  - org.openrewrite.DeleteSourceFiles:
+      filePattern: "weather-api/src/test/java/com/weather/api/auth/JwtAuthenticatorTest.java"

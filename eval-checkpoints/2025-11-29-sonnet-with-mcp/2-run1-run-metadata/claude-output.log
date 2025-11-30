@@ -1,0 +1,61 @@
+Excellent! All required files are present. Let me create a final summary:
+
+## Workflow Complete
+
+**Output Directory**: `.output/2025-11-28-21-49/`
+
+### All Required Files Verified ✓
+
+**Core Artifacts**:
+- ✓ session-id.txt
+- ✓ intent-tree.md
+- ✓ pr-3.diff
+
+**Recipe Options** (3 alternatives):
+- ✓ option-1-recipe.yaml (Broad approach, F1: 64.52%)
+- ✓ option-2-recipe.yaml (Narrow approach, F1: 67.86%)
+- ✓ option-3-recipe.yaml (Hybrid approach, F1: 50.49%)
+
+**Validation Results**:
+- ✓ option-1-recipe.diff, option-1-stats.json, option-1-validation-analysis.md
+- ✓ option-2-recipe.diff, option-2-stats.json, option-2-validation-analysis.md
+- ✓ option-3-recipe.diff, option-3-stats.json, option-3-validation-analysis.md
+
+**Creation Analyses**:
+- ✓ option-1-creation-analysis.md
+- ✓ option-2-creation-analysis.md
+- ✓ option-3-creation-analysis.md
+
+**Phase Reports**:
+- ✓ phase1.md (Repository Setup)
+- ✓ phase2.md (Intent Analysis)
+- ✓ phase3.md (Recipe Mapping)
+- ✓ phase4.md (Recipe Validation)
+- ✓ phase5.md (Recipe Refinement)
+- ✓ phase6.md (Final Decision)
+
+**Final Recommendation** (result/ directory):
+- ✓ result/pr.diff
+- ✓ result/recommended-recipe.yaml (Option 2)
+- ✓ result/recommended-recipe.diff
+
+### Final Recommendation: Option 2
+
+**Metrics**:
+- Precision: 76%
+- Recall: 61.29%
+- F1 Score: 67.86%
+
+**Recipe Coverage**:
+- Java 11 → 17 upgrade (Gradle config, GitHub Actions)
+- JUnit 4 → 5 migration (annotations, imports, assertions)
+- Gradle wrapper 6.9 → 7.6.4
+- Shadow plugin 6.1.0 → 7.1.2
+- Test runner configuration
+
+**Why Option 2**:
+- Best precision (fewest unwanted changes)
+- Highest F1 score
+- Production-safe (no critical failures)
+- Manageable gaps (mostly cosmetic)
+- Better control over transformations

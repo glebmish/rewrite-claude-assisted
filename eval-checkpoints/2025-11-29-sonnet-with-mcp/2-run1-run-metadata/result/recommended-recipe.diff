@@ -1,0 +1,264 @@
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index f5934d5..4ce2ef7 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -31,7 +31,7 @@ jobs:
+       - name: Set up JDK 11
+         uses: actions/setup-java@v3
+         with:
+-          java-version: '11'
++          java-version: '17'
+           distribution: 'temurin'
+ 
+       - name: Cache Gradle packages
+diff --git a/build.gradle b/build.gradle
+index dec1b75..1b5f9b6 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -1,15 +1,15 @@
+ plugins {
+     id 'java'
+     id 'application'
+-    id 'com.github.johnrengelman.shadow' version '6.1.0'
++    id 'com.github.johnrengelman.shadow' version '7.1.2'
+ }
+ 
+ group = 'com.example'
+ version = '1.0.0'
+ 
+ java {
+-    sourceCompatibility = JavaVersion.VERSION_11
+-    targetCompatibility = JavaVersion.VERSION_11
++    sourceCompatibility = JavaVersion.VERSION_17
++    targetCompatibility = JavaVersion.VERSION_17
+ }
+ 
+ repositories {
+@@ -40,7 +40,7 @@ dependencies {
+     implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.14.1'
+     
+     // Testing - JUnit 4
+-    testImplementation 'junit:junit:4.13.2'
++    implementation "org.junit.jupiter:junit-jupiter:5.14.1"
+     testImplementation 'io.dropwizard:dropwizard-testing:2.0.25'
+     testImplementation 'org.mockito:mockito-core:3.12.4'
+     testImplementation 'com.h2database:h2:1.4.200'
+@@ -56,5 +56,5 @@ shadowJar {
+ }
+ 
+ test {
+-    useJUnit()
++    useJUnitPlatform()
+ }
+\ No newline at end of file
+diff --git a/gradle/wrapper/gradle-wrapper.jar b/gradle/wrapper/gradle-wrapper.jar
+index 1b33c55..afba109 100644
+Binary files a/gradle/wrapper/gradle-wrapper.jar and b/gradle/wrapper/gradle-wrapper.jar differ
+diff --git a/gradle/wrapper/gradle-wrapper.properties b/gradle/wrapper/gradle-wrapper.properties
+index d867a96..740943c 100644
+--- a/gradle/wrapper/gradle-wrapper.properties
++++ b/gradle/wrapper/gradle-wrapper.properties
+@@ -1,7 +1,8 @@
+ distributionBase=GRADLE_USER_HOME
+ distributionPath=wrapper/dists
+-distributionUrl=https\://services.gradle.org/distributions/gradle-6.9-bin.zip
++distributionUrl=https\://services.gradle.org/distributions/gradle-7.6.4-bin.zip
+ networkTimeout=10000
+ validateDistributionUrl=true
+ zipStoreBase=GRADLE_USER_HOME
+-zipStorePath=wrapper/dists
+\ No newline at end of file
++zipStorePath=wrapper/dists
++distributionSha256Sum=bed1da33cca0f557ab13691c77f38bb67388119e4794d113e051039b80af9bb1
+\ No newline at end of file
+diff --git a/gradlew b/gradlew
+index 23d15a9..65dcd68 100755
+--- a/gradlew
++++ b/gradlew
+@@ -15,8 +15,6 @@
+ # See the License for the specific language governing permissions and
+ # limitations under the License.
+ #
+-# SPDX-License-Identifier: Apache-2.0
+-#
+ 
+ ##############################################################################
+ #
+@@ -57,7 +55,7 @@
+ #       Darwin, MinGW, and NonStop.
+ #
+ #   (3) This script is generated from the Groovy template
+-#       https://github.com/gradle/gradle/blob/HEAD/platforms/jvm/plugins-application/src/main/resources/org/gradle/api/internal/plugins/unixStartScript.txt
++#       https://github.com/gradle/gradle/blob/HEAD/subprojects/plugins/src/main/resources/org/gradle/api/internal/plugins/unixStartScript.txt
+ #       within the Gradle project.
+ #
+ #       You can find Gradle at https://github.com/gradle/gradle/.
+@@ -85,8 +83,10 @@ done
+ # This is normally unused
+ # shellcheck disable=SC2034
+ APP_BASE_NAME=${0##*/}
+-# Discard cd standard output in case $CDPATH is set (https://github.com/gradle/gradle/issues/25036)
+-APP_HOME=$( cd -P "${APP_HOME:-./}" > /dev/null && printf '%s\n' "$PWD" ) || exit
++APP_HOME=$( cd "${APP_HOME:-./}" && pwd -P ) || exit
++
++# Add default JVM options here. You can also use JAVA_OPTS and GRADLE_OPTS to pass JVM options to this script.
++DEFAULT_JVM_OPTS='"-Xmx64m" "-Xms64m"'
+ 
+ # Use the maximum available, or set MAX_FD != -1 to use that value.
+ MAX_FD=maximum
+@@ -114,7 +114,7 @@ case "$( uname )" in                #(
+   NONSTOP* )        nonstop=true ;;
+ esac
+ 
+-CLASSPATH="\\\"\\\""
++CLASSPATH=$APP_HOME/gradle/wrapper/gradle-wrapper.jar
+ 
+ 
+ # Determine the Java command to use to start the JVM.
+@@ -133,13 +133,10 @@ location of your Java installation."
+     fi
+ else
+     JAVACMD=java
+-    if ! command -v java >/dev/null 2>&1
+-    then
+-        die "ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH.
++    which java >/dev/null 2>&1 || die "ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH.
+ 
+ Please set the JAVA_HOME variable in your environment to match the
+ location of your Java installation."
+-    fi
+ fi
+ 
+ # Increase the maximum file descriptors if we can.
+@@ -147,7 +144,7 @@ if ! "$cygwin" && ! "$darwin" && ! "$nonstop" ; then
+     case $MAX_FD in #(
+       max*)
+         # In POSIX sh, ulimit -H is undefined. That's why the result is checked to see if it worked.
+-        # shellcheck disable=SC2039,SC3045
++        # shellcheck disable=SC3045 
+         MAX_FD=$( ulimit -H -n ) ||
+             warn "Could not query maximum file descriptor limit"
+     esac
+@@ -155,7 +152,7 @@ if ! "$cygwin" && ! "$darwin" && ! "$nonstop" ; then
+       '' | soft) :;; #(
+       *)
+         # In POSIX sh, ulimit -n is undefined. That's why the result is checked to see if it worked.
+-        # shellcheck disable=SC2039,SC3045
++        # shellcheck disable=SC3045 
+         ulimit -n "$MAX_FD" ||
+             warn "Could not set maximum file descriptor limit to $MAX_FD"
+     esac
+@@ -200,20 +197,16 @@ if "$cygwin" || "$msys" ; then
+     done
+ fi
+ 
+-
+-# Add default JVM options here. You can also use JAVA_OPTS and GRADLE_OPTS to pass JVM options to this script.
+-DEFAULT_JVM_OPTS='"-Xmx64m" "-Xms64m"'
+-
+-# Collect all arguments for the java command:
+-#   * DEFAULT_JVM_OPTS, JAVA_OPTS, and optsEnvironmentVar are not allowed to contain shell fragments,
+-#     and any embedded shellness will be escaped.
+-#   * For example: A user cannot expect ${Hostname} to be expanded, as it is an environment variable and will be
+-#     treated as '${Hostname}' itself on the command line.
++# Collect all arguments for the java command;
++#   * $DEFAULT_JVM_OPTS, $JAVA_OPTS, and $GRADLE_OPTS can contain fragments of
++#     shell script including quotes and variable substitutions, so put them in
++#     double quotes to make sure that they get re-expanded; and
++#   * put everything else in single quotes, so that it's not re-expanded.
+ 
+ set -- \
+         "-Dorg.gradle.appname=$APP_BASE_NAME" \
+         -classpath "$CLASSPATH" \
+-        -jar "$APP_HOME/gradle/wrapper/gradle-wrapper.jar" \
++        org.gradle.wrapper.GradleWrapperMain \
+         "$@"
+ 
+ # Stop when "xargs" is not available.
+diff --git a/gradlew.bat b/gradlew.bat
+old mode 100644
+new mode 100755
+index 5eed7ee..6689b85
+--- a/gradlew.bat
++++ b/gradlew.bat
+@@ -13,8 +13,6 @@
+ @rem See the License for the specific language governing permissions and
+ @rem limitations under the License.
+ @rem
+-@rem SPDX-License-Identifier: Apache-2.0
+-@rem
+ 
+ @if "%DEBUG%"=="" @echo off
+ @rem ##########################################################################
+@@ -45,11 +43,11 @@ set JAVA_EXE=java.exe
+ %JAVA_EXE% -version >NUL 2>&1
+ if %ERRORLEVEL% equ 0 goto execute
+ 
+-echo. 1>&2
+-echo ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH. 1>&2
+-echo. 1>&2
+-echo Please set the JAVA_HOME variable in your environment to match the 1>&2
+-echo location of your Java installation. 1>&2
++echo.
++echo ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH.
++echo.
++echo Please set the JAVA_HOME variable in your environment to match the
++echo location of your Java installation.
+ 
+ goto fail
+ 
+@@ -59,22 +57,22 @@ set JAVA_EXE=%JAVA_HOME%/bin/java.exe
+ 
+ if exist "%JAVA_EXE%" goto execute
+ 
+-echo. 1>&2
+-echo ERROR: JAVA_HOME is set to an invalid directory: %JAVA_HOME% 1>&2
+-echo. 1>&2
+-echo Please set the JAVA_HOME variable in your environment to match the 1>&2
+-echo location of your Java installation. 1>&2
++echo.
++echo ERROR: JAVA_HOME is set to an invalid directory: %JAVA_HOME%
++echo.
++echo Please set the JAVA_HOME variable in your environment to match the
++echo location of your Java installation.
+ 
+ goto fail
+ 
+ :execute
+ @rem Setup the command line
+ 
+-set CLASSPATH=
++set CLASSPATH=%APP_HOME%\gradle\wrapper\gradle-wrapper.jar
+ 
+ 
+ @rem Execute Gradle
+-"%JAVA_EXE%" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %GRADLE_OPTS% "-Dorg.gradle.appname=%APP_BASE_NAME%" -classpath "%CLASSPATH%" -jar "%APP_HOME%\gradle\wrapper\gradle-wrapper.jar" %*
++"%JAVA_EXE%" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %GRADLE_OPTS% "-Dorg.gradle.appname=%APP_BASE_NAME%" -classpath "%CLASSPATH%" org.gradle.wrapper.GradleWrapperMain %*
+ 
+ :end
+ @rem End local scope for the variables with windows NT shell
+diff --git a/src/test/java/com/example/usermanagement/UserResourceTest.java b/src/test/java/com/example/usermanagement/UserResourceTest.java
+index 79b24fc..2cdcf17 100644
+--- a/src/test/java/com/example/usermanagement/UserResourceTest.java
++++ b/src/test/java/com/example/usermanagement/UserResourceTest.java
+@@ -1,16 +1,16 @@
+ package com.example.usermanagement;
+ 
+ import com.example.usermanagement.core.User;
+-import org.junit.Before;
+-import org.junit.Test;
++import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.Test;
+ 
+-import static org.junit.Assert.*;
++import static org.junit.jupiter.api.Assertions.*;
+ 
+ public class UserResourceTest {
+ 
+     private User testUser;
+ 
+-    @Before
++    @BeforeEach
+     public void setUp() {
+         testUser = new User("testuser", "test@example.com", "password123");
+         testUser.setId(1L);

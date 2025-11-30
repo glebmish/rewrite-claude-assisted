@@ -1,0 +1,70 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.example.H2ToPostgreSQLMigrationOption3
+displayName: Migrate from H2 to PostgreSQL - Option 3 (Hybrid Semantic + Corrected Text)
+description: Migrates a simple blog platform from H2 to PostgreSQL using semantic recipes where they work reliably and corrected text replacements for cases where semantic recipes failed. Combines best of Options 1 and 2.
+recipeList:
+  # GitHub Actions: Use semantic recipe (works perfectly in Option 1)
+  - org.openrewrite.github.ChangeActionVersion:
+      action: actions/cache
+      version: v4
+
+  # Dockerfile: Use text replacement (works in both options)
+  - org.openrewrite.text.FindAndReplace:
+      find: openjdk:17-jre-slim
+      replace: eclipse-temurin:17-jre-alpine
+      filePattern: "**/Dockerfile"
+
+  # Gradle: Replace H2 comment - text-based for precision
+  - org.openrewrite.text.FindAndReplace:
+      find: "    // H2 Database"
+      replace: "    // PostgreSQL"
+      filePattern: "**/build.gradle"
+
+  # Gradle: Replace H2 dependency with PostgreSQL - text-based for precision
+  - org.openrewrite.text.FindAndReplace:
+      find: "    implementation 'com.h2database:h2:2.1.214'"
+      replace: "    implementation 'org.postgresql:postgresql:42.6.0'"
+      filePattern: "**/build.gradle"
+
+  # Gradle: Add Testcontainers dependencies - FIXED indentation
+  - org.openrewrite.text.FindAndReplace:
+      find: "    testImplementation 'org.assertj:assertj-core:3.23.1'"
+      replace: "    testImplementation 'org.assertj:assertj-core:3.23.1'\n    testImplementation 'org.testcontainers:testcontainers:1.17.6'\n    testImplementation 'org.testcontainers:postgresql:1.17.6'\n    testImplementation 'org.testcontainers:junit-jupiter:1.17.6'"
+      filePattern: "**/build.gradle"
+
+  # YAML Config: Update driver class - text-based for precision
+  - org.openrewrite.text.FindAndReplace:
+      find: "  driverClass: org.h2.Driver"
+      replace: "  driverClass: org.postgresql.Driver"
+      filePattern: "**/config.yml"
+
+  # YAML Config: Update database user - text-based for quote control
+  - org.openrewrite.text.FindAndReplace:
+      find: "  user: sa"
+      replace: '  user: "{{ GET_ENV_VAR:DATABASE_USER }}"'
+      filePattern: "**/config.yml"
+
+  # YAML Config: Update database password - text-based to fix Option 1 failure
+  - org.openrewrite.text.FindAndReplace:
+      find: '  password: ""'
+      replace: '  password: "{{ GET_ENV_VAR:DATABASE_PASSWORD }}"'
+      filePattern: "**/config.yml"
+
+  # YAML Config: Update database URL - text-based for quote control
+  - org.openrewrite.text.FindAndReplace:
+      find: "  url: jdbc:h2:mem:blog;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE"
+      replace: '  url: "{{ GET_ENV_VAR:DATABASE_URL }}"'
+      filePattern: "**/config.yml"
+
+  # YAML Config: Update Hibernate dialect - text-based for precision
+  - org.openrewrite.text.FindAndReplace:
+      find: "    hibernate.dialect: org.hibernate.dialect.H2Dialect"
+      replace: "    hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect"
+      filePattern: "**/config.yml"
+
+  # SQL Migration: Convert H2 AUTO_INCREMENT to PostgreSQL BIGSERIAL
+  - org.openrewrite.text.FindAndReplace:
+      find: "    id BIGINT AUTO_INCREMENT PRIMARY KEY,"
+      replace: "    id BIGSERIAL PRIMARY KEY,"
+      filePattern: "**/*.sql"

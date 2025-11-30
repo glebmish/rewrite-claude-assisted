@@ -1,0 +1,49 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.example.PRRecipe2Option2
+displayName: Java 17 to 21 Upgrade - Narrow Approach
+description: Surgical upgrade from Java 17 to Java 21 using targeted recipes for each specific change. This approach provides precise control over each transformation.
+recipeList:
+  # 1. Gradle Java Toolchain Configuration (replaces sourceCompatibility/targetCompatibility with toolchain)
+  - org.openrewrite.java.migrate.UpgradeJavaVersion:
+      version: 21
+
+  # 2. Update Gradle Wrapper version from 8.1 to 8.5
+  - org.openrewrite.gradle.UpdateGradleWrapper:
+      version: 8.5
+
+  # 3. Update GitHub Actions java-version from 17 to 21
+  - org.openrewrite.github.SetupJavaUpgradeJavaVersion:
+      minimumJavaMajorVersion: 21
+
+  # 4. Update GitHub Actions step name from "Set up JDK 17" to "Set up JDK 21"
+  - org.openrewrite.text.FindAndReplace:
+      find: "Set up JDK 17"
+      replace: "Set up JDK 21"
+      regex: false
+      caseSensitive: true
+      filePattern: ".github/workflows/*.yml"
+
+  # 5. Update Dockerfile builder stage from eclipse-temurin:17-jdk-alpine to eclipse-temurin:21-jdk-alpine
+  - org.openrewrite.text.FindAndReplace:
+      find: "eclipse-temurin:17-jdk-alpine"
+      replace: "eclipse-temurin:21-jdk-alpine"
+      regex: false
+      caseSensitive: true
+      filePattern: "**/Dockerfile"
+
+  # 6. Update Dockerfile runtime stage from eclipse-temurin:17-jre-alpine to eclipse-temurin:21-jre-alpine
+  - org.openrewrite.text.FindAndReplace:
+      find: "eclipse-temurin:17-jre-alpine"
+      replace: "eclipse-temurin:21-jre-alpine"
+      regex: false
+      caseSensitive: true
+      filePattern: "**/Dockerfile"
+
+  # 7. Update README.md Technology Stack section - Java 17 to Java 21
+  - org.openrewrite.text.FindAndReplace:
+      find: "Java 17"
+      replace: "Java 21"
+      regex: false
+      caseSensitive: true
+      filePattern: "**/README.md"

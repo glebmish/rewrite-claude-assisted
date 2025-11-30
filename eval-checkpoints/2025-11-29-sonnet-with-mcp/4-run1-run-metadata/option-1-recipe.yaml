@@ -1,0 +1,88 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.example.H2ToPostgreSQLMigrationOption1
+displayName: Migrate from H2 to PostgreSQL - Option 1 (Semantic + Text Fallbacks)
+description: Migrates a simple blog platform from H2 to PostgreSQL, updates GitHub Actions cache version, and updates Docker base image using semantic recipes where available and text replacements as fallbacks.
+recipeList:
+  # GitHub Actions: Update actions/cache from v2 to v4
+  - org.openrewrite.github.ChangeActionVersion:
+      action: actions/cache
+      version: v4
+
+  # Dockerfile: Replace openjdk:17-jre-slim with eclipse-temurin:17-jre-alpine
+  - org.openrewrite.text.FindAndReplace:
+      find: openjdk:17-jre-slim
+      replace: eclipse-temurin:17-jre-alpine
+      filePattern: "**/Dockerfile"
+
+  # Gradle: Remove H2 dependency
+  - org.openrewrite.gradle.RemoveDependency:
+      groupId: com.h2database
+      artifactId: h2
+
+  # Gradle: Add PostgreSQL dependency
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.postgresql
+      artifactId: postgresql
+      version: 42.6.0
+      configuration: implementation
+
+  # Gradle: Add Testcontainers dependencies
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.testcontainers
+      artifactId: testcontainers
+      version: 1.17.6
+      configuration: testImplementation
+
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.testcontainers
+      artifactId: postgresql
+      version: 1.17.6
+      configuration: testImplementation
+
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.testcontainers
+      artifactId: junit-jupiter
+      version: 1.17.6
+      configuration: testImplementation
+
+  # YAML Config: Update database driver class
+  - org.openrewrite.yaml.ChangePropertyValue:
+      propertyKey: database.driverClass
+      newValue: org.postgresql.Driver
+      oldValue: org.h2.Driver
+      filePattern: "**/config.yml"
+
+  # YAML Config: Update database user
+  - org.openrewrite.yaml.ChangePropertyValue:
+      propertyKey: database.user
+      newValue: "{{ GET_ENV_VAR:DATABASE_USER }}"
+      oldValue: sa
+      filePattern: "**/config.yml"
+
+  # YAML Config: Update database password
+  - org.openrewrite.yaml.ChangePropertyValue:
+      propertyKey: database.password
+      newValue: "{{ GET_ENV_VAR:DATABASE_PASSWORD }}"
+      oldValue: '""'
+      filePattern: "**/config.yml"
+
+  # YAML Config: Update database URL
+  - org.openrewrite.yaml.ChangePropertyValue:
+      propertyKey: database.url
+      newValue: "{{ GET_ENV_VAR:DATABASE_URL }}"
+      oldValue: jdbc:h2:mem:blog;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+      filePattern: "**/config.yml"
+
+  # YAML Config: Update Hibernate dialect
+  - org.openrewrite.yaml.ChangePropertyValue:
+      propertyKey: database.properties.hibernate.dialect
+      newValue: org.hibernate.dialect.PostgreSQLDialect
+      oldValue: org.hibernate.dialect.H2Dialect
+      filePattern: "**/config.yml"
+
+  # SQL Migration: Convert H2 AUTO_INCREMENT to PostgreSQL BIGSERIAL
+  - org.openrewrite.text.FindAndReplace:
+      find: BIGINT AUTO_INCREMENT
+      replace: BIGSERIAL
+      filePattern: "**/*.sql"

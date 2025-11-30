@@ -1,0 +1,95 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.example.RefinedJava17JUnit5Migration
+displayName: Migrate to Java 17 and JUnit 5 (Refined Hybrid Approach)
+description: |
+  Refined migration combining targeted recipes with precise configuration to match PR changes exactly.
+  Uses Java toolchain API, correct JUnit dependency scoping, proper Gradle property updates,
+  and semantic YAML changes. Avoids over-eager version upgrades while maintaining comprehensive coverage.
+recipeList:
+  # Update Gradle wrapper to 7.6.4
+  - org.openrewrite.gradle.UpdateGradleWrapper:
+      version: 7.6.4
+      distribution: bin
+
+  # Update Gradle shadow plugin
+  - org.openrewrite.gradle.plugins.UpgradePluginVersion:
+      pluginIdPattern: com.github.johnrengelman.shadow
+      newVersion: 7.1.2
+
+  # JUnit 5 - Update test annotations and assertions
+  - org.openrewrite.java.testing.junit5.UpdateBeforeAfterAnnotations
+  - org.openrewrite.java.testing.junit5.UpdateTestAnnotation
+  - org.openrewrite.java.testing.junit5.AssertToAssertions
+
+  # JUnit 5 - Update test configuration to use JUnit Platform
+  - org.openrewrite.java.testing.junit5.GradleUseJunitJupiter
+
+  # JUnit 5 - Cleanup old imports
+  - org.openrewrite.java.testing.junit5.CleanupJUnitImports
+
+  # Remove old JUnit 4 dependency
+  - org.openrewrite.java.dependencies.RemoveDependency:
+      groupId: junit
+      artifactId: junit
+
+  # Add JUnit Jupiter API dependency with correct scope and version
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.junit.jupiter
+      artifactId: junit-jupiter-api
+      version: 5.8.1
+      configuration: testImplementation
+      onlyIfUsing: org.junit.jupiter.api.*
+
+  # Add JUnit Jupiter Engine dependency with correct scope and version
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.junit.jupiter
+      artifactId: junit-jupiter-engine
+      version: 5.8.1
+      configuration: testRuntimeOnly
+      onlyIfUsing: org.junit.jupiter.api.*
+
+  # Update GitHub Actions java-version parameter
+  - org.openrewrite.github.SetupJavaUpgradeJavaVersion:
+      minimumJavaMajorVersion: 17
+
+  # Migrate from sourceCompatibility/targetCompatibility to Java toolchain
+  - org.openrewrite.text.FindAndReplace:
+      find: "java \\{\\s*sourceCompatibility = JavaVersion\\.VERSION_11\\s*targetCompatibility = JavaVersion\\.VERSION_11\\s*\\}"
+      replace: "java {\n    toolchain {\n        languageVersion = JavaLanguageVersion.of(17)\n    }\n}"
+      regex: true
+      multiline: true
+      dotAll: true
+      filePattern: "**/build.gradle"
+
+  # Update GitHub Actions step name from "Set up JDK 11" to "Set up JDK 17"
+  - org.openrewrite.yaml.ChangeValue:
+      keyPath: $.jobs.build.steps[?(@.uses =~ /actions\/setup-java@.*/)].name
+      value: Set up JDK 17
+      filePattern: .github/workflows/*.yml
+
+  # Update JUnit comment from "JUnit 4" to "JUnit 5" in build.gradle
+  - org.openrewrite.text.FindAndReplace:
+      find: "// Testing - JUnit 4"
+      replace: "// Testing - JUnit 5"
+      regex: false
+      caseSensitive: true
+      filePattern: "**/build.gradle"
+
+  # Update mainClassName to mainClass in application block
+  - org.openrewrite.text.FindAndReplace:
+      find: "(application \\{[^}]*)(\\s+)mainClassName(\\s*=\\s*['\"][^'\"]+['\"])"
+      replace: "$1$2mainClass$3"
+      regex: true
+      multiline: true
+      dotAll: true
+      filePattern: "**/build.gradle"
+
+  # Add mainClassName to shadowJar block
+  - org.openrewrite.text.FindAndReplace:
+      find: "(shadowJar \\{\\s*archiveClassifier = ['\"]fat['\"]\\s*mergeServiceFiles\\(\\))(\\s*\\})"
+      replace: "$1\n    mainClassName = 'com.example.usermanagement.UserManagementApplication'$2"
+      regex: true
+      multiline: true
+      dotAll: true
+      filePattern: "**/build.gradle"

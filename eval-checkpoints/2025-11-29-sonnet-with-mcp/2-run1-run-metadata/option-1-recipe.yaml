@@ -1,0 +1,28 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.example.BroadJava17JUnit5Migration
+displayName: Migrate to Java 17 and JUnit 5 (Broad Approach)
+description: |
+  Comprehensive migration from Java 11 to Java 17 and JUnit 4 to JUnit 5.
+  Uses broad migration recipes that handle multiple aspects of the upgrade automatically.
+  Includes Gradle wrapper update, plugin upgrades, and GitHub Actions CI configuration updates.
+recipeList:
+  # Java 17 migration - comprehensive upgrade
+  - org.openrewrite.java.migrate.UpgradeToJava17
+
+  # JUnit 4 to 5 migration - comprehensive upgrade
+  - org.openrewrite.java.testing.junit5.JUnit4to5Migration
+
+  # Update Gradle wrapper to 7.6.4
+  - org.openrewrite.gradle.UpdateGradleWrapper:
+      version: 7.6.4
+      distribution: bin
+
+  # Update Gradle shadow plugin
+  - org.openrewrite.gradle.plugins.UpgradePluginVersion:
+      pluginIdPattern: com.github.johnrengelman.shadow
+      newVersion: 7.1.2
+
+  # Update GitHub Actions java-version to 17
+  - org.openrewrite.github.SetupJavaUpgradeJavaVersion:
+      minimumJavaMajorVersion: 17

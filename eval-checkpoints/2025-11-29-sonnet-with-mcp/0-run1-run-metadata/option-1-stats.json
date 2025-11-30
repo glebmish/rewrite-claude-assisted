@@ -1,0 +1,18 @@
+{
+  "diff_files": {
+    "pr_diff": "/__w/rewrite-claude-assisted/rewrite-claude-assisted/.output/2025-11-28-21-49/pr-2.diff",
+    "recipe_diff": "/__w/rewrite-claude-assisted/rewrite-claude-assisted/.output/2025-11-28-21-49/option-1-recipe.diff"
+  },
+  "metrics": {
+    "total_expected_changes": 21,
+    "total_resulting_changes": 35,
+    "true_positives": 14,
+    "false_positives": 21,
+    "false_negatives": 7,
+    "precision": 0.4,
+    "recall": 0.6667,
+    "f1_score": 0.5,
+    "is_perfect_match": false
+  },
+  "analysis_timestamp": "2025-11-28T21:56:17Z"
+}

@@ -1,0 +1,45 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.example.NarrowJava17JUnit5Migration
+displayName: Migrate to Java 17 and JUnit 5 (Narrow Approach)
+description: |
+  Targeted migration from Java 11 to Java 17 and JUnit 4 to JUnit 5.
+  Uses specific recipes for precise control over each transformation step.
+  Covers Gradle configuration, JUnit annotations, dependencies, and CI workflow updates.
+recipeList:
+  # Java version upgrade in Gradle
+  - org.openrewrite.java.migrate.UpgradeJavaVersion:
+      version: 17
+
+  # Update Gradle wrapper to 7.6.4
+  - org.openrewrite.gradle.UpdateGradleWrapper:
+      version: 7.6.4
+      distribution: bin
+
+  # Update Gradle shadow plugin
+  - org.openrewrite.gradle.plugins.UpgradePluginVersion:
+      pluginIdPattern: com.github.johnrengelman.shadow
+      newVersion: 7.1.2
+
+  # JUnit 5 - Add dependencies
+  - org.openrewrite.java.testing.junit5.AddJupiterDependencies
+
+  # JUnit 5 - Update test configuration
+  - org.openrewrite.java.testing.junit5.GradleUseJunitJupiter
+
+  # JUnit 5 - Update annotations
+  - org.openrewrite.java.testing.junit5.UpdateBeforeAfterAnnotations
+  - org.openrewrite.java.testing.junit5.UpdateTestAnnotation
+  - org.openrewrite.java.testing.junit5.AssertToAssertions
+
+  # JUnit 5 - Cleanup
+  - org.openrewrite.java.testing.junit5.CleanupJUnitImports
+
+  # Remove old JUnit 4 dependency
+  - org.openrewrite.java.dependencies.RemoveDependency:
+      groupId: junit
+      artifactId: junit
+
+  # Update GitHub Actions java-version to 17
+  - org.openrewrite.github.SetupJavaUpgradeJavaVersion:
+      minimumJavaMajorVersion: 17
