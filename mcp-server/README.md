@@ -108,27 +108,28 @@ This one-time setup will:
 
 ## Configuration for Claude Code
 
-### Option 1: Using .mcp.json (Project-level)
+The `.mcp.json` file is automatically generated during setup with the correct absolute path to the startup script.
 
-Copy or symlink the `.mcp.json` file to your project root or Claude Code will automatically detect it in the mcp-server directory:
+If you need to manually regenerate it:
+
+```bash
+cd /path/to/rewrite-claude-assisted
+./scripts/quick-setup.sh
+```
+
+This will create `.mcp.json` in the project root:
 
 ```json
 {
   "mcpServers": {
     "openrewrite-mcp": {
       "type": "stdio",
-      "command": "/home/glebmish/projects/rewrite-claude-assisted/mcp-server/scripts/startup.sh",
+      "command": "/absolute/path/to/rewrite-claude-assisted/mcp-server/scripts/startup.sh",
       "args": [],
       "env": {}
     }
   }
 }
-```
-
-### Option 2: Using claude mcp add command
-
-```bash
-claude mcp add --transport stdio openrewrite-mcp -- /home/glebmish/projects/rewrite-claude-assisted/mcp-server/scripts/startup.sh
 ```
 
 ## Testing the Server

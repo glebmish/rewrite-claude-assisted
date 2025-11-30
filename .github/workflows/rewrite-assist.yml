@@ -66,7 +66,7 @@ jobs:
     # PostgreSQL service for MCP server
     services:
       postgres:
-        image: bboygleb/openrewrite-recipes-db:latest
+        image: glebmish/openrewrite-recipes-db:latest
         env:
           POSTGRES_DB: openrewrite_recipes
           POSTGRES_USER: mcp_user
@@ -80,7 +80,7 @@ jobs:
           --health-retries 5
 
     container:
-      image: bboygleb/rewrite-assist
+      image: glebmish/rewrite-assist
       env:
         CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
