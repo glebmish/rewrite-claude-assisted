@@ -1,0 +1,108 @@
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index f5934d5..8a1b8d5 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -28,10 +28,10 @@ jobs:
+     steps:
+       - uses: actions/checkout@v3
+ 
+-      - name: Set up JDK 11
++      - name: Set up JDK 17
+         uses: actions/setup-java@v3
+         with:
+-          java-version: '11'
++          java-version: '17'
+           distribution: 'temurin'
+ 
+       - name: Cache Gradle packages
+diff --git a/build.gradle b/build.gradle
+index dec1b75..8e90c52 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -1,15 +1,16 @@
+ plugins {
+     id 'java'
+     id 'application'
+-    id 'com.github.johnrengelman.shadow' version '6.1.0'
++    id 'com.github.johnrengelman.shadow' version '7.1.2'
+ }
+ 
+ group = 'com.example'
+ version = '1.0.0'
+ 
+ java {
+-    sourceCompatibility = JavaVersion.VERSION_11
+-    targetCompatibility = JavaVersion.VERSION_11
++    toolchain {
++        languageVersion = JavaLanguageVersion.of(17)
++    }
+ }
+ 
+ repositories {
+@@ -39,22 +40,24 @@ dependencies {
+     implementation 'org.apache.logging.log4j:log4j-api:2.14.1'
+     implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.14.1'
+     
+-    // Testing - JUnit 4
+-    testImplementation 'junit:junit:4.13.2'
++    // Testing - JUnit 5
++    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
++    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+     testImplementation 'io.dropwizard:dropwizard-testing:2.0.25'
+     testImplementation 'org.mockito:mockito-core:3.12.4'
+     testImplementation 'com.h2database:h2:1.4.200'
+ }
+ 
+ application {
+-    mainClassName = 'com.example.usermanagement.UserManagementApplication'
++    mainClass = 'com.example.usermanagement.UserManagementApplication'
+ }
+ 
+ shadowJar {
+     archiveClassifier = 'fat'
+     mergeServiceFiles()
++    mainClassName = 'com.example.usermanagement.UserManagementApplication'
+ }
+ 
+ test {
+-    useJUnit()
++    useJUnitPlatform()
+ }
+\ No newline at end of file
+diff --git a/gradle/wrapper/gradle-wrapper.properties b/gradle/wrapper/gradle-wrapper.properties
+index d867a96..6ee8a1a 100644
+--- a/gradle/wrapper/gradle-wrapper.properties
++++ b/gradle/wrapper/gradle-wrapper.properties
+@@ -1,6 +1,6 @@
+ distributionBase=GRADLE_USER_HOME
+ distributionPath=wrapper/dists
+-distributionUrl=https\://services.gradle.org/distributions/gradle-6.9-bin.zip
++distributionUrl=https\://services.gradle.org/distributions/gradle-7.6.4-bin.zip
+ networkTimeout=10000
+ validateDistributionUrl=true
+ zipStoreBase=GRADLE_USER_HOME
+diff --git a/src/test/java/com/example/usermanagement/UserResourceTest.java b/src/test/java/com/example/usermanagement/UserResourceTest.java
+index 79b24fc..2cdcf17 100644
+--- a/src/test/java/com/example/usermanagement/UserResourceTest.java
++++ b/src/test/java/com/example/usermanagement/UserResourceTest.java
+@@ -1,16 +1,16 @@
+ package com.example.usermanagement;
+ 
+ import com.example.usermanagement.core.User;
+-import org.junit.Before;
+-import org.junit.Test;
++import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.Test;
+ 
+-import static org.junit.Assert.*;
++import static org.junit.jupiter.api.Assertions.*;
+ 
+ public class UserResourceTest {
+ 
+     private User testUser;
+ 
+-    @Before
++    @BeforeEach
+     public void setUp() {
+         testUser = new User("testuser", "test@example.com", "password123");
+         testUser.setId(1L);

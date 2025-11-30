@@ -1,0 +1,31 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.weather.api.PRRecipe3Option1
+displayName: Upgrade to Java 17 - Broad Approach
+description: |
+  Comprehensive Java 11 to 17 upgrade using OpenRewrite's standard migration recipe,
+  supplemented with targeted changes for Gradle wrapper and specific code transformations.
+  This approach relies on the broad UpgradeToJava17 recipe for most changes.
+recipeList:
+  # Core Java 17 migration - handles build files, API migrations, and Java 17 features
+  - org.openrewrite.java.migrate.UpgradeToJava17
+
+  # Gradle wrapper upgrade (not included in UpgradeToJava17)
+  - org.openrewrite.gradle.UpdateGradleWrapper:
+      version: 7.6
+
+  # Delete obsolete authentication files
+  - org.openrewrite.DeleteSourceFiles:
+      filePattern: weather-api/src/main/java/com/weather/api/auth/JwtAuthFilter.java
+  - org.openrewrite.DeleteSourceFiles:
+      filePattern: weather-api/src/main/java/com/weather/api/auth/JwtAuthenticator.java
+  - org.openrewrite.DeleteSourceFiles:
+      filePattern: weather-api/src/main/java/com/weather/api/auth/ApiKeyAuthFilter.java
+  - org.openrewrite.DeleteSourceFiles:
+      filePattern: weather-api/src/test/java/com/weather/api/auth/JwtAuthenticatorTest.java
+
+  # Change ApiKeyAuthenticator to use BasicCredentials instead of String
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: java.lang.String
+      newFullyQualifiedTypeName: io.dropwizard.auth.basic.BasicCredentials
+      ignoreDefinition: true

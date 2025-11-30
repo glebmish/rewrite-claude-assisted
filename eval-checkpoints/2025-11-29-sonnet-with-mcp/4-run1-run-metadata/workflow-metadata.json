@@ -1,0 +1,9 @@
+{
+  "pr_url": "https://github.com/openrewrite-assist-testing-dataset/simple-blog-platform/pull/3",
+  "commit_hash": "65a685453812f215540e7dacc15471cbd04abe71",
+  "status": "success",
+  "exit_code": 0,
+  "duration_seconds": 907,
+  "start_time": "2025-11-28T22:13:06Z",
+  "end_time": "2025-11-28T22:28:13Z"
+}

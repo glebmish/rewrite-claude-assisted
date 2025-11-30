@@ -1,0 +1,59 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.yourorg.UpgradeDropwizard2to3Option3
+displayName: Upgrade Dropwizard 2.1.12 to 3.0.0 - Refined Approach
+description: Combines the precision of Option 2's ChangeType approach with fixes for Java version update. Focuses on high-precision transformations, accepting manual cleanup for @Override annotations.
+recipeList:
+  # Update Java version to 17 - Using broader Java migration recipe
+  # This handles sourceCompatibility, targetCompatibility, and toolchain
+  - org.openrewrite.java.migrate.UpgradeJavaVersion:
+      version: 17
+
+  # Update each Dropwizard dependency individually with explicit versions
+  - org.openrewrite.gradle.UpgradeDependencyVersion:
+      groupId: io.dropwizard
+      artifactId: dropwizard-core
+      newVersion: 3.0.0
+
+  - org.openrewrite.gradle.UpgradeDependencyVersion:
+      groupId: io.dropwizard
+      artifactId: dropwizard-jdbi3
+      newVersion: 3.0.0
+
+  - org.openrewrite.gradle.UpgradeDependencyVersion:
+      groupId: io.dropwizard
+      artifactId: dropwizard-auth
+      newVersion: 3.0.0
+
+  - org.openrewrite.gradle.UpgradeDependencyVersion:
+      groupId: io.dropwizard
+      artifactId: dropwizard-configuration
+      newVersion: 3.0.0
+
+  - org.openrewrite.gradle.UpgradeDependencyVersion:
+      groupId: io.dropwizard
+      artifactId: dropwizard-testing
+      newVersion: 3.0.0
+
+  # Migrate ONLY core Dropwizard types (not auth, db, jdbi3)
+  # Using ChangeType instead of ChangePackage for surgical precision
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: io.dropwizard.Application
+      newFullyQualifiedTypeName: io.dropwizard.core.Application
+
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: io.dropwizard.setup.Bootstrap
+      newFullyQualifiedTypeName: io.dropwizard.core.setup.Bootstrap
+
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: io.dropwizard.setup.Environment
+      newFullyQualifiedTypeName: io.dropwizard.core.setup.Environment
+
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: io.dropwizard.Configuration
+      newFullyQualifiedTypeName: io.dropwizard.core.Configuration
+
+  # Note: @Override annotation removal for initialize() and run() methods
+  # requires manual cleanup or custom recipe development.
+  # No existing OpenRewrite recipe can target specific method signatures
+  # without over-applying to all @Override annotations project-wide.

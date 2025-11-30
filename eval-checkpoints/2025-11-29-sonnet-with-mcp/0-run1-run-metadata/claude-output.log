@@ -1,0 +1,47 @@
+Excellent! All phases completed successfully. Let me create a final summary.
+
+## Workflow Summary
+
+**Session ID**: Captured in `.output/2025-11-28-21-49/session-id.txt`
+
+### Phase 1: Repository Setup ✓
+- Cloned ecommerce-catalog repository
+- Fetched PR #2 branch
+- Saved PR diff
+
+### Phase 2: Intent Analysis ✓
+- **Strategic Intent**: Upgrade Java 17 to Java 21
+- **Tactical Intents**: Gradle toolchain migration, Docker images, GitHub Actions, documentation
+- Identified 5 transformation categories across 4 file types
+
+### Phase 3: Recipe Mapping ✓
+Created 2 recipe options:
+- **Option 1**: Broad approach using `UpgradeToJava21` migration recipe
+- **Option 2**: Narrow approach with targeted semantic recipes
+
+### Phase 4: Recipe Validation ✓
+Validation results:
+- **Option 1**: F1=0.50, Precision=0.40, Recall=0.67 (many over-applications)
+- **Option 2**: F1=0.70, Precision=0.74, Recall=0.67 (better precision)
+
+### Phase 5: Recipe Refinement ✓
+- **Option 3**: Combined best practices from both options
+- Fixed critical Java toolchain API migration gap
+- **Results**: F1=0.81, Precision=0.73, Recall=0.90 (best overall)
+
+### Phase 6: Final Decision ✓
+**Recommended Recipe**: Option 3 (`com.example.PRRecipe2Option3`)
+
+**Rationale**:
+- Highest F1 score (0.81 vs 0.70 and 0.50)
+- Best recall (90% coverage vs 67%)
+- Good precision (73%)
+- Successfully migrates to Java toolchain API
+- Minimal over-application
+
+**Result files created**:
+- ✓ `result/pr.diff` - Original PR diff
+- ✓ `result/recommended-recipe.yaml` - Option 3 recipe
+- ✓ `result/recommended-recipe.diff` - Recipe execution output
+
+All required files verified and present in `.output/2025-11-28-21-49/`

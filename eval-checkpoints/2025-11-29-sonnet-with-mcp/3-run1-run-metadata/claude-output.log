@@ -1,0 +1,40 @@
+## Workflow Complete ✓
+
+Successfully completed the rewrite-assist workflow for PR #3 (Dropwizard 2.1.12 → 3.0.0 upgrade).
+
+### Output Location
+`.output/2025-11-28-22-31/`
+
+### Key Results
+
+**Recommended Recipe: Option 3**
+- **Precision**: 100% (0 false positives)
+- **Recall**: 90.91% (20/22 changes automated)
+- **F1 Score**: 95.24%
+- **Manual cleanup**: 2 @Override annotations
+
+### Files Generated (27 total)
+
+**Core Files:**
+- session-id.txt
+- intent-tree.md
+- pr-3.diff
+- phase1.md through phase6.md
+
+**Recipe Options (3 alternatives tested):**
+- option-1-recipe.yaml + diff + stats + analyses (broad approach, 58.82% precision)
+- option-2-recipe.yaml + diff + stats + analyses (surgical approach, 64.52% precision)
+- option-3-recipe.yaml + diff + stats + analyses (refined approach, 100% precision)
+
+**Final Deliverables (result/ directory):**
+- pr.diff - original PR changes
+- recommended-recipe.yaml - production-ready recipe (Option 3)
+- recommended-recipe.diff - recipe execution output
+
+### Decision Summary
+
+Option 3 selected based on:
+- Zero false positives (vs 11-14 in other options)
+- Correct package migrations (fixed Option 1's over-migration)
+- Working Java upgrade (fixed Option 2's configuration error)
+- Acceptable trade-off: 2 manual edits vs 11 incorrect removals
