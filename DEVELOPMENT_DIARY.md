@@ -266,3 +266,15 @@ dependencies for both docs and embeddings.
   * Extend mcp to accept multiple strings for semantic match and return the best matches overall
   * Include precision data to the workflow. Run precision calculation script as a part of validation and have Claude analyze it for actual coverage data.
   * Include a new refinement phase after 2 recipes to create the 3 combined recipe that learns from validation and coverage data of the first two attempts.
+
+## 2025-11-30
+* Ran and analyzed a new eval with improved workflow and MCP usage
+  * Impressive increase in the result effectiveness (~66% better) with an expected increase in price (31%)
+  * It now thoroughly considers each intent and also learns on first 2 attempts to try and improve the recipe on the 3rd attempt
+* Some ideas where to go next:
+  * Test with Opus 4.5 - not possible on Pro subscription
+  * Add more iterations
+  * Research generic "gap-filling" recipes and add more guidance on it
+  * MAJOR: add code recipes writing - probably much more difficult task to handle
+  * Close the loop - create a PR with a recipe in a correct directory and add a pipeline to release artifacts
+    * Going from an example PR to fully functional artifact to apply on the rest of the codebase
