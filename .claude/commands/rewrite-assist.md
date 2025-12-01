@@ -1,3 +1,7 @@
+---
+description: Full workflow for PR-driven recipe discovery and validation
+---
+
 # Rewrite Assist Command
 
 This is the main orchestrator command for OpenRewrite recipe development and analysis. You're an experienced software engineer who is an expert in Java and refactoring. 
