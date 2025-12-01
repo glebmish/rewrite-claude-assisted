@@ -1,6 +1,8 @@
 # OpenRewrite Recipe Assistant
 
-*AI-powered automated refactoring at scale through example-driven recipe generation*
+*Turn a PR example into a deterministic refactoring recipe.*
+
+AI-powered automated refactoring at scale through example-driven recipe generation*
 
 [→ Next: Architecture](./docs/ARCHITECTURE.md) | [→ Next: Validation Algorithm](./docs/VALIDATION.md) | [→ Next: Evaluation Infrastructure](./docs/EVALUATION.md)
 
@@ -10,7 +12,7 @@
 
 1. [Problem Statement](#problem-statement)
 2. [Solution](#solution)
-3. [Known Limitations](#known-limitations)
+3. [Current Scope](#current-scope)
 4. [Getting Started](#getting-started)
 5. [System Architecture](#system-architecture)
 6. [Evaluation Architecture](#evaluation-architecture)
@@ -74,7 +76,7 @@ graph LR
 
 ---
 
-## Known Limitations
+## Current scope
 
 Current implementation constraints:
 
@@ -102,6 +104,25 @@ These constraints represent opportunities for future enhancement rather than fun
 
 ### Quick Setup
 
+**Option 1: Guided Setup (Recommended)**
+```bash
+# Clone repository
+git clone https://github.com/glebmish/rewrite-claude-assisted.git
+cd rewrite-claude-assisted
+
+# Start Claude Code and run setup assistant
+claude
+> /setup-assistant
+```
+
+The setup assistant will:
+- Check all prerequisites interactively
+- Install and configure the MCP server
+- Auto-configure Claude Code integration
+- Verify the complete setup
+- Guide you to next steps
+
+**Option 2: Manual Setup**
 ```bash
 # Clone repository
 git clone https://github.com/glebmish/rewrite-claude-assisted.git

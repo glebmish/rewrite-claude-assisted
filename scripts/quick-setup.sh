@@ -8,6 +8,26 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
+# Parse command-line flags
+SKIP_PREREQUISITES=false
+TEST_CLAUDE=false
+
+for arg in "$@"; do
+    case $arg in
+        --skip-prerequisites-check)
+            SKIP_PREREQUISITES=true
+            ;;
+        --test-claude)
+            TEST_CLAUDE=true
+            ;;
+        *)
+            echo "Unknown option: $arg"
+            echo "Usage: $0 [--skip-prerequisites-check] [--test-claude]"
+            exit 1
+            ;;
+    esac
+done
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -38,20 +58,25 @@ echo "╚═══════════════════════�
 echo ""
 
 # Step 1: Check prerequisites
-log_info "Step 1/3: Checking prerequisites..."
-echo ""
+if [ "$SKIP_PREREQUISITES" = false ]; then
+    log_info "Step 1/3: Checking prerequisites..."
+    echo ""
 
-if [ -x "$SCRIPT_DIR/check-prerequisites.sh" ]; then
-    if "$SCRIPT_DIR/check-prerequisites.sh"; then
-        echo ""
+    if [ -x "$SCRIPT_DIR/check-prerequisites.sh" ]; then
+        if "$SCRIPT_DIR/check-prerequisites.sh"; then
+            echo ""
+        else
+            log_error "Prerequisites check failed"
+            echo ""
+            echo "Please install missing prerequisites and run this script again."
+            exit 1
+        fi
     else
-        log_error "Prerequisites check failed"
-        echo ""
-        echo "Please install missing prerequisites and run this script again."
-        exit 1
+        log_warning "check-prerequisites.sh not found or not executable, skipping validation"
     fi
 else
-    log_warning "check-prerequisites.sh not found or not executable, skipping validation"
+    log_info "Step 1/3: Skipping prerequisites check..."
+    echo ""
 fi
 
 # Step 2: Setup MCP server
@@ -69,11 +94,18 @@ fi
 
 echo ""
 
-# Step 2.5: Generate .mcp.json with correct path
-log_info "Generating .mcp.json configuration..."
+# Step 2.5: Configure Claude Code MCP settings
+log_info "Configuring Claude Code MCP settings..."
 echo ""
 
-cat > "$PROJECT_ROOT/.mcp.json" << EOF
+CLAUDE_SETTINGS="$HOME/.config/claude-code/settings.json"
+
+# Check if MCP is already configured in Claude Code settings
+if [ -f "$CLAUDE_SETTINGS" ] && grep -q "openrewrite-mcp" "$CLAUDE_SETTINGS" 2>/dev/null; then
+    log_success "MCP server already configured in Claude Code"
+else
+    # Generate local .mcp.json for reference
+    cat > "$PROJECT_ROOT/.mcp.json" << EOF
 {
   "mcpServers": {
     "openrewrite-mcp": {
@@ -86,11 +118,7 @@ cat > "$PROJECT_ROOT/.mcp.json" << EOF
 }
 EOF
 
-if [ -f "$PROJECT_ROOT/.mcp.json" ]; then
-    log_success "Generated .mcp.json with path: $PROJECT_ROOT/mcp-server/scripts/startup.sh"
-else
-    log_error "Failed to generate .mcp.json"
-    exit 1
+    log_success "MCP server configured - new .mcp.json config file created in repository root"
 fi
 
 echo ""
@@ -108,7 +136,7 @@ else
 fi
 
 # Step 4: Test Claude Code integration (optional)
-if [ "${1:-}" = "--test-claude" ]; then
+if [ "$TEST_CLAUDE" = true ]; then
     log_info "Step 4/4: Testing Claude Code integration..."
     echo ""
 
