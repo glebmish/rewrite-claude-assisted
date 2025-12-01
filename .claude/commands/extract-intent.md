@@ -1,3 +1,7 @@
+---
+description: Extract transformation intents from PR changes
+---
+
 # Extract Intent Command
 
 You are an experienced Java engineer assisting with intent extraction for OpenRewrite recipe development.

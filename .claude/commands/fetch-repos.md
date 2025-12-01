@@ -1,3 +1,7 @@
+---
+description: Clone repositories and fetch PR branches for analysis
+---
+
 # Fetch Repos Command
 
 Your task is to setup environment for OpenRewrite recipe analysis.

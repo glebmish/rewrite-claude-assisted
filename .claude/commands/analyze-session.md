@@ -1,3 +1,7 @@
+---
+description: Analyze workflow session for accuracy, effectiveness, and ROI
+---
+
 # Analyze Session Command
 
 Analyzes OpenRewrite workflow sessions for execution accuracy, recipe effectiveness, and cost-benefit ROI.

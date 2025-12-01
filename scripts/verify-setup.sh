@@ -88,19 +88,7 @@ else
 fi
 cd "$PROJECT_ROOT"
 
-# 4. Gradle build
-log_check "Gradle build"
-if [ -f "$PROJECT_ROOT/gradlew" ]; then
-    if [ -f "$PROJECT_ROOT/build.gradle" ]; then
-        log_success "Gradle project configured"
-    else
-        log_error "build.gradle missing"
-    fi
-else
-    log_error "Gradle wrapper missing"
-fi
-
-# 5. Claude Code commands
+# 4. Claude Code commands
 log_check "Claude Code workflow commands"
 if [ -f "$PROJECT_ROOT/.claude/commands/rewrite-assist.md" ]; then
     log_success "Main workflow command present"
@@ -108,7 +96,7 @@ else
     log_error "Main workflow command missing"
 fi
 
-# 6. MCP server runtime test
+# 5. MCP server runtime test
 log_check "MCP server startup and connectivity"
 cd "$PROJECT_ROOT/mcp-server"
 if [ -x "scripts/startup.sh" ]; then
@@ -182,7 +170,7 @@ else
 fi
 cd "$PROJECT_ROOT"
 
-# 7. Eval framework
+# 6. Eval framework
 log_check "Evaluation framework"
 if [ -f "$PROJECT_ROOT/eval/entrypoint.sh" ] && [ -d "$PROJECT_ROOT/eval/suites" ]; then
     log_success "Evaluation framework present"
