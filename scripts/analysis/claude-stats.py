@@ -18,6 +18,12 @@ from typing import Dict, List, Optional, Tuple
 
 # Pricing per million tokens
 PRICING = {
+    "claude-opus-4-5": {
+        "input": 5.00,
+        "output": 25.00,
+        "cache_creation": 6.25,
+        "cache_read": 0.50,
+    },
     "claude-sonnet-4-5": {
         "input": 3.00,
         "output": 15.00,
@@ -29,12 +35,6 @@ PRICING = {
         "output": 5.00,
         "cache_creation": 1.25,
         "cache_read": 0.10,
-    },
-    "claude-3-5-haiku": {
-        "input": 0.80,
-        "output": 4.00,
-        "cache_creation": 1.00,
-        "cache_read": 0.08,
     },
 }
 
@@ -213,9 +213,15 @@ def calculate_costs(usage: Dict[str, int], model: str) -> Dict[str, float]:
             pricing = price
             break
 
-    # Default to sonnet pricing if no match
+    # Return n/a if no match found
     if not pricing:
-        pricing = PRICING["claude-sonnet-4-5"]
+        return {
+            "input_tokens_cost": "n/a",
+            "output_tokens_cost": "n/a",
+            "cache_creation_cost": "n/a",
+            "cache_read_cost": "n/a",
+            "total_cost": "n/a",
+        }
 
     # Calculate per-category costs
     input_cost = (usage.get("input_tokens", 0) * pricing["input"]) / 1_000_000
@@ -291,14 +297,24 @@ def build_agent_usage(
         "cache_read_cost": 0.0,
         "total_cost": 0.0,
     }
+    has_unknown_pricing = False
 
     for model_data in models_used.values():
         for key in total_costs:
-            total_costs[key] += model_data["costs"][key]
+            cost_value = model_data["costs"][key]
+            if cost_value == "n/a":
+                has_unknown_pricing = True
+            else:
+                total_costs[key] += cost_value
 
-    # Round total costs
-    for key in total_costs:
-        total_costs[key] = round(total_costs[key], 6)
+    # If any model has unknown pricing, mark totals as n/a
+    if has_unknown_pricing:
+        for key in total_costs:
+            total_costs[key] = "n/a"
+    else:
+        # Round total costs
+        for key in total_costs:
+            total_costs[key] = round(total_costs[key], 6)
 
     return AgentUsage(
         agent_id=agent_id,
@@ -563,6 +579,7 @@ def calculate_totals(main_agent: AgentUsage, subagents: List[AgentUsage]) -> Dic
 
     total_usage = main_agent.usage.copy()
     total_costs = main_agent.costs.copy()
+    has_unknown_pricing = any(v == "n/a" for v in main_agent.costs.values())
 
     for agent in subagents:
         total_messages += agent.messages
@@ -573,12 +590,23 @@ def calculate_totals(main_agent: AgentUsage, subagents: List[AgentUsage]) -> Dic
         for key in total_usage:
             total_usage[key] += agent.usage[key]
 
-        for key in total_costs:
-            total_costs[key] += agent.costs[key]
+        # Check if this agent has unknown pricing
+        if any(v == "n/a" for v in agent.costs.values()):
+            has_unknown_pricing = True
 
-    # Round costs
-    for key in total_costs:
-        total_costs[key] = round(total_costs[key], 6)
+        # Add costs (skip if n/a)
+        for key in total_costs:
+            if total_costs[key] != "n/a" and agent.costs[key] != "n/a":
+                total_costs[key] += agent.costs[key]
+
+    # If any agent has unknown pricing, mark totals as n/a
+    if has_unknown_pricing:
+        for key in total_costs:
+            total_costs[key] = "n/a"
+    else:
+        # Round costs
+        for key in total_costs:
+            total_costs[key] = round(total_costs[key], 6)
 
     # Calculate success rate
     success_rate = total_successful / total_tool_calls if total_tool_calls > 0 else 0.0
@@ -731,7 +759,8 @@ def print_summary(analysis: SessionAnalysis):
     print(f"  Output tokens: {analysis.main_agent.usage['output_tokens']:,}")
     print(f"  Cache creation tokens: {analysis.main_agent.usage['cache_creation_input_tokens']:,}")
     print(f"  Cache read tokens: {analysis.main_agent.usage['cache_read_input_tokens']:,}")
-    print(f"  Total cost: ${analysis.main_agent.costs['total_cost']:.4f}")
+    cost = analysis.main_agent.costs['total_cost']
+    print(f"  Total cost: {cost if cost == 'n/a' else f'${cost:.4f}'}")
     print()
 
     if analysis.subagents:
@@ -742,7 +771,8 @@ def print_summary(analysis: SessionAnalysis):
             print(f"    Output tokens: {agent.usage['output_tokens']:,}")
             print(f"    Cache creation tokens: {agent.usage['cache_creation_input_tokens']:,}")
             print(f"    Cache read tokens: {agent.usage['cache_read_input_tokens']:,}")
-            print(f"    Cost: ${agent.costs['total_cost']:.4f}")
+            agent_cost = agent.costs['total_cost']
+            print(f"    Cost: {agent_cost if agent_cost == 'n/a' else f'${agent_cost:.4f}'}")
             print()
 
     print(f"Total:")
@@ -750,7 +780,8 @@ def print_summary(analysis: SessionAnalysis):
     print(f"  Total output tokens: {analysis.totals['usage']['output_tokens']:,}")
     print(f"  Total cache creation tokens: {analysis.totals['usage']['cache_creation_input_tokens']:,}")
     print(f"  Total cache read tokens: {analysis.totals['usage']['cache_read_input_tokens']:,}")
-    print(f"  Total cost: ${analysis.totals['costs']['total_cost']:.4f}")
+    total_cost = analysis.totals['costs']['total_cost']
+    print(f"  Total cost: {total_cost if total_cost == 'n/a' else f'${total_cost:.4f}'}")
     print()
 
     print("=" * 70)
