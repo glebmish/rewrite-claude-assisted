@@ -147,7 +147,7 @@ log "Executing rewrite-assist command"
 START_TIME=$(date +%s)
 
 # Build the claude command
-CLAUDE_CMD="claude --model opus"
+CLAUDE_CMD="claude --model sonnet"
 
 # Define MCP log file
 MCP_LOG_FILE="/tmp/mcp-claude-log-$$.txt"
