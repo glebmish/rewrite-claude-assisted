@@ -1,0 +1,117 @@
+/**
+ * OpenRewrite Init Script
+ *
+ * This init script applies OpenRewrite to a project for automated code analysis
+ * without requiring permanent modifications to the project's build files.
+ *
+ * Usage:
+ *   ./gradlew --init-script rewrite.gradle rewriteDryRun -DrecipeName=com.yourorg.YourRecipe
+ *
+ * The recipe name must be provided via the recipeName system property.
+ * The recipe itself should be defined in a rewrite.yml file in the repository root.
+ */
+
+// Centralized version management
+def rewriteAllVersion = '1.23.0'
+def rewriteDockerVersion = '2.14.0'
+def rewriteGithubActionsVersion = '3.14.0'
+def rewriteJavaDependenciesVersion = '1.45.0'
+def rewriteMigrateJava = '3.21.2'
+def rewriteTestingFrameworksVersion = '3.21.3'
+def rewriteGradleVersion = '8.67.1'
+
+// Core OpenRewrite modules (org.openrewrite)
+def rewriteGroovyVersion = '8.67.0'
+def rewriteHclVersion = '8.67.0'
+def rewriteJavaVersion = '8.67.0'
+def rewriteJsonVersion = '8.67.0'
+def rewriteKotlinVersion = '8.67.0'
+def rewritePropertiesVersion = '8.67.0'
+def rewriteProtobufVersion = '8.67.0'
+def rewriteTomlVersion = '8.67.0'
+def rewriteXmlVersion = '8.67.0'
+def rewriteYamlVersion = '8.67.0'
+
+// Recipe modules (org.openrewrite.recipe)
+def rewriteApacheVersion = '2.20.1'
+def rewriteDropwizardVersion = '0.8.1'
+def rewriteGithubActionsRecipeVersion = '3.15.0'
+def rewriteHibernateVersion = '2.15.1'
+def rewriteJacksonVersion = '1.11.0'
+def rewriteJavaSecurityVersion = '3.22.0'
+def rewriteKubernetesVersion = '3.13.1'
+def rewriteLoggingFrameworksVersion = '3.19.0'
+def rewriteMicrometerVersion = '0.27.1'
+def rewriteOkhttpVersion = '0.20.1'
+def rewriteOpenapiVersion = '0.27.1'
+def rewriteSpringVersion = '6.19.0'
+def rewriteSqlVersion = '2.8.1'
+def rewriteTerraformVersion = '3.11.1'
+
+initscript {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.openrewrite.rewrite:org.openrewrite.rewrite.gradle.plugin:7.3.0")
+    }
+}
+
+rootProject {
+    def recipeName = System.getProperty('recipeName')
+    if (!recipeName) {
+        throw new GradleException("""
+            |Recipe name must be provided via system property.
+            |Usage: ./gradlew --init-script rewrite.gradle rewriteDryRun -DrecipeName=com.yourorg.YourRecipe
+            |
+            |Make sure you have a rewrite.yml file in the repository root that defines this recipe.
+        """.stripMargin())
+    }
+
+    plugins.apply(org.openrewrite.gradle.RewritePlugin)
+
+    dependencies {
+        rewrite("org.openrewrite.recipe:rewrite-all:${rewriteAllVersion}")
+        rewrite("org.openrewrite.recipe:rewrite-docker:${rewriteDockerVersion}")
+        rewrite("org.openrewrite.recipe:rewrite-github-actions:${rewriteGithubActionsVersion}")
+        rewrite("org.openrewrite.recipe:rewrite-java-dependencies:${rewriteJavaDependenciesVersion}")
+        rewrite("org.openrewrite.recipe:rewrite-migrate-java:${rewriteMigrateJava}")
+        rewrite("org.openrewrite.recipe:rewrite-testing-frameworks:${rewriteTestingFrameworksVersion}")
+        rewrite("org.openrewrite:rewrite-gradle:${rewriteGradleVersion}")
+        rewrite("org.openrewrite:rewrite-groovy:${rewriteGroovyVersion}")
+        rewrite("org.openrewrite:rewrite-hcl:${rewriteHclVersion}")
+        rewrite("org.openrewrite:rewrite-java:${rewriteJavaVersion}")
+        rewrite("org.openrewrite:rewrite-json:${rewriteJsonVersion}")
+        rewrite("org.openrewrite:rewrite-kotlin:${rewriteKotlinVersion}")
+        rewrite("org.openrewrite:rewrite-properties:${rewritePropertiesVersion}")
+        rewrite("org.openrewrite:rewrite-protobuf:${rewriteProtobufVersion}")
+        rewrite("org.openrewrite:rewrite-toml:${rewriteTomlVersion}")
+        rewrite("org.openrewrite:rewrite-xml:${rewriteXmlVersion}")
+        rewrite("org.openrewrite:rewrite-yaml:${rewriteYamlVersion}")
+        rewrite("org.openrewrite.recipe:rewrite-apache:${rewriteApacheVersion}")
+        rewrite("org.openrewrite.recipe:rewrite-dropwizard:${rewriteDropwizardVersion}")
+        rewrite("org.openrewrite.recipe:rewrite-github-actions:${rewriteGithubActionsRecipeVersion}")
+        rewrite("org.openrewrite.recipe:rewrite-hibernate:${rewriteHibernateVersion}")
+        rewrite("org.openrewrite.recipe:rewrite-jackson:${rewriteJacksonVersion}")
+        rewrite("org.openrewrite.recipe:rewrite-java-security:${rewriteJavaSecurityVersion}")
+        rewrite("org.openrewrite.recipe:rewrite-kubernetes:${rewriteKubernetesVersion}")
+        rewrite("org.openrewrite.recipe:rewrite-logging-frameworks:${rewriteLoggingFrameworksVersion}")
+        rewrite("org.openrewrite.recipe:rewrite-micrometer:${rewriteMicrometerVersion}")
+        rewrite("org.openrewrite.recipe:rewrite-okhttp:${rewriteOkhttpVersion}")
+        rewrite("org.openrewrite.recipe:rewrite-openapi:${rewriteOpenapiVersion}")
+        rewrite("org.openrewrite.recipe:rewrite-spring:${rewriteSpringVersion}")
+        rewrite("org.openrewrite.recipe:rewrite-sql:${rewriteSqlVersion}")
+        rewrite("org.openrewrite.recipe:rewrite-terraform:${rewriteTerraformVersion}")
+    }
+
+    rewrite {
+        activeRecipe(recipeName)
+        setExportDatatables(true)
+        exclusion(
+          "**/gradlew",
+          "**/gradlew.bat",
+          "**/gradle-wrapper.jar"
+        )
+    }
+}
