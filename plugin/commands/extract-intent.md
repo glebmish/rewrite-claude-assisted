@@ -17,11 +17,6 @@ Your task is to analyze given PRs in the repositories and extracts intents in th
 * Repositories and PRs must be set up in `.workspace/` directory (use `/fetch-repos` command first)
 * PR branches must be available for analysis
 
-## OpenRewrite Best Practices Review
-* Read and analyze `skills/openrewrite-assist/references/openrewrite-guide.md` to understand OpenRewrite best practices and patterns
-* Log key insights and relevant patterns to the report that will guide recipe selection
-* Note any specific constraints or recommendations for recipe composition
-
 ## PR Analysis and Intent Extraction
 
 You MUST strive to replicate given changes FULLY. That includes exact formatting, comments, string changes, complicated code changes.

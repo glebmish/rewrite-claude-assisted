@@ -4,7 +4,7 @@
   "description": "AI-powered OpenRewrite recipe discovery and validation from GitHub PRs. Analyzes PR changes, maps them to OpenRewrite recipes, validates effectiveness, and produces production-ready recipe configurations.",
   "author": {
     "name": "Gleb Mishchenko",
-    "email": "gleb.mishchenko@gmail.com",
+    "email": "gleb.mishchenko.96@gmail.com",
     "url": "https://github.com/glebmish"
   },
   "homepage": "https://github.com/glebmish/openrewrite-assist-plugin",
@@ -17,10 +17,7 @@
     "migration",
     "recipe",
     "automation",
-    "code-transformation",
-    "spring-boot",
-    "junit",
-    "gradle"
+    "code-transformation"
   ],
   "mcpServers": "./.mcp.json"
 }
