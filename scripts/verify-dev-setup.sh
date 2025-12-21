@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# Script: verify-setup.sh
-# Purpose: Verify OpenRewrite Assist plugin setup is working correctly
-# Usage: ./scripts/verify-setup.sh
+# Script: verify-dev-setup.sh
+# Purpose: Verify development environment for rewrite-claude-assisted repo
+# Usage: ./scripts/verify-dev-setup.sh
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PLUGIN_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-MCP_DIR="$PLUGIN_ROOT/mcp-server"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+MCP_DIR="$PROJECT_ROOT/plugin/mcp-server"
 
 # Colors for output
 RED='\033[0;31m'
@@ -39,7 +39,7 @@ log_warning() {
 
 echo ""
 echo "╔════════════════════════════════════════════════════════════╗"
-echo "║  OpenRewrite Assist - Setup Verification                   ║"
+echo "║  Development Environment Verification                      ║"
 echo "╚════════════════════════════════════════════════════════════╝"
 echo ""
 
@@ -51,9 +51,10 @@ if [ -f "$MCP_DIR/src/server.py" ] && \
     log_success "MCP server files present"
 else
     log_error "MCP server files missing"
+    echo "   Expected: $MCP_DIR/src/server.py, requirements.txt, docker-compose.yml"
 fi
 
-# 2. Python virtual environment
+# 2. Python virtual environment with uv
 log_check "Python virtual environment"
 if [ -d "$MCP_DIR/venv" ]; then
     log_success "Virtual environment exists"
@@ -63,11 +64,11 @@ if [ -d "$MCP_DIR/venv" ]; then
         log_success "Python dependencies installed"
     else
         log_error "Python dependencies missing or incomplete"
-        echo "   Run: cd $MCP_DIR && venv/bin/pip install -r requirements.txt"
+        echo "   Run: cd $MCP_DIR && uv pip install -r requirements.txt"
     fi
 else
     log_error "Python virtual environment not found"
-    echo "   Run: scripts/setup-plugin.sh"
+    echo "   Run: scripts/setup-dev.sh"
 fi
 
 # 3. Docker image
@@ -89,22 +90,32 @@ else
     log_error "Docker image not found: $IMAGE"
     echo "   Run: docker pull $IMAGE"
 fi
-cd "$PLUGIN_ROOT"
+cd "$PROJECT_ROOT"
 
 # 4. MCP configuration
 log_check "MCP configuration"
-if [ -f "$PLUGIN_ROOT/.mcp.json" ]; then
-    log_success "MCP configuration present"
+if [ -f "$PROJECT_ROOT/.mcp.json" ]; then
+    log_success "Local MCP configuration present (.mcp.json)"
 else
-    log_error "MCP configuration missing (.mcp.json)"
+    log_error "Local MCP configuration missing (.mcp.json)"
+    echo "   Run: scripts/setup-dev.sh"
 fi
 
-# 5. Plugin commands
+# 5. Plugin structure
+log_check "Plugin structure"
+if [ -d "$PROJECT_ROOT/plugin" ] && \
+   [ -f "$PROJECT_ROOT/plugin/.claude-plugin/plugin.json" ]; then
+    log_success "Plugin structure present"
+else
+    log_error "Plugin structure missing"
+fi
+
+# 6. Plugin commands
 log_check "Plugin commands"
 COMMANDS_OK=true
-for cmd in "rewrite-assist.md" "fetch-repos.md" "extract-intent.md"; do
-    if [ ! -f "$PLUGIN_ROOT/commands/$cmd" ]; then
-        log_error "Command missing: $cmd"
+for cmd in "rewrite-assist.md" "fetch-repos.md" "extract-intent.md" "verify-openrewrite-assist-prerequisites.md"; do
+    if [ ! -f "$PROJECT_ROOT/plugin/commands/$cmd" ]; then
+        log_error "Plugin command missing: $cmd"
         COMMANDS_OK=false
     fi
 done
@@ -112,12 +123,12 @@ if [ "$COMMANDS_OK" = true ]; then
     log_success "Plugin commands present"
 fi
 
-# 6. Plugin agents
+# 7. Plugin agents
 log_check "Plugin agents"
 AGENTS_OK=true
 for agent in "openrewrite-expert.md" "openrewrite-recipe-validator.md"; do
-    if [ ! -f "$PLUGIN_ROOT/agents/$agent" ]; then
-        log_error "Agent missing: $agent"
+    if [ ! -f "$PROJECT_ROOT/plugin/agents/$agent" ]; then
+        log_error "Plugin agent missing: $agent"
         AGENTS_OK=false
     fi
 done
@@ -125,12 +136,22 @@ if [ "$AGENTS_OK" = true ]; then
     log_success "Plugin agents present"
 fi
 
-# 7. MCP server startup script
+# 8. MCP startup script
 log_check "MCP startup script"
 if [ -x "$MCP_DIR/scripts/startup.sh" ]; then
     log_success "MCP startup script ready"
 else
     log_error "MCP startup script missing or not executable"
+fi
+
+# 9. Evaluation framework
+log_check "Evaluation framework"
+if [ -d "$PROJECT_ROOT/eval" ] && \
+   [ -f "$PROJECT_ROOT/eval/entrypoint.sh" ] && \
+   [ -d "$PROJECT_ROOT/eval/suites" ]; then
+    log_success "Evaluation framework present"
+else
+    log_warning "Evaluation framework incomplete (optional for development)"
 fi
 
 # Summary
@@ -140,9 +161,9 @@ if [ $CHECKS_FAILED -eq 0 ]; then
     echo "║  ✓ All Verifications Passed!                              ║"
     echo "╚════════════════════════════════════════════════════════════╝"
     echo ""
-    log_success "Setup verified: $CHECKS_PASSED checks passed"
+    log_success "Development environment verified: $CHECKS_PASSED checks passed"
     echo ""
-    echo "Plugin is ready to use!"
+    echo "Environment is ready for development!"
     echo ""
     exit 0
 else
@@ -152,7 +173,7 @@ else
     log_warning "Passed: $CHECKS_PASSED, Failed: $CHECKS_FAILED"
     echo ""
     echo "Some components may not work correctly."
-    echo "Review errors above and run scripts/setup-plugin.sh again if needed."
+    echo "Review errors above and run scripts/setup-dev.sh again if needed."
     echo ""
     exit 1
 fi

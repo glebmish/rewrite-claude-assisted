@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Script: check-prerequisites.sh
-# Purpose: Validate runtime prerequisites for OpenRewrite Assist plugin
-# Usage: ./scripts/check-prerequisites.sh
+# Script: check-dev-prerequisites.sh
+# Purpose: Validate development prerequisites for rewrite-claude-assisted repo
+# Usage: ./scripts/check-dev-prerequisites.sh
 
 set -euo pipefail
 
@@ -35,11 +35,22 @@ log_warning() {
 
 echo ""
 echo "╔════════════════════════════════════════════════════════════╗"
-echo "║  OpenRewrite Assist - Prerequisites Check                  ║"
+echo "║  Development Prerequisites Check                           ║"
 echo "╚════════════════════════════════════════════════════════════╝"
 echo ""
 
-# 1. Docker
+# 1. uv (Python package manager)
+log_check "uv (Python package manager)"
+if command -v uv &> /dev/null; then
+    UV_VERSION=$(uv --version)
+    log_success "$UV_VERSION"
+else
+    log_error "uv not found in PATH"
+    echo "   Install: curl -LsSf https://astral.sh/uv/install.sh | sh"
+    echo "   Or: pip install uv"
+fi
+
+# 2. Docker
 log_check "Docker"
 if command -v docker &> /dev/null; then
     DOCKER_VERSION=$(docker --version)
@@ -57,7 +68,7 @@ else
     echo "   Install: https://docs.docker.com/get-docker/"
 fi
 
-# 2. Docker Compose
+# 3. Docker Compose
 log_check "Docker Compose"
 if command -v docker-compose &> /dev/null; then
     COMPOSE_VERSION=$(docker-compose --version)
@@ -70,7 +81,7 @@ else
     echo "   Install: https://docs.docker.com/compose/install/"
 fi
 
-# 3. Python 3.8+
+# 4. Python 3.8+
 log_check "Python 3.8+"
 if command -v python3 &> /dev/null; then
     PYTHON_VERSION=$(python3 --version | cut -d' ' -f2)
@@ -88,7 +99,7 @@ else
     echo "   Install: https://www.python.org/downloads/"
 fi
 
-# 4. Git
+# 5. Git
 log_check "Git"
 if command -v git &> /dev/null; then
     GIT_VERSION=$(git --version)
@@ -98,7 +109,7 @@ else
     echo "   Install: https://git-scm.com/downloads"
 fi
 
-# 5. GitHub CLI
+# 6. GitHub CLI
 log_check "GitHub CLI"
 if command -v gh &> /dev/null; then
     GH_VERSION=$(gh --version | head -n 1)
@@ -108,7 +119,7 @@ else
     echo "   Install for PR operations: https://cli.github.com/"
 fi
 
-# 6. jq (JSON processor)
+# 7. jq (JSON processor)
 log_check "jq"
 if command -v jq &> /dev/null; then
     JQ_VERSION=$(jq --version)
@@ -118,7 +129,7 @@ else
     echo "   Install: https://jqlang.github.io/jq/download/"
 fi
 
-# 7. yq (YAML processor)
+# 8. yq (YAML processor)
 log_check "yq"
 if command -v yq &> /dev/null; then
     YQ_VERSION=$(yq --version 2>&1 | head -n 1)
@@ -128,13 +139,23 @@ else
     echo "   Install: https://github.com/mikefarah/yq#install"
 fi
 
-# 8. Disk space
+# 9. Claude Code CLI
+log_check "Claude Code CLI"
+if command -v claude &> /dev/null; then
+    CLAUDE_VERSION=$(claude --version 2>&1 || echo "unknown version")
+    log_success "Claude Code CLI installed: $CLAUDE_VERSION"
+else
+    log_warning "Claude Code CLI not found (needed for running workflows)"
+    echo "   Install: npm install -g @anthropic-ai/claude-code"
+fi
+
+# 10. Disk space
 log_check "Disk space"
 AVAILABLE_GB=$(df -BG . | tail -1 | awk '{print $4}' | tr -d 'G')
-if [ "$AVAILABLE_GB" -ge 2 ]; then
+if [ "$AVAILABLE_GB" -ge 5 ]; then
     log_success "Sufficient disk space: ${AVAILABLE_GB}GB available"
 else
-    log_warning "Low disk space: ${AVAILABLE_GB}GB available (2GB+ recommended)"
+    log_warning "Low disk space: ${AVAILABLE_GB}GB available (5GB+ recommended for development)"
 fi
 
 # Summary
@@ -142,13 +163,13 @@ echo ""
 echo "╔════════════════════════════════════════════════════════════╗"
 if [ $FAILED_CHECKS -eq 0 ]; then
     if [ $WARNING_CHECKS -eq 0 ]; then
-        echo "║  ✓ All Prerequisites Met!                                 ║"
+        echo "║  ✓ All Development Prerequisites Met!                     ║"
     else
         echo "║  ✓ Required Prerequisites Met (with warnings)             ║"
     fi
     echo "╚════════════════════════════════════════════════════════════╝"
     echo ""
-    log_success "System ready for setup"
+    log_success "System ready for development setup"
     if [ $WARNING_CHECKS -gt 0 ]; then
         log_warning "$WARNING_CHECKS optional prerequisite(s) missing"
     fi
