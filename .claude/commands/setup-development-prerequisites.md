@@ -97,27 +97,15 @@ Guide developer on available development workflows and documentation.
 
 3. **Show development workflows** (in order of complexity):
 
-   **a) Rebuild recipe database** (if recipes need updating):
-   ```bash
-   cd data-ingestion
-   source venv/bin/activate
-   python main.py  # Takes 15-20 minutes
-   ```
-   See `data-ingestion/README.md` for details.
+   **a) Rebuild recipe database**: See `data-ingestion/README.md`
 
-   **b) Run evaluations** (test workflow quality):
-   ```bash
-   cd eval
-   ./run-eval.sh  # Runs full test suite
-   ```
-   See `eval/README.md` for test suite configuration and result analysis.
+   **b) Run evaluations**: See `eval/README.md`
 
    **c) Test plugin locally** (recommended for development):
    ```bash
    claude --plugin-dir ./plugin
    > /rewrite-assist https://github.com/owner/repo/pull/123
    ```
-   This loads the plugin from local directory, useful for testing changes.
 
    **d) Quick test with installed plugin**:
    ```bash
