@@ -30,16 +30,12 @@ scripts/check-prerequisites.sh
 
 2. **Interpret output**:
    - ✗ = required prerequisite missing - must fix
-   - ⚠ = optional prerequisite missing - can continue
    - ✓ = check passed
 
-3. **For each missing required prerequisite**:
+3. **For each missing prerequisite**:
    - Show the installation instructions from script output
    - Ask user to install and confirm when ready
    - Re-run check to verify installation
-
-4. **Handle optional tools (gh CLI)**:
-   - If missing, ask: "GitHub CLI is optional. Continue without it?"
 
 ### Success Criteria
 Script exits with code 0 (all required prerequisites pass)

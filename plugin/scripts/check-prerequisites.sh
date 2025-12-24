@@ -112,8 +112,8 @@ if command -v gh &> /dev/null; then
     GH_VERSION=$(gh --version | head -n 1)
     log_success "$GH_VERSION"
 else
-    log_warning "GitHub CLI not found (optional but recommended)"
-    echo "   Install for PR operations: https://cli.github.com/"
+    log_error "GitHub CLI not found"
+    echo "   Install: https://cli.github.com/"
 fi
 
 # 6. jq (JSON processor)

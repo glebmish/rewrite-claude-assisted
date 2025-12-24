@@ -48,7 +48,7 @@ Before using the plugin, ensure you have:
 - **Docker Compose**
 - **Python 3.8+**
 - **Git**
-- **GitHub CLI** (`gh`) - optional but recommended
+- **GitHub CLI** (`gh`)
 
 ## Quick Start
 

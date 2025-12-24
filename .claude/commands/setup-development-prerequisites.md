@@ -30,7 +30,6 @@ scripts/check-dev-prerequisites.sh
 
 2. **Parse output**:
    - Identify missing prerequisites (marked with ✗)
-   - Identify warnings (marked with ⚠)
    - Note successful checks (marked with ✓)
 
 3. **For each missing prerequisite**:
@@ -39,12 +38,8 @@ scripts/check-dev-prerequisites.sh
    - Ask user to install and confirm when ready
    - Re-run check to verify installation
 
-4. **Handle optional tools (gh CLI)**:
-   - Explain: "GitHub CLI enables PR operations but is optional for basic usage"
-   - If missing, ask: "Do you want to continue without gh CLI?"
-
 ### Success Criteria
-All required prerequisites pass (Docker, Docker Compose, Python 3.8+ with venv, Git, jq, yq, Claude Code CLI)
+All required prerequisites pass (Docker, Docker Compose, Python 3.8+ with venv, Git, gh, jq, yq, Claude Code CLI)
 
 ---
 
