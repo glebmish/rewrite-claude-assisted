@@ -76,8 +76,8 @@ else
     echo ""
 fi
 
-# Step 2: Setup Python environment with uv
-log_info "Step 2/5: Setting up Python environment with uv..."
+# Step 2: Setup Python environment with venv
+log_info "Step 2/5: Setting up Python environment..."
 echo ""
 
 if [ ! -d "$MCP_DIR" ]; then
@@ -106,14 +106,15 @@ else
     DB_IMAGE_TAG="latest"
 fi
 
-# Create virtual environment with uv
-log_info "Creating virtual environment with uv..."
-uv venv venv
+# Create virtual environment with venv
+log_info "Creating virtual environment..."
+python3 -m venv venv
 log_success "Virtual environment created"
 
-# Install dependencies with uv
-log_info "Installing Python dependencies with uv..."
-uv pip install -r requirements.txt
+# Install dependencies with pip
+log_info "Installing Python dependencies..."
+./venv/bin/pip install --upgrade pip
+./venv/bin/pip install -r requirements.txt
 log_success "Dependencies installed"
 
 cd "$PROJECT_ROOT"

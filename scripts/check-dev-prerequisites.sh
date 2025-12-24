@@ -39,18 +39,7 @@ echo "║  Development Prerequisites Check                           ║"
 echo "╚════════════════════════════════════════════════════════════╝"
 echo ""
 
-# 1. uv (Python package manager)
-log_check "uv (Python package manager)"
-if command -v uv &> /dev/null; then
-    UV_VERSION=$(uv --version)
-    log_success "$UV_VERSION"
-else
-    log_error "uv not found in PATH"
-    echo "   Install: curl -LsSf https://astral.sh/uv/install.sh | sh"
-    echo "   Or: pip install uv"
-fi
-
-# 2. Docker
+# 1. Docker
 log_check "Docker"
 if command -v docker &> /dev/null; then
     DOCKER_VERSION=$(docker --version)
@@ -68,7 +57,7 @@ else
     echo "   Install: https://docs.docker.com/get-docker/"
 fi
 
-# 3. Docker Compose
+# 2. Docker Compose
 log_check "Docker Compose"
 if command -v docker-compose &> /dev/null; then
     COMPOSE_VERSION=$(docker-compose --version)
@@ -81,8 +70,8 @@ else
     echo "   Install: https://docs.docker.com/compose/install/"
 fi
 
-# 4. Python 3.8+
-log_check "Python 3.8+"
+# 3. Python 3.8+ with venv
+log_check "Python 3.8+ with venv"
 if command -v python3 &> /dev/null; then
     PYTHON_VERSION=$(python3 --version | cut -d' ' -f2)
     PYTHON_MAJOR=$(echo $PYTHON_VERSION | cut -d'.' -f1)
@@ -90,6 +79,14 @@ if command -v python3 &> /dev/null; then
 
     if [ "$PYTHON_MAJOR" -ge 3 ] && [ "$PYTHON_MINOR" -ge 8 ]; then
         log_success "Python $PYTHON_VERSION"
+
+        # Check venv module
+        if python3 -c "import venv" &> /dev/null; then
+            log_success "Python venv module available"
+        else
+            log_error "Python venv module not found"
+            echo "   Install: apt install python3-venv (Debian/Ubuntu)"
+        fi
     else
         log_error "Python 3.8+ required, found Python $PYTHON_VERSION"
         echo "   Install: https://www.python.org/downloads/"
@@ -99,7 +96,7 @@ else
     echo "   Install: https://www.python.org/downloads/"
 fi
 
-# 5. Git
+# 4. Git
 log_check "Git"
 if command -v git &> /dev/null; then
     GIT_VERSION=$(git --version)
@@ -109,7 +106,7 @@ else
     echo "   Install: https://git-scm.com/downloads"
 fi
 
-# 6. GitHub CLI
+# 5. GitHub CLI
 log_check "GitHub CLI"
 if command -v gh &> /dev/null; then
     GH_VERSION=$(gh --version | head -n 1)
@@ -119,7 +116,7 @@ else
     echo "   Install for PR operations: https://cli.github.com/"
 fi
 
-# 7. jq (JSON processor)
+# 6. jq (JSON processor)
 log_check "jq"
 if command -v jq &> /dev/null; then
     JQ_VERSION=$(jq --version)
@@ -129,7 +126,7 @@ else
     echo "   Install: https://jqlang.github.io/jq/download/"
 fi
 
-# 8. yq (YAML processor)
+# 7. yq (YAML processor)
 log_check "yq"
 if command -v yq &> /dev/null; then
     YQ_VERSION=$(yq --version 2>&1 | head -n 1)
@@ -139,7 +136,7 @@ else
     echo "   Install: https://github.com/mikefarah/yq#install"
 fi
 
-# 9. Claude Code CLI
+# 8. Claude Code CLI
 log_check "Claude Code CLI"
 if command -v claude &> /dev/null; then
     CLAUDE_VERSION=$(claude --version 2>&1 || echo "unknown version")
@@ -149,7 +146,7 @@ else
     echo "   Install: npm install -g @anthropic-ai/claude-code"
 fi
 
-# 10. Disk space
+# 9. Disk space
 log_check "Disk space"
 AVAILABLE_GB=$(df -BG . | tail -1 | awk '{print $4}' | tr -d 'G')
 if [ "$AVAILABLE_GB" -ge 5 ]; then
@@ -157,6 +154,8 @@ if [ "$AVAILABLE_GB" -ge 5 ]; then
 else
     log_warning "Low disk space: ${AVAILABLE_GB}GB available (5GB+ recommended for development)"
 fi
+
+echo ""
 
 # Summary
 echo ""

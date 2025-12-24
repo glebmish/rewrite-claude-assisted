@@ -44,14 +44,14 @@ scripts/check-dev-prerequisites.sh
    - If missing, ask: "Do you want to continue without gh CLI?"
 
 ### Success Criteria
-All required prerequisites pass (uv, Docker, Docker Compose, Python 3.8+, Git, jq, yq, Claude Code CLI)
+All required prerequisites pass (Docker, Docker Compose, Python 3.8+ with venv, Git, jq, yq, Claude Code CLI)
 
 ---
 
 ## Phase 2: Environment Setup
 
 ### Objective
-Set up Python environment with uv and pull Docker image.
+Set up Python virtual environment and pull Docker image.
 
 ### Actions
 
@@ -69,13 +69,13 @@ scripts/setup-dev.sh --skip-prerequisites-check
      - Explain: "Failed to pull pre-built database image"
      - Suggest: "Check network connection and try again"
 
-   - **uv dependency issues**:
+   - **Python dependency issues**:
      - Suggest: "Try recreating virtual environment"
-     - Run: `rm -rf plugin/mcp-server/venv && cd plugin/mcp-server && uv venv venv`
+     - Run: `rm -rf plugin/mcp-server/venv && cd plugin/mcp-server && python3 -m venv venv`
      - Retry setup
 
 ### Success Criteria
-Python environment is configured with uv and Docker image is available
+Python virtual environment is configured and Docker image is available
 
 ---
 
@@ -99,7 +99,7 @@ scripts/verify-dev-setup.sh
 
 3. **Common issues and fixes**:
    - **MCP server files missing**: Check plugin directory structure
-   - **Python dependencies incomplete**: `cd plugin/mcp-server && uv pip install -r requirements.txt`
+   - **Python dependencies incomplete**: `cd plugin/mcp-server && ./venv/bin/pip install -r requirements.txt`
    - **Docker image not found**: `docker pull glebmish/openrewrite-recipes-db:latest`
    - **MCP configuration missing**: Re-run `scripts/setup-dev.sh`
 

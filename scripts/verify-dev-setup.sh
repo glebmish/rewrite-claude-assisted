@@ -54,7 +54,7 @@ else
     echo "   Expected: $MCP_DIR/src/server.py, requirements.txt, docker-compose.yml"
 fi
 
-# 2. Python virtual environment with uv
+# 2. Python virtual environment
 log_check "Python virtual environment"
 if [ -d "$MCP_DIR/venv" ]; then
     log_success "Virtual environment exists"
@@ -64,7 +64,7 @@ if [ -d "$MCP_DIR/venv" ]; then
         log_success "Python dependencies installed"
     else
         log_error "Python dependencies missing or incomplete"
-        echo "   Run: cd $MCP_DIR && uv pip install -r requirements.txt"
+        echo "   Run: cd $MCP_DIR && ./venv/bin/pip install -r requirements.txt"
     fi
 else
     log_error "Python virtual environment not found"

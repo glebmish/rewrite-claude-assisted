@@ -116,8 +116,8 @@ claude
 ```
 
 The setup assistant will:
-- Check all development prerequisites (uv, Docker, Git, etc.)
-- Set up Python environment with uv
+- Check all development prerequisites (Docker, Python, Git, etc.)
+- Set up Python virtual environment
 - Pull Docker image for MCP recipe database
 - Configure local MCP integration
 - Verify the complete setup
@@ -132,7 +132,7 @@ cd rewrite-claude-assisted
 # Check prerequisites
 ./scripts/check-dev-prerequisites.sh
 
-# Run setup (creates venv with uv, pulls Docker image)
+# Run setup (creates venv, pulls Docker image)
 ./scripts/setup-dev.sh
 
 # Verify setup
