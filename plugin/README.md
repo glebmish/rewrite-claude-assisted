@@ -54,16 +54,16 @@ Before using the plugin, ensure you have:
 
 ### 1. Setup
 
-Run the setup wizard:
+Run the prerequisites verification:
 
 ```
-/openrewrite-assist:setup
+/verify-openrewrite-assist-prerequisites
 ```
 
 This will:
-- Check prerequisites
-- Set up the MCP server with recipe database
-- Configure permissions
+- Check prerequisites (Docker, Python, Git, etc.)
+- Set up the MCP server environment
+- Pull the recipe database Docker image
 - Verify the installation
 
 ### 2. Analyze a PR
@@ -95,8 +95,7 @@ All outputs are saved to `.output/<timestamp>/`:
 | `/rewrite-assist <PR-URL>` | Full workflow for recipe discovery and validation |
 | `/fetch-repos <PR-URLs>` | Clone repositories and fetch PR branches |
 | `/extract-intent <repo:branch>` | Extract transformation intents from PR |
-| `/analyze-session <output-dir>` | Analyze workflow session effectiveness |
-| `/setup` | Interactive setup wizard |
+| `/verify-openrewrite-assist-prerequisites` | Check and set up plugin prerequisites |
 
 ## Agents
 
@@ -106,7 +105,6 @@ The plugin uses specialized subagents:
 |-------|-------|---------|
 | `openrewrite-expert` | opus | Recipe discovery and composition |
 | `openrewrite-recipe-validator` | opus | Empirical recipe validation |
-| `openrewrite-session-analyzer` | sonnet | Workflow effectiveness analysis |
 
 ### Configuring Models
 
@@ -123,9 +121,24 @@ The plugin includes an MCP server for semantic recipe search:
 - **Recipes**: 2000+ OpenRewrite recipes with embeddings
 - **Tools**: `find_recipes`, `get_recipe`, `test_connection`
 
-### Starting the MCP Server
+### Setting Up the MCP Server
 
-The MCP server starts automatically when needed. To manually manage:
+Run the setup scripts:
+
+```bash
+cd scripts
+
+# Check prerequisites
+./check-prerequisites.sh
+
+# Set up environment (creates venv, pulls Docker image)
+./setup-plugin.sh
+
+# Verify setup
+./verify-setup.sh
+```
+
+To manually start the database:
 
 ```bash
 cd mcp-server
@@ -147,18 +160,15 @@ openrewrite-assist-plugin/
 │   ├── rewrite-assist.md
 │   ├── fetch-repos.md
 │   ├── extract-intent.md
-│   ├── analyze-session.md
-│   └── setup.md
+│   └── verify-openrewrite-assist-prerequisites.md
 ├── agents/                    # Specialized subagents
 │   ├── openrewrite-expert.md
-│   ├── openrewrite-recipe-validator.md
-│   └── openrewrite-session-analyzer.md
-├── skills/
-│   └── openrewrite-assist/
-│       ├── SKILL.md
-│       └── references/
+│   └── openrewrite-recipe-validator.md
 ├── mcp-server/                # Recipe search MCP server
-├── scripts/                   # Helper scripts
+├── scripts/                   # Setup and verification scripts
+│   ├── check-prerequisites.sh
+│   ├── setup-plugin.sh
+│   └── verify-setup.sh
 ├── .mcp.json                  # MCP configuration
 ├── README.md
 ├── PERMISSIONS.md
