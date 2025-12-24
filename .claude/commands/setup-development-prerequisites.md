@@ -92,10 +92,8 @@ Guide developer on available development workflows and documentation.
    - `docs/ARCHITECTURE.md`: System design, agent orchestration, workflow phases
    - `docs/VALIDATION.md`: Empirical validation algorithm, precision/recall metrics
    - `docs/EVALUATION.md`: Evaluation infrastructure, batch pipeline
-   - `docs/openrewrite.md`: Condensed OpenRewrite guide
    - `plugin/README.md`: Plugin overview and usage
    - `plugin/PERMISSIONS.md`: Required tool permissions
-   - `DEVELOPMENT_DIARY.md`: Evolution log with insights
 
 3. **Show development workflows** (in order of complexity):
 

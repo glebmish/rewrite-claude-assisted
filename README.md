@@ -211,10 +211,9 @@ rewrite-claude-assisted/
 ├── eval/                  # Non-interactive workflow runner, test suite definitions
 ├── eval-checkpoints/      # Historical checkpoints with complete artifacts
 └── docs/
-│   ├── ARCHITECTURE.md    # System design deep-dive including refinement
-│   ├── VALIDATION.md      # Empirical validation algorithm
-│   ├── EVALUATION.md      # Evaluation algorithm
-│   └── openrewrite.md     # Condensed OpenRewrite guide for user and LLM use
+    ├── ARCHITECTURE.md    # System design deep-dive including refinement
+    ├── VALIDATION.md      # Empirical validation algorithm
+    └── EVALUATION.md      # Evaluation algorithm
 └── DEVELOPMENT_DIARY.md   # 6-month evolution log with insights
 ```
 
