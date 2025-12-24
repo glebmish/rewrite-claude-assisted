@@ -82,23 +82,53 @@ Python virtual environments are configured and Docker image is available
 ## Phase 3: Next Steps
 
 ### Objective
-Guide developer on what to do next.
+Guide developer on available development workflows and documentation.
 
 ### Actions
 
 1. **Display success message**
 
-2. **Show development commands**:
-   - Test the plugin: `claude` then `/rewrite-assist https://github.com/owner/repo/pull/123`
-   - Run evaluations: See `eval/README.md`
-
-3. **Point to documentation**:
+2. **Point to documentation**:
+   - `docs/ARCHITECTURE.md`: System design, agent orchestration, workflow phases
+   - `docs/VALIDATION.md`: Empirical validation algorithm, precision/recall metrics
+   - `docs/EVALUATION.md`: Evaluation infrastructure, batch pipeline
+   - `docs/openrewrite.md`: Condensed OpenRewrite guide
    - `plugin/README.md`: Plugin overview and usage
    - `plugin/PERMISSIONS.md`: Required tool permissions
-   - `eval/README.md`: Evaluation framework
+   - `DEVELOPMENT_DIARY.md`: Evolution log with insights
+
+3. **Show development workflows** (in order of complexity):
+
+   **a) Rebuild recipe database** (if recipes need updating):
+   ```bash
+   cd data-ingestion
+   source venv/bin/activate
+   python main.py  # Takes 15-20 minutes
+   ```
+   See `data-ingestion/README.md` for details.
+
+   **b) Run evaluations** (test workflow quality):
+   ```bash
+   cd eval
+   ./run-eval.sh  # Runs full test suite
+   ```
+   See `eval/README.md` for test suite configuration and result analysis.
+
+   **c) Test plugin locally** (recommended for development):
+   ```bash
+   claude --plugin-dir ./plugin
+   > /rewrite-assist https://github.com/owner/repo/pull/123
+   ```
+   This loads the plugin from local directory, useful for testing changes.
+
+   **d) Quick test with installed plugin**:
+   ```bash
+   claude
+   > /rewrite-assist https://github.com/owner/repo/pull/123
+   ```
 
 ### Success Criteria
-Developer understands how to test the plugin and run evaluations
+Developer understands available workflows and can choose appropriate next step
 
 ---
 
