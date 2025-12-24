@@ -51,7 +51,7 @@ All required prerequisites pass (Docker, Docker Compose, Python 3.8+ with venv, 
 ## Phase 2: Environment Setup
 
 ### Objective
-Set up Python virtual environment and pull Docker image.
+Set up Python virtual environments and pull Docker image.
 
 ### Actions
 
@@ -71,70 +71,15 @@ scripts/setup-dev.sh --skip-prerequisites-check
 
    - **Python dependency issues**:
      - Suggest: "Try recreating virtual environment"
-     - Run: `rm -rf plugin/mcp-server/venv && cd plugin/mcp-server && python3 -m venv venv`
+     - Run: `rm -rf plugin/mcp-server/venv && rm -rf data-ingestion/venv`
      - Retry setup
 
 ### Success Criteria
-Python virtual environment is configured and Docker image is available
+Python virtual environments are configured and Docker image is available
 
 ---
 
-## Phase 3: Verification
-
-### Objective
-Verify all development components are working correctly.
-
-### Actions
-
-1. **Run verification script**:
-```bash
-scripts/verify-dev-setup.sh
-```
-
-2. **Interpret results**:
-   - For each failed check:
-     - Read the error message
-     - Provide specific fix based on failure type
-     - Offer to retry after fix
-
-3. **Common issues and fixes**:
-   - **MCP server files missing**: Check plugin directory structure
-   - **Python dependencies incomplete**: `cd plugin/mcp-server && ./venv/bin/pip install -r requirements.txt`
-   - **Docker image not found**: `docker pull glebmish/openrewrite-recipes-db:latest`
-   - **MCP configuration missing**: Re-run `scripts/setup-dev.sh`
-
-### Success Criteria
-All verification checks pass (or only optional warnings)
-
----
-
-## Phase 4: Target Repository Check (Optional)
-
-### Objective
-Check if the target repository has Java/Gradle for recipe execution.
-
-### Actions
-
-1. **Ask user**:
-   - "Will you be running OpenRewrite recipes directly on this repository?"
-   - "Or will you clone a different repository for recipe execution?"
-
-2. **If running on this repository**:
-   - Check for `build.gradle` or `build.gradle.kts`
-   - Extract Java version from build file
-   - Verify matching Java version is available
-   - Check for `gradlew` or `gradlew.bat`
-
-3. **If running on different repository**:
-   - Skip Java/Gradle checks
-   - Note: "Java/Gradle will be checked when you run /rewrite-assist"
-
-### Success Criteria
-User understands the recipe execution requirements
-
----
-
-## Phase 5: Next Steps
+## Phase 3: Next Steps
 
 ### Objective
 Guide developer on what to do next.

@@ -70,8 +70,8 @@ else
     echo "   Install: https://docs.docker.com/compose/install/"
 fi
 
-# 3. Python 3.8+
-log_check "Python 3.8+"
+# 3. Python 3.8+ with venv
+log_check "Python 3.8+ with venv"
 if command -v python3 &> /dev/null; then
     PYTHON_VERSION=$(python3 --version | cut -d' ' -f2)
     PYTHON_MAJOR=$(echo $PYTHON_VERSION | cut -d'.' -f1)
@@ -79,6 +79,14 @@ if command -v python3 &> /dev/null; then
 
     if [ "$PYTHON_MAJOR" -ge 3 ] && [ "$PYTHON_MINOR" -ge 8 ]; then
         log_success "Python $PYTHON_VERSION"
+
+        # Check venv module
+        if python3 -c "import venv" &> /dev/null; then
+            log_success "Python venv module available"
+        else
+            log_error "Python venv module not found"
+            echo "   Install: apt install python3-venv (Debian/Ubuntu)"
+        fi
     else
         log_error "Python 3.8+ required, found Python $PYTHON_VERSION"
         echo "   Install: https://www.python.org/downloads/"

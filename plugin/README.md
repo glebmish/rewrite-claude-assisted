@@ -133,9 +133,6 @@ cd scripts
 
 # Set up environment (creates venv, pulls Docker image)
 ./setup-plugin.sh
-
-# Verify setup
-./verify-setup.sh
 ```
 
 To manually start the database:
@@ -165,10 +162,9 @@ openrewrite-assist-plugin/
 │   ├── openrewrite-expert.md
 │   └── openrewrite-recipe-validator.md
 ├── mcp-server/                # Recipe search MCP server
-├── scripts/                   # Setup and verification scripts
+├── scripts/                   # Setup scripts
 │   ├── check-prerequisites.sh
-│   ├── setup-plugin.sh
-│   └── verify-setup.sh
+│   └── setup-plugin.sh
 ├── .mcp.json                  # MCP configuration
 ├── README.md
 ├── PERMISSIONS.md

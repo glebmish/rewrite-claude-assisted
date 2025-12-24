@@ -2,12 +2,15 @@
 # Script: setup-dev.sh
 # Purpose: Setup development environment for rewrite-claude-assisted repo
 # Usage: ./scripts/setup-dev.sh [--skip-prerequisites-check]
+#
+# This script runs the plugin setup first, then adds dev-specific setup (data-ingestion).
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-MCP_DIR="$PROJECT_ROOT/plugin/mcp-server"
+PLUGIN_DIR="$PROJECT_ROOT/plugin"
+DATA_INGESTION_DIR="$PROJECT_ROOT/data-ingestion"
 
 # Parse command-line flags
 SKIP_PREREQUISITES=false
@@ -54,121 +57,53 @@ echo "║  Development Environment Setup                             ║"
 echo "╚════════════════════════════════════════════════════════════╝"
 echo ""
 
-# Step 1: Check prerequisites
-if [ "$SKIP_PREREQUISITES" = false ]; then
-    log_info "Step 1/5: Checking prerequisites..."
-    echo ""
-
-    if [ -x "$SCRIPT_DIR/check-dev-prerequisites.sh" ]; then
-        if "$SCRIPT_DIR/check-dev-prerequisites.sh"; then
-            echo ""
-        else
-            log_error "Prerequisites check failed"
-            echo ""
-            echo "Please install missing prerequisites and run this script again."
-            exit 1
-        fi
-    else
-        log_warning "check-dev-prerequisites.sh not found or not executable, skipping validation"
-    fi
-else
-    log_info "Step 1/5: Skipping prerequisites check..."
-    echo ""
-fi
-
-# Step 2: Setup Python environment with venv
-log_info "Step 2/5: Setting up Python environment..."
+# Step 1: Run plugin setup
+log_info "Step 1/2: Running plugin setup..."
 echo ""
 
-if [ ! -d "$MCP_DIR" ]; then
-    log_error "MCP server directory not found: $MCP_DIR"
+PLUGIN_SETUP_ARGS=""
+if [ "$SKIP_PREREQUISITES" = true ]; then
+    PLUGIN_SETUP_ARGS="--skip-prerequisites-check"
+fi
+
+if [ -x "$PLUGIN_DIR/scripts/setup-plugin.sh" ]; then
+    if ! "$PLUGIN_DIR/scripts/setup-plugin.sh" $PLUGIN_SETUP_ARGS; then
+        log_error "Plugin setup failed"
+        exit 1
+    fi
+else
+    log_error "Plugin setup-plugin.sh not found or not executable"
     exit 1
 fi
 
-cd "$MCP_DIR"
-
-# Load environment variables
-if [ -f ".env" ]; then
-    set -a
-    source ".env"
-    set +a
-    log_info "Loaded configuration from .env"
-elif [ -f ".env.example" ]; then
-    log_info "Creating .env from .env.example"
-    cp ".env.example" ".env"
-    set -a
-    source ".env"
-    set +a
-    log_success ".env created"
-else
-    log_warning "No .env file found, using defaults"
-    DB_IMAGE_NAME="glebmish/openrewrite-recipes-db"
-    DB_IMAGE_TAG="latest"
-fi
-
-# Create virtual environment with venv
-log_info "Creating virtual environment..."
-python3 -m venv venv
-log_success "Virtual environment created"
-
-# Install dependencies with pip
-log_info "Installing Python dependencies..."
-./venv/bin/pip install --upgrade pip
-./venv/bin/pip install -r requirements.txt
-log_success "Dependencies installed"
-
-cd "$PROJECT_ROOT"
-
-# Step 3: Pull Docker image (don't start)
-log_info "Step 3/5: Pulling Docker image..."
+# Step 2: Setup data-ingestion environment
+echo ""
+log_info "Step 2/2: Setting up data-ingestion environment..."
 echo ""
 
-FULL_IMAGE_NAME="${DB_IMAGE_NAME:-glebmish/openrewrite-recipes-db}:${DB_IMAGE_TAG:-latest}"
-
-if docker image inspect "$FULL_IMAGE_NAME" &> /dev/null; then
-    log_success "Docker image already exists: $FULL_IMAGE_NAME"
+if [ ! -d "$DATA_INGESTION_DIR" ]; then
+    log_warning "data-ingestion directory not found, skipping"
 else
-    log_info "Pulling image: $FULL_IMAGE_NAME"
-    if docker pull "$FULL_IMAGE_NAME"; then
-        log_success "Docker image pulled successfully"
+    cd "$DATA_INGESTION_DIR"
+
+    # Create virtual environment if it doesn't exist
+    if [ ! -d "venv" ]; then
+        log_info "Creating data-ingestion virtual environment..."
+        python3 -m venv venv
+        log_success "Virtual environment created"
     else
-        log_error "Failed to pull Docker image"
-        echo "   Try manually: docker pull $FULL_IMAGE_NAME"
-        exit 1
+        log_success "Virtual environment already exists"
     fi
-fi
 
-# Step 4: Configure MCP
-log_info "Step 4/5: Configuring MCP..."
-echo ""
+    # Install dependencies (always run - idempotent, catches updates)
+    log_info "Installing data-ingestion dependencies..."
+    source venv/bin/activate
+    pip install -q --upgrade pip
+    pip install -q -r requirements.txt
+    deactivate
+    log_success "Dependencies installed"
 
-# Generate local .mcp.json for development
-if [ -f "$PROJECT_ROOT/.mcp.json" ]; then
-    log_success "MCP configuration already exists"
-else
-    cat > "$PROJECT_ROOT/.mcp.json" << EOF
-{
-  "mcpServers": {
-    "openrewrite-mcp": {
-      "type": "stdio",
-      "command": "$MCP_DIR/scripts/startup.sh",
-      "args": [],
-      "env": {}
-    }
-  }
-}
-EOF
-    log_success "MCP configuration created at .mcp.json"
-fi
-
-# Step 5: Verify eval framework
-log_info "Step 5/5: Verifying eval framework..."
-echo ""
-
-if [ -f "$PROJECT_ROOT/eval/entrypoint.sh" ] && [ -d "$PROJECT_ROOT/eval/suites" ]; then
-    log_success "Evaluation framework present"
-else
-    log_warning "Evaluation framework incomplete (some files missing)"
+    cd "$PROJECT_ROOT"
 fi
 
 # Summary
@@ -178,11 +113,6 @@ echo "║  ✓ Development Setup Complete!                             ║"
 echo "╚════════════════════════════════════════════════════════════╝"
 echo ""
 log_success "Development environment is configured"
-echo ""
-echo "Configuration:"
-echo "  MCP Server: $MCP_DIR"
-echo "  Docker Image: $FULL_IMAGE_NAME"
-echo "  MCP Config: $PROJECT_ROOT/.mcp.json"
 echo ""
 echo "Next steps:"
 echo ""

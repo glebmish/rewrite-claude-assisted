@@ -125,23 +125,19 @@ log_success "Dependencies installed"
 
 cd "$PLUGIN_ROOT"
 
-# Step 3: Pull Docker image (don't start)
+# Step 3: Pull Docker image (always run - idempotent, updates if newer available)
 log_info "Step 3/4: Pulling Docker image..."
 echo ""
 
 FULL_IMAGE_NAME="${DB_IMAGE_NAME:-glebmish/openrewrite-recipes-db}:${DB_IMAGE_TAG:-latest}"
 
-if docker image inspect "$FULL_IMAGE_NAME" &> /dev/null; then
-    log_success "Docker image already exists: $FULL_IMAGE_NAME"
+log_info "Pulling image: $FULL_IMAGE_NAME"
+if docker pull "$FULL_IMAGE_NAME"; then
+    log_success "Docker image ready: $FULL_IMAGE_NAME"
 else
-    log_info "Pulling image: $FULL_IMAGE_NAME"
-    if docker pull "$FULL_IMAGE_NAME"; then
-        log_success "Docker image pulled successfully"
-    else
-        log_error "Failed to pull Docker image"
-        echo "   Try manually: docker pull $FULL_IMAGE_NAME"
-        exit 1
-    fi
+    log_error "Failed to pull Docker image"
+    echo "   Try manually: docker pull $FULL_IMAGE_NAME"
+    exit 1
 fi
 
 # Step 4: Configure MCP

@@ -120,7 +120,7 @@ The setup assistant will:
 - Set up Python virtual environment
 - Pull Docker image for MCP recipe database
 - Configure local MCP integration
-- Verify the complete setup
+- Verify the configuration
 - Guide you to next steps
 
 **Option 2: Manual Setup**
@@ -134,9 +134,6 @@ cd rewrite-claude-assisted
 
 # Run setup (creates venv, pulls Docker image)
 ./scripts/setup-dev.sh
-
-# Verify setup
-./scripts/verify-dev-setup.sh
 ```
 
 ### Example Execution
@@ -209,7 +206,7 @@ rewrite-claude-assisted/
 │   ├── agents/            # openrewrite-expert, openrewrite-recipe-validator
 │   ├── mcp-server/        # Bundled MCP server with semantic search
 │   └── scripts/           # Plugin setup/verify scripts
-├── scripts/               # Development setup scripts (check, setup, verify)
+├── scripts/               # Development setup scripts (check, setup)
 ├── data-ingestion/        # Recipe database pipeline (15-20 min full build)
 ├── eval/                  # Non-interactive workflow runner, test suite definitions
 ├── eval-checkpoints/      # Historical checkpoints with complete artifacts

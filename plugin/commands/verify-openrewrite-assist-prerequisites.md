@@ -4,9 +4,9 @@ description: Verify prerequisites for running OpenRewrite Assist plugin
 
 # Verify OpenRewrite Assist Prerequisites
 
-Interactive verification wizard for OpenRewrite Assist plugin. This command validates that all prerequisites are met and the plugin is correctly configured.
+Interactive setup wizard for OpenRewrite Assist plugin. This command validates that all prerequisites are met and sets up the plugin environment.
 
-You are an experienced DevOps engineer helping users verify their environment for the OpenRewrite Assist plugin. Your goal is to ensure the setup is complete and working.
+You are an experienced DevOps engineer helping users set up their environment for the OpenRewrite Assist plugin. Your goal is to ensure the setup is complete and working.
 
 ## Execution Protocol
 
@@ -28,23 +28,21 @@ Verify all required tools are installed and properly configured.
 scripts/check-prerequisites.sh
 ```
 
-2. **Parse output**:
-   - Identify missing prerequisites (marked with ✗)
-   - Identify warnings (marked with ⚠)
-   - Note successful checks (marked with ✓)
+2. **Interpret output**:
+   - ✗ = required prerequisite missing - must fix
+   - ⚠ = optional prerequisite missing - can continue
+   - ✓ = check passed
 
-3. **For each missing prerequisite**:
+3. **For each missing required prerequisite**:
    - Show the installation instructions from script output
-   - Detect OS if needed for platform-specific guidance
    - Ask user to install and confirm when ready
    - Re-run check to verify installation
 
 4. **Handle optional tools (gh CLI)**:
-   - Explain: "GitHub CLI enables PR operations but is optional for basic usage"
-   - If missing, ask: "Do you want to continue without gh CLI?"
+   - If missing, ask: "GitHub CLI is optional. Continue without it?"
 
 ### Success Criteria
-All required prerequisites pass (Docker, Docker Compose, Python 3.8+, Git, jq, yq)
+Script exits with code 0 (all required prerequisites pass)
 
 ---
 
@@ -61,53 +59,16 @@ scripts/setup-plugin.sh --skip-prerequisites-check
 ```
 
 2. **Monitor for errors**:
-   - **Docker not running**:
-     - Guide: "Please start Docker Desktop and try again"
-     - Wait for user confirmation, then retry
-
-   - **Image pull failures**:
-     - Explain: "Failed to pull pre-built database image"
-     - Suggest: "Check network connection and try again"
-
-   - **Python dependency issues**:
-     - Suggest: "Recreating virtual environment"
-     - Run: `rm -rf mcp-server/venv && python3 -m venv mcp-server/venv`
-     - Retry setup
+   - **Docker not running**: Guide user to start Docker, retry
+   - **Image pull failures**: Check network, retry
+   - **Python dependency issues**: Suggest `rm -rf mcp-server/venv` and retry
 
 ### Success Criteria
-MCP server environment is configured and Docker image is available
+Script exits with code 0
 
 ---
 
-## Phase 3: Verification
-
-### Objective
-Verify all components are working correctly.
-
-### Actions
-
-1. **Run verification script**:
-```bash
-scripts/verify-setup.sh
-```
-
-2. **Interpret results**:
-   - For each failed check:
-     - Read the error message
-     - Provide specific fix based on failure type
-     - Offer to retry after fix
-
-3. **Common issues and fixes**:
-   - **MCP server files missing**: Check plugin installation
-   - **Python dependencies incomplete**: `cd mcp-server && venv/bin/pip install -r requirements.txt`
-   - **Docker image not found**: `docker pull glebmish/openrewrite-recipes-db:latest`
-
-### Success Criteria
-All verification checks pass (or only optional warnings)
-
----
-
-## Phase 4: Target Repository Check (Optional)
+## Phase 3: Target Repository Check (Optional)
 
 ### Objective
 Check if the target repository has Java/Gradle for recipe execution.
@@ -115,16 +76,16 @@ Check if the target repository has Java/Gradle for recipe execution.
 ### Actions
 
 1. **Ask user**:
-   - "Will you be running OpenRewrite recipes directly on this repository?"
-   - "Or will you clone a different repository for recipe execution?"
+   - "Will you be running OpenRewrite recipes on a specific repository now?"
+   - "Or will you clone a different repository later?"
 
-2. **If running on this repository**:
+2. **If running on a repository now**:
    - Check for `build.gradle` or `build.gradle.kts`
    - Extract Java version from build file
    - Verify matching Java version is available
    - Check for `gradlew` or `gradlew.bat`
 
-3. **If running on different repository**:
+3. **If running on different repository later**:
    - Skip Java/Gradle checks
    - Note: "Java/Gradle will be checked when you run /rewrite-assist"
 
@@ -133,7 +94,7 @@ User understands the recipe execution requirements
 
 ---
 
-## Phase 5: Next Steps
+## Phase 4: Next Steps
 
 ### Objective
 Guide user on what to do next.
@@ -142,7 +103,7 @@ Guide user on what to do next.
 
 1. **Display success message**
 
-2. **Show example commands**:
+2. **Show example command**:
    - Try the main workflow: `/rewrite-assist https://github.com/owner/repo/pull/123`
 
 3. **Point to documentation**:
@@ -150,7 +111,7 @@ Guide user on what to do next.
    - PERMISSIONS.md: Required tool permissions
 
 ### Success Criteria
-User understands how to use the plugin and what to try next
+User understands how to use the plugin
 
 ---
 
@@ -165,4 +126,4 @@ User understands how to use the plugin and what to try next
 
 - Be patient and educational
 - Provide exact commands to fix issues
-- Test after each configuration change
+- The setup script is idempotent - safe to re-run
