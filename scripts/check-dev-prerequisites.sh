@@ -48,15 +48,10 @@ echo ""
 echo "Running plugin prerequisites check first..."
 echo ""
 
-if [ -x "$PLUGIN_DIR/scripts/check-prerequisites.sh" ]; then
-    if ! "$PLUGIN_DIR/scripts/check-prerequisites.sh"; then
-        echo ""
-        log_error "Plugin prerequisites check failed"
-        echo "Please fix the issues above and run this script again."
-        exit 1
-    fi
-else
-    log_error "Plugin check-prerequisites.sh not found or not executable"
+if ! "$PLUGIN_DIR/scripts/check-prerequisites.sh"; then
+    echo ""
+    log_error "Plugin prerequisites check failed"
+    echo "Please fix the issues above and run this script again."
     exit 1
 fi
 

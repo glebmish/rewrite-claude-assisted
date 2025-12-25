@@ -122,20 +122,9 @@ if command -v java &> /dev/null; then
     JAVA_VERSION=$(java -version 2>&1 | head -n 1)
     if echo "$JAVA_VERSION" | grep -qE '"17\.|"17"'; then
         log_success "$JAVA_VERSION"
-    else
-        # Check if Java 17 is available via alternatives
-        if [ -d "/usr/lib/jvm/java-17-openjdk-amd64" ]; then
-            log_success "Java 17 available at /usr/lib/jvm/java-17-openjdk-amd64"
-            echo "   Note: Default java is $JAVA_VERSION"
-            echo "   Set JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 when needed"
-        else
-            log_error "Java 17 required, found $JAVA_VERSION"
-            echo "   Install: apt install openjdk-17-jdk (Debian/Ubuntu)"
-        fi
     fi
 else
     log_error "Java not found in PATH"
-    echo "   Install: apt install openjdk-17-jdk (Debian/Ubuntu)"
 fi
 
 # 7. jq (JSON processor)

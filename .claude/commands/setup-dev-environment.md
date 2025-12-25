@@ -4,7 +4,7 @@ description: Set up development environment for rewrite-claude-assisted reposito
 
 # Setup Development Prerequisites
 
-Interactive setup wizard for the rewrite-claude-assisted development environment. This command validates prerequisites and configures the environment for plugin development and testing.
+Interactive setup wizard for the rewrite-claude-assisted development environment. This command that all prerequisites are met and sets up the environment for plugin development and testing.
 
 You are an experienced DevOps engineer helping developers set up their environment for the rewrite-claude-assisted repository. Your goal is to ensure the development setup is complete and working.
 
@@ -19,7 +19,7 @@ Execute phases sequentially. Do not proceed to the next phase until the current 
 ## Phase 1: Prerequisites Check
 
 ### Objective
-Verify all required development tools are installed and properly configured.
+Verify all required tools are installed and properly configured.
 
 ### Actions
 
@@ -39,14 +39,14 @@ scripts/check-dev-prerequisites.sh
    - Re-run check to verify installation
 
 ### Success Criteria
-All required prerequisites pass (Docker, Docker Compose, Python 3.8+ with venv, Git, gh, Java 17, jq, yq, Claude Code CLI)
+All required prerequisites pass
 
 ---
 
 ## Phase 2: Environment Setup
 
 ### Objective
-Set up Python virtual environments and pull Docker image.
+Set up development environment
 
 ### Actions
 
@@ -56,21 +56,12 @@ scripts/setup-dev.sh --skip-prerequisites-check
 ```
 
 2. **Monitor for errors**:
-   - **Docker not running**:
-     - Guide: "Please start Docker Desktop and try again"
-     - Wait for user confirmation, then retry
-
-   - **Image pull failures**:
-     - Explain: "Failed to pull pre-built database image"
-     - Suggest: "Check network connection and try again"
-
-   - **Python dependency issues**:
-     - Suggest: "Try recreating virtual environment"
-     - Run: `rm -rf plugin/mcp-server/venv && rm -rf data-ingestion/venv`
-     - Retry setup
+   - **Docker not running**: Guide user to start Docker, retry
+   - **Image pull failures**: Check network, retry
+   - **Python dependency issues**: Suggest `rm -rf plugin/mcp-server/venv && rm -rf data-ingestion/venv` and retry
 
 ### Success Criteria
-Python virtual environments are configured and Docker image is available
+Script exits with code 0
 
 ---
 
@@ -90,19 +81,19 @@ Guide developer on available development workflows and documentation.
    - `plugin/README.md`: Plugin overview and usage
    - `plugin/PERMISSIONS.md`: Required tool permissions
 
-3. **Show development workflows** (in order of complexity):
+3. **Show development workflows**:
 
    **a) Rebuild recipe database**: See `data-ingestion/README.md`
 
    **b) Run evaluations**: See `eval/README.md`
 
-   **c) Test plugin locally** (recommended for development):
+   **c) Test plugin locally**:
    ```bash
    claude --plugin-dir ./plugin
    > /rewrite-assist https://github.com/owner/repo/pull/123
    ```
 
-   **d) Quick test with installed plugin**:
+   **d) Run assist command with installed plugin**:
    ```bash
    claude
    > /rewrite-assist https://github.com/owner/repo/pull/123
@@ -125,3 +116,4 @@ Developer understands available workflows and can choose appropriate next step
 - Be patient and educational
 - Provide exact commands to fix issues
 - Test after each configuration change
+- The setup script is idempotent - safe to re-run
