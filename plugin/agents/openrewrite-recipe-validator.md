@@ -59,7 +59,7 @@ IMPORTANT: if you aren't able to execute the script, fail early and report the f
 validation in any other way. Failing early helps us troubleshoot and save resources.
 
 ```bash
-cd <plugin root directory> && scripts/validate-recipe.sh \
+$CLAUDE_PLUGIN_ROOT/scripts/validate-recipe.sh \
   --repo-path .workspace/<repo-name> \
   --recipe-file <output_dir_full_path>/option-1-recipe.yaml \
   --output-diff <output_dir_full_path>/option-1-recipe.diff \
@@ -75,7 +75,7 @@ The script automatically:
 
 ### Error Handling
 If the script fails:
-- `This command requires approval` - make sure that you are in correct directory, and you refer to the script by its relative path (`scripts/validate-recipe.sh`)
+- `This command requires approval` - make sure you use the full path via `$CLAUDE_PLUGIN_ROOT/scripts/validate-recipe.sh`
 - `Unsupported class file major version` - a wrong Java version was used
 - Check that repository path exists and is a git repository
 - Verify recipe YAML file exists and has valid `name` field
@@ -84,7 +84,7 @@ If the script fails:
 - Review error output for specific failure reason
 - CRITICAL: If none of those is the reason for the failure, rerun the script with `--debug`
   ```
-  cd <plugin root directory> && bash -x scripts/validate-recipe.sh \
+  bash -x $CLAUDE_PLUGIN_ROOT/scripts/validate-recipe.sh \
   --repo-path .workspace/<repo-name> \
   --recipe-file <output_dir_full_path>/option-1-recipe.yaml \
   --output-diff <output_dir_full_path>/option-1-recipe.diff \
@@ -99,7 +99,7 @@ If the script fails:
 ### Step 1: Execute analysis script
 
 ```
-cd <plugin root directory> && ./scripts/analysis/recipe-diff-precision.sh \
+$CLAUDE_PLUGIN_ROOT/scripts/analysis/recipe-diff-precision.sh \
 <output_dir_full_path>/pr-<N>.diff <output_dir_full_path>/option-1-recipe.diff <output_dir_full_path>/option-1-stats.json
 ```
 

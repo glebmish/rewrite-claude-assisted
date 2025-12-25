@@ -25,7 +25,7 @@ Verify all required tools are installed and properly configured.
 
 1. **Run prerequisites script**:
 ```bash
-scripts/check-prerequisites.sh
+$CLAUDE_PLUGIN_ROOT/scripts/check-prerequisites.sh
 ```
 
 2. **Parse output**:
@@ -52,7 +52,7 @@ Set up plugin environment
 
 1. **Run setup script**:
 ```bash
-scripts/setup-plugin.sh --skip-prerequisites-check
+$CLAUDE_PLUGIN_ROOT/scripts/setup-plugin.sh --skip-prerequisites-check
 ```
 
 2. **Monitor for errors**:

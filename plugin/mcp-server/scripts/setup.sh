@@ -6,7 +6,7 @@ set -euo pipefail
 # - Pull or build the pre-loaded database image
 # - Create Python virtual environment
 # - Install dependencies
-# - Verify Docker and PostgreSQL
+# - Verify Docker
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"

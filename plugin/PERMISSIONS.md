@@ -19,13 +19,12 @@ Add the following to your `.claude/settings.json`:
       "Bash(git checkout:*)",
       "Bash(./gradlew:*)",
       "Bash(yq:*)",
-      "Bash(scripts/validate-recipe.sh:*)",
-      "Bash(scripts/get-session-id.sh:*)",
-      "Bash(scripts/fetch-session.sh:*)",
-      "Bash(scripts/check-prerequisites.sh:*)",
-      "Bash(scripts/quick-setup.sh:*)",
-      "Bash(scripts/verify-setup.sh:*)",
-      "Bash(scripts/analysis/recipe-diff-precision.sh:*)",
+      "Bash(${CLAUDE_PLUGIN_ROOT}/scripts/validate-recipe.sh:*)",
+      "Bash(${CLAUDE_PLUGIN_ROOT}/scripts/get-session-id.sh:*)",
+      "Bash(${CLAUDE_PLUGIN_ROOT}/scripts/fetch-session.sh:*)",
+      "Bash(${CLAUDE_PLUGIN_ROOT}/scripts/check-prerequisites.sh:*)",
+      "Bash(${CLAUDE_PLUGIN_ROOT}/scripts/setup-plugin.sh:*)",
+      "Bash(${CLAUDE_PLUGIN_ROOT}/scripts/analysis/recipe-diff-precision.sh:*)",
       "mcp__openrewrite-mcp__test_connection",
       "mcp__openrewrite-mcp__find_recipes",
       "mcp__openrewrite-mcp__get_recipe"
@@ -65,13 +64,12 @@ Add the following to your `.claude/settings.json`:
 
 | Permission | Purpose |
 |------------|---------|
-| `Bash(scripts/validate-recipe.sh:*)` | Validate recipes against repos |
-| `Bash(scripts/get-session-id.sh:*)` | Capture session ID |
-| `Bash(scripts/fetch-session.sh:*)` | Fetch Claude session logs |
-| `Bash(scripts/check-prerequisites.sh:*)` | Check system requirements |
-| `Bash(scripts/quick-setup.sh:*)` | Run setup wizard |
-| `Bash(scripts/verify-setup.sh:*)` | Verify installation |
-| `Bash(scripts/analysis/recipe-diff-precision.sh:*)` | Calculate precision metrics |
+| `Bash(${CLAUDE_PLUGIN_ROOT}/scripts/validate-recipe.sh:*)` | Validate recipes against repos |
+| `Bash(${CLAUDE_PLUGIN_ROOT}/scripts/get-session-id.sh:*)` | Capture session ID |
+| `Bash(${CLAUDE_PLUGIN_ROOT}/scripts/fetch-session.sh:*)` | Fetch Claude session logs |
+| `Bash(${CLAUDE_PLUGIN_ROOT}/scripts/check-prerequisites.sh:*)` | Check system requirements |
+| `Bash(${CLAUDE_PLUGIN_ROOT}/scripts/setup-plugin.sh:*)` | Set up plugin environment |
+| `Bash(${CLAUDE_PLUGIN_ROOT}/scripts/analysis/recipe-diff-precision.sh:*)` | Calculate precision metrics |
 
 ### MCP Tools
 
