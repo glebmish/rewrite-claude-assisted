@@ -4,7 +4,7 @@ description: Full workflow for PR-driven recipe discovery and validation
 
 # Rewrite Assist Command
 
-This is the main orchestrator command for OpenRewrite recipe development and analysis. You're an experienced software engineer who is an expert in Java and refactoring. 
+This is the main orchestrator command for OpenRewrite recipe development and analysis. You're an experienced software engineer who is an expert in Java and refactoring.
 
 This command coordinates a multiphase workflow by executing individual commands in sequence.
 * Always complete a current phase first before reading description of the next phase.
@@ -21,7 +21,7 @@ It is CRITICALLY important that you use relative path:
 `scripts/get-session-id.sh -o .output/<yyy-mm-dd-hh-MM>/session-id.txt`.
 * On failures, retry it with different path variations and ALWAYS fail fast if you are not able to execute this command.
 
-Phase can be described as a slash command (`/<command-name>`). Do NOT use SlashCommand tool for those, read the command file instead (in `.claude/commands`)
+Phase can be described as a slash command (`/<command-name>`). Do NOT use SlashCommand tool for those, read the command file instead (in `commands/`)
 
 **CRITICAL VERBOSITY CONSTRAINTS:**
 - Be concise and factual - avoid verbose explanations
@@ -47,7 +47,7 @@ cd <repo_directory>
 git diff <default_branch> pr-<pr_number> --output=<output_dir>/pr-<pr_number>.diff
 ```
 
-### Phase 2: `/extract-intent <pairs of repository-path:pr-branch-name>` - Intent Analysis  
+### Phase 2: `/extract-intent <pairs of repository-path:pr-branch-name>` - Intent Analysis
 Analyze PRs to extract both strategic (wide) and tactical (narrow) transformation intents.
 You MUST NOT try to improve or add anything on top of what PR is doing. Always assume PR changes is the state the the user desires and work with PR changes only.
 
@@ -150,8 +150,8 @@ cp .output/<yyyy-mm-dd-hh-MM>/<subagent-recipe-diff-file> .output/<yyyy-mm-dd-hh
   - `.output/<yyyy-mm-dd-hh-MM>/option-<N>-recipe.yaml` - generated OpenRewrite recipes
   - `.output/<yyyy-mm-dd-hh-MM>/option-<N>-recipe.diff` - diffs from recipe validation
   - `.output/<yyyy-mm-dd-hh-MM>/option-<N>-stats.json` - recipe effectiveness stats
-  - `.output/<yyyy-mm-dd-hh-MM>/option-<N>-creation-analysis.diff` - analysis by openrewrite expert who created the recipe
-  - `.output/<yyyy-mm-dd-hh-MM>/option-<N>-validation-analysis.diff` - analysis based on recipe validation results
+  - `.output/<yyyy-mm-dd-hh-MM>/option-<N>-creation-analysis.md` - analysis by openrewrite expert who created the recipe
+  - `.output/<yyyy-mm-dd-hh-MM>/option-<N>-validation-analysis.md` - analysis based on recipe validation results
   - `.output/<yyyy-mm-dd-hh-MM>/pr-<N>.diff` - original PR diff
   - `.output/<yyyy-mm-dd-hh-MM>/phase<N>.md` - reports for each phase
   - `.output/<yyyy-mm-dd-hh-MM>/result/pr.diff` - PR diff, must be copied from `.output/<yyyy-mm-dd-hh-MM>`

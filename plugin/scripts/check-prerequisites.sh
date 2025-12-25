@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Script: check-prerequisites.sh
-# Purpose: Validate all prerequisites for OpenRewrite Recipe Assistant
+# Purpose: Validate runtime prerequisites for OpenRewrite Assist plugin
 # Usage: ./scripts/check-prerequisites.sh
 
 set -euo pipefail
@@ -13,6 +13,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 FAILED_CHECKS=0
+WARNING_CHECKS=0
 
 log_check() {
     echo -e "${BLUE}➤${NC}  Checking $1..."
@@ -29,31 +30,16 @@ log_error() {
 
 log_warning() {
     echo -e "${YELLOW}⚠${NC}  $1"
+    ((WARNING_CHECKS++))
 }
 
 echo ""
 echo "╔════════════════════════════════════════════════════════════╗"
-echo "║  Prerequisites Check                                       ║"
+echo "║  OpenRewrite Assist - Prerequisites Check                  ║"
 echo "╚════════════════════════════════════════════════════════════╝"
 echo ""
 
-# 1. Java 21
-log_check "Java 21"
-if command -v java &> /dev/null; then
-    JAVA_VERSION=$(java -version 2>&1 | head -n 1 | cut -d'"' -f2 | cut -d'.' -f1)
-    if [ "$JAVA_VERSION" = "21" ]; then
-        JAVA_FULL=$(java -version 2>&1 | head -n 1)
-        log_success "Java 21 found: $JAVA_FULL"
-    else
-        log_error "Java 21 required, found Java $JAVA_VERSION"
-        echo "   Install: https://adoptium.net/ or use SDKMAN: https://sdkman.io/"
-    fi
-else
-    log_error "Java not found in PATH"
-    echo "   Install: https://adoptium.net/"
-fi
-
-# 2. Docker
+# 1. Docker
 log_check "Docker"
 if command -v docker &> /dev/null; then
     DOCKER_VERSION=$(docker --version)
@@ -71,7 +57,7 @@ else
     echo "   Install: https://docs.docker.com/get-docker/"
 fi
 
-# 3. Docker Compose
+# 2. Docker Compose
 log_check "Docker Compose"
 if command -v docker-compose &> /dev/null; then
     COMPOSE_VERSION=$(docker-compose --version)
@@ -84,8 +70,8 @@ else
     echo "   Install: https://docs.docker.com/compose/install/"
 fi
 
-# 4. Python 3.8+
-log_check "Python 3.8+"
+# 3. Python 3.8+ with venv
+log_check "Python 3.8+ with venv"
 if command -v python3 &> /dev/null; then
     PYTHON_VERSION=$(python3 --version | cut -d' ' -f2)
     PYTHON_MAJOR=$(echo $PYTHON_VERSION | cut -d'.' -f1)
@@ -93,6 +79,14 @@ if command -v python3 &> /dev/null; then
 
     if [ "$PYTHON_MAJOR" -ge 3 ] && [ "$PYTHON_MINOR" -ge 8 ]; then
         log_success "Python $PYTHON_VERSION"
+
+        # Check venv module
+        if python3 -c "import venv" &> /dev/null; then
+            log_success "Python venv module available"
+        else
+            log_error "Python venv module not found"
+            echo "   Install: apt install python3-venv (Debian/Ubuntu)"
+        fi
     else
         log_error "Python 3.8+ required, found Python $PYTHON_VERSION"
         echo "   Install: https://www.python.org/downloads/"
@@ -102,17 +96,7 @@ else
     echo "   Install: https://www.python.org/downloads/"
 fi
 
-# 5. Claude Code CLI
-log_check "Claude Code CLI"
-if command -v claude &> /dev/null; then
-    CLAUDE_VERSION=$(claude --version 2>&1 || echo "unknown version")
-    log_success "Claude Code CLI installed: $CLAUDE_VERSION"
-else
-    log_error "Claude Code CLI not found"
-    echo "   Install: https://github.com/anthropics/claude-code"
-fi
-
-# 6. Git
+# 4. Git
 log_check "Git"
 if command -v git &> /dev/null; then
     GIT_VERSION=$(git --version)
@@ -122,17 +106,39 @@ else
     echo "   Install: https://git-scm.com/downloads"
 fi
 
-# 7. GitHub CLI
+# 5. GitHub CLI
 log_check "GitHub CLI"
 if command -v gh &> /dev/null; then
     GH_VERSION=$(gh --version | head -n 1)
     log_success "$GH_VERSION"
 else
     log_error "GitHub CLI not found"
-    echo "   Install for PR operations: https://cli.github.com/"
+    echo "   Install: https://cli.github.com/"
 fi
 
-# 8. jq (JSON processor)
+# 6. Java 17
+log_check "Java 17"
+if command -v java &> /dev/null; then
+    JAVA_VERSION=$(java -version 2>&1 | head -n 1)
+    if echo "$JAVA_VERSION" | grep -qE '"17\.|"17"'; then
+        log_success "$JAVA_VERSION"
+    else
+        # Check if Java 17 is available via alternatives
+        if [ -d "/usr/lib/jvm/java-17-openjdk-amd64" ]; then
+            log_success "Java 17 available at /usr/lib/jvm/java-17-openjdk-amd64"
+            echo "   Note: Default java is $JAVA_VERSION"
+            echo "   Set JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 when needed"
+        else
+            log_error "Java 17 required, found $JAVA_VERSION"
+            echo "   Install: apt install openjdk-17-jdk (Debian/Ubuntu)"
+        fi
+    fi
+else
+    log_error "Java not found in PATH"
+    echo "   Install: apt install openjdk-17-jdk (Debian/Ubuntu)"
+fi
+
+# 7. jq (JSON processor)
 log_check "jq"
 if command -v jq &> /dev/null; then
     JQ_VERSION=$(jq --version)
@@ -142,7 +148,7 @@ else
     echo "   Install: https://jqlang.github.io/jq/download/"
 fi
 
-# 9. yq (YAML processor)
+# 8. yq (YAML processor)
 log_check "yq"
 if command -v yq &> /dev/null; then
     YQ_VERSION=$(yq --version 2>&1 | head -n 1)
@@ -152,7 +158,7 @@ else
     echo "   Install: https://github.com/mikefarah/yq#install"
 fi
 
-# 10. Disk space
+# 9. Disk space
 log_check "Disk space"
 AVAILABLE_GB=$(df -BG . | tail -1 | awk '{print $4}' | tr -d 'G')
 if [ "$AVAILABLE_GB" -ge 2 ]; then
@@ -165,17 +171,27 @@ fi
 echo ""
 echo "╔════════════════════════════════════════════════════════════╗"
 if [ $FAILED_CHECKS -eq 0 ]; then
-    echo "║  ✓ All Required Prerequisites Met!                        ║"
+    if [ $WARNING_CHECKS -eq 0 ]; then
+        echo "║  ✓ All Prerequisites Met!                                 ║"
+    else
+        echo "║  ✓ Required Prerequisites Met (with warnings)             ║"
+    fi
     echo "╚════════════════════════════════════════════════════════════╝"
     echo ""
     log_success "System ready for setup"
+    if [ $WARNING_CHECKS -gt 0 ]; then
+        log_warning "$WARNING_CHECKS optional prerequisite(s) missing"
+    fi
     echo ""
     exit 0
 else
-    echo "║  ✗ Prerequisites Check Failed                             ║"
+    echo "║  ✗ Prerequisites Check Failed                              ║"
     echo "╚════════════════════════════════════════════════════════════╝"
     echo ""
-    log_error "$FAILED_CHECKS prerequisite(s) missing"
+    log_error "$FAILED_CHECKS required prerequisite(s) missing"
+    if [ $WARNING_CHECKS -gt 0 ]; then
+        log_warning "$WARNING_CHECKS optional prerequisite(s) missing"
+    fi
     echo ""
     echo "Please install missing prerequisites and run this script again."
     echo ""
