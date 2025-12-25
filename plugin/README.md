@@ -43,7 +43,7 @@ claude /plugin add github.com/glebmish/openrewrite-assist-plugin
 
 Before using the plugin, ensure you have:
 
-- **Java 11/17/21** (matching your target project)
+- **Java 17**
 - **Docker** (for MCP recipe database)
 - **Docker Compose**
 - **Python 3.8+**

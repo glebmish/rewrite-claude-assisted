@@ -116,7 +116,29 @@ else
     echo "   Install: https://cli.github.com/"
 fi
 
-# 6. jq (JSON processor)
+# 6. Java 17
+log_check "Java 17"
+if command -v java &> /dev/null; then
+    JAVA_VERSION=$(java -version 2>&1 | head -n 1)
+    if echo "$JAVA_VERSION" | grep -qE '"17\.|"17"'; then
+        log_success "$JAVA_VERSION"
+    else
+        # Check if Java 17 is available via alternatives
+        if [ -d "/usr/lib/jvm/java-17-openjdk-amd64" ]; then
+            log_success "Java 17 available at /usr/lib/jvm/java-17-openjdk-amd64"
+            echo "   Note: Default java is $JAVA_VERSION"
+            echo "   Set JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 when needed"
+        else
+            log_error "Java 17 required, found $JAVA_VERSION"
+            echo "   Install: apt install openjdk-17-jdk (Debian/Ubuntu)"
+        fi
+    fi
+else
+    log_error "Java not found in PATH"
+    echo "   Install: apt install openjdk-17-jdk (Debian/Ubuntu)"
+fi
+
+# 7. jq (JSON processor)
 log_check "jq"
 if command -v jq &> /dev/null; then
     JQ_VERSION=$(jq --version)
@@ -126,7 +148,7 @@ else
     echo "   Install: https://jqlang.github.io/jq/download/"
 fi
 
-# 7. yq (YAML processor)
+# 8. yq (YAML processor)
 log_check "yq"
 if command -v yq &> /dev/null; then
     YQ_VERSION=$(yq --version 2>&1 | head -n 1)
@@ -136,7 +158,7 @@ else
     echo "   Install: https://github.com/mikefarah/yq#install"
 fi
 
-# 8. Disk space
+# 9. Disk space
 log_check "Disk space"
 AVAILABLE_GB=$(df -BG . | tail -1 | awk '{print $4}' | tr -d 'G')
 if [ "$AVAILABLE_GB" -ge 2 ]; then

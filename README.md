@@ -93,7 +93,7 @@ These constraints represent opportunities for future enhancement rather than fun
 
 ### Requirements
 
-- Java 21
+- Java 17
 - Docker & Docker Compose
 - Python 3.8+
 - Claude Code CLI

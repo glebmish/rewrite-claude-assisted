@@ -39,7 +39,7 @@ scripts/check-dev-prerequisites.sh
    - Re-run check to verify installation
 
 ### Success Criteria
-All required prerequisites pass (Docker, Docker Compose, Python 3.8+ with venv, Git, gh, jq, yq, Claude Code CLI)
+All required prerequisites pass (Docker, Docker Compose, Python 3.8+ with venv, Git, gh, Java 17, jq, yq, Claude Code CLI)
 
 ---
 
