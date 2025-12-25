@@ -67,14 +67,9 @@ if [ "$SKIP_PREREQUISITES" = true ]; then
     PLUGIN_SETUP_ARGS="--skip-prerequisites-check"
 fi
 
-if [ -x "$PLUGIN_DIR/scripts/setup-plugin.sh" ]; then
-    if ! "$PLUGIN_DIR/scripts/setup-plugin.sh" $PLUGIN_SETUP_ARGS; then
-        log_error "Plugin setup failed"
-        exit 1
-    fi
-else
-    log_error "Plugin setup-plugin.sh not found or not executable"
-    exit 1
+if ! "$PLUGIN_DIR/scripts/setup-plugin.sh" $PLUGIN_SETUP_ARGS; then
+  log_error "Plugin setup failed"
+  exit 1
 fi
 
 # Step 2: Setup data-ingestion environment
@@ -82,60 +77,52 @@ echo ""
 log_info "Step 2/3: Setting up data-ingestion environment..."
 echo ""
 
-if [ ! -d "$DATA_INGESTION_DIR" ]; then
-    log_warning "data-ingestion directory not found, skipping"
+cd "$DATA_INGESTION_DIR"
+
+# Create virtual environment if it doesn't exist
+if [ ! -d "venv" ]; then
+  log_info "Creating data-ingestion virtual environment..."
+  python3 -m venv venv
+  log_success "Virtual environment created"
 else
-    cd "$DATA_INGESTION_DIR"
-
-    # Create virtual environment if it doesn't exist
-    if [ ! -d "venv" ]; then
-        log_info "Creating data-ingestion virtual environment..."
-        python3 -m venv venv
-        log_success "Virtual environment created"
-    else
-        log_success "Virtual environment already exists"
-    fi
-
-    # Install dependencies (always run - idempotent, catches updates)
-    log_info "Installing data-ingestion dependencies..."
-    source venv/bin/activate
-    pip install -q --upgrade pip
-    pip install -q -r requirements.txt
-    deactivate
-    log_success "Dependencies installed"
-
-    cd "$PROJECT_ROOT"
+  log_success "Virtual environment already exists"
 fi
+
+# Install dependencies (always run - idempotent, catches updates)
+log_info "Installing data-ingestion dependencies..."
+source venv/bin/activate
+pip install -q --upgrade pip
+pip install -q -r requirements.txt
+deactivate
+log_success "Dependencies installed"
+
+cd "$PROJECT_ROOT"
 
 # Step 3: Setup log-mcp-server environment
 echo ""
 log_info "Step 3/3: Setting up log-mcp-server environment..."
 echo ""
 
-if [ ! -d "$LOG_MCP_SERVER_DIR" ]; then
-    log_warning "log-mcp-server directory not found, skipping"
+cd "$LOG_MCP_SERVER_DIR"
+
+# Create virtual environment if it doesn't exist
+if [ ! -d "venv" ]; then
+  log_info "Creating log-mcp-server virtual environment..."
+  python3 -m venv venv
+  log_success "Virtual environment created"
 else
-    cd "$LOG_MCP_SERVER_DIR"
-
-    # Create virtual environment if it doesn't exist
-    if [ ! -d "venv" ]; then
-        log_info "Creating log-mcp-server virtual environment..."
-        python3 -m venv venv
-        log_success "Virtual environment created"
-    else
-        log_success "Virtual environment already exists"
-    fi
-
-    # Install dependencies (always run - idempotent, catches updates)
-    log_info "Installing log-mcp-server dependencies..."
-    source venv/bin/activate
-    pip install -q --upgrade pip
-    pip install -q -r requirements.txt
-    deactivate
-    log_success "Dependencies installed"
-
-    cd "$PROJECT_ROOT"
+  log_success "Virtual environment already exists"
 fi
+
+# Install dependencies (always run - idempotent, catches updates)
+log_info "Installing log-mcp-server dependencies..."
+source venv/bin/activate
+pip install -q --upgrade pip
+pip install -q -r requirements.txt
+deactivate
+log_success "Dependencies installed"
+
+cd "$PROJECT_ROOT"
 
 # Summary
 echo ""

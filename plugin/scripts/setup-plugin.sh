@@ -129,7 +129,7 @@ cd "$PLUGIN_ROOT"
 log_info "Step 3/4: Pulling Docker image..."
 echo ""
 
-FULL_IMAGE_NAME="${DB_IMAGE_NAME:-glebmish/openrewrite-recipes-db}:${DB_IMAGE_TAG:-latest}"
+FULL_IMAGE_NAME="${DB_IMAGE_NAME}:${DB_IMAGE_TAG}"
 
 log_info "Pulling image: $FULL_IMAGE_NAME"
 if docker pull "$FULL_IMAGE_NAME"; then

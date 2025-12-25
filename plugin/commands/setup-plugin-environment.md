@@ -1,8 +1,8 @@
 ---
-description: Verify prerequisites for running OpenRewrite Assist plugin
----
+description: Set up environment for OpenRewrite assist plugin
+------
 
-# Verify OpenRewrite Assist Prerequisites
+# Setup Plugin Prerequisites
 
 Interactive setup wizard for OpenRewrite Assist plugin. This command validates that all prerequisites are met and sets up the plugin environment.
 
@@ -28,24 +28,25 @@ Verify all required tools are installed and properly configured.
 scripts/check-prerequisites.sh
 ```
 
-2. **Interpret output**:
-   - ✗ = required prerequisite missing - must fix
-   - ✓ = check passed
+2. **Parse output**:
+   - Identify missing prerequisites (marked with ✗)
+   - Note successful checks (marked with ✓)
 
 3. **For each missing prerequisite**:
    - Show the installation instructions from script output
+   - Detect OS if needed for platform-specific guidance
    - Ask user to install and confirm when ready
    - Re-run check to verify installation
 
 ### Success Criteria
-Script exits with code 0 (all required prerequisites pass)
+All required prerequisites pass
 
 ---
 
 ## Phase 2: Environment Setup
 
 ### Objective
-Set up MCP server environment and pull Docker image.
+Set up plugin environment
 
 ### Actions
 
@@ -72,21 +73,19 @@ Check if the target repository has Java/Gradle for recipe execution.
 ### Actions
 
 1. **Ask user**:
-   - "Will you be running OpenRewrite recipes on a specific repository now?"
-   - "Or will you clone a different repository later?"
-
-2. **If running on a repository now**:
+   - "Will you be running OpenRewrite assist commands on the currently opened repository?"
+   
+2. **If yes**:
    - Check for `build.gradle` or `build.gradle.kts`
    - Extract Java version from build file
    - Verify matching Java version is available
-   - Check for `gradlew` or `gradlew.bat`
+   - Check for `gradlew`
 
 3. **If running on different repository later**:
    - Skip Java/Gradle checks
-   - Note: "Java/Gradle will be checked when you run /rewrite-assist"
-
+   
 ### Success Criteria
-User understands the recipe execution requirements
+When current repository is the target, compliance is verified
 
 ---
 
@@ -101,10 +100,6 @@ Guide user on what to do next.
 
 2. **Show example command**:
    - Try the main workflow: `/rewrite-assist https://github.com/owner/repo/pull/123`
-
-3. **Point to documentation**:
-   - README.md: Overview and quick start
-   - PERMISSIONS.md: Required tool permissions
 
 ### Success Criteria
 User understands how to use the plugin
@@ -122,4 +117,5 @@ User understands how to use the plugin
 
 - Be patient and educational
 - Provide exact commands to fix issues
+- The setup script is idempotent - safe to re-run
 - The setup script is idempotent - safe to re-run
