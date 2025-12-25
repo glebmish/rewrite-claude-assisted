@@ -1,7 +1,7 @@
 ---
 name: openrewrite-recipe-validator
 description: Use this agent PROACTIVELY to validate OpenRewrite recipes against PR changes. MUST BE USED when: Testing OpenRewrite recipe correctness and effectiveness against real project (2) Comparing recipe coverage with desired PR changes (3) Validating recipe accuracy and precision (4) Analyzing gaps between recipe output and intended changes. Examples: 'validate recipe path/to/option-1-recipe.yaml and compare with PR #123', 'test if this recipe covers all changes in the security fix PR'. ALWAYS pass pass a full path to the ouput directory and full path to the recipe.
-model: opus
+model: sonnet
 color: orange
 ---
 
