@@ -71,7 +71,8 @@ log "SSH key configured successfully"
 log "Setting up MCP server environment"
 ENTRYPOINT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(cd "$ENTRYPOINT_DIR/.." && pwd)"
-MCP_DIR="$ROOT_DIR/mcp-server"
+MCP_DIR="$ROOT_DIR/plugin/mcp-server"
+PLUGIN_DIR="$ROOT_DIR/plugin"
 LOG_MCP_DIR="$ROOT_DIR/log-mcp-server"
 SCRIPTS_DIR="$MCP_DIR/scripts"
 if [[ -d "$MCP_DIR" ]]; then
@@ -171,8 +172,11 @@ if [[ -n "$CLAUDE_DISALLOWED_TOOLS" ]]; then
     CLAUDE_CMD="$CLAUDE_CMD --disallowedTools \"$CLAUDE_DISALLOWED_TOOLS\""
 fi
 
-# Add MCP arguments
-CLAUDE_CMD="$CLAUDE_CMD --mcp-config '{\"mcpServers\":{\"openrewrite-mcp\":{\"type\":\"stdio\",\"command\":\"$SCRIPTS_DIR/startup.sh\",\"args\":[],\"env\":{}},\"log-mcp-server\":{\"type\":\"stdio\",\"command\":\"$LOG_MCP_DIR/venv/bin/python\",\"args\":[\"$LOG_MCP_DIR/server.py\",\"--log-file\",\"$MCP_LOG_FILE\"],\"env\":{}}}}' --strict-mcp-config"
+# Add plugin directory
+CLAUDE_CMD="$CLAUDE_CMD --plugin-dir $PLUGIN_DIR"
+
+# Add log-mcp-server
+CLAUDE_CMD="$CLAUDE_CMD --mcp-config '{\"mcpServers\":{\"log-mcp-server\":{\"type\":\"stdio\",\"command\":\"$LOG_MCP_DIR/venv/bin/python\",\"args\":[\"$LOG_MCP_DIR/server.py\",\"--log-file\",\"$MCP_LOG_FILE\"],\"env\":{}}}}' --strict-mcp-config"
 
 CLAUDE_PROMPT="/rewrite-assist $PR_URL."
 if [[ "$STRICT_MODE" == "true" ]]; then

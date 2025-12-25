@@ -8,8 +8,12 @@ log() {
 
 GITHUB_STEP_SUMMARY="${GITHUB_STEP_SUMMARY:-/dev/null}"
 
+# Determine directories
+EVAL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$EVAL_DIR/.." && pwd)"
+PLUGIN_DIR="$PROJECT_ROOT/plugin"
+
 # Source shared settings parser
-#SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 #source "$SCRIPT_DIR/parse-settings.sh"
 
 # Parse settings file for tool restrictions
@@ -75,7 +79,7 @@ LOG_DIR="$OUTPUT_DIR/log"
 SESSION_LOG="$LOG_DIR/$SESSION_ID.jsonl"
 
 # Fetch session using existing script
-if ! scripts/fetch-session.sh -s "$SESSION_ID" -o "$LOG_DIR"; then
+if ! "$PLUGIN_DIR/scripts/fetch-session.sh" -s "$SESSION_ID" -o "$LOG_DIR"; then
     log "Error: Failed to fetch session log"
     exit 1
 fi
@@ -86,7 +90,7 @@ SESSION_FETCH_FAILED=false
 log "Phase 2: Running quantitative analysis..."
 
 log "  Running usage and cost stats analysis..."
-if scripts/analysis/claude-stats.py "$SESSION_LOG" -o "$OUTPUT_DIR"; then
+if "$PROJECT_ROOT/scripts/claude-stats.py" "$SESSION_LOG" -o "$OUTPUT_DIR"; then
     log "  Usage stats saved to: $OUTPUT_DIR/claude-usage-stats.json"
     log "  Cost stats saved to: $OUTPUT_DIR/claude-cost-stats.json"
 else
@@ -108,7 +112,7 @@ if [[ -f "$PR_DIFF" && -f "$RECIPE_DIFF" ]]; then
 
     PRECISION_OUTPUT="$OUTPUT_DIR/recipe-precision-analysis.json"
 
-    if scripts/analysis/recipe-diff-precision.sh "$PR_DIFF" "$RECIPE_DIFF" "$PRECISION_OUTPUT"; then
+    if "$PLUGIN_DIR/scripts/analysis/recipe-diff-precision.sh" "$PR_DIFF" "$RECIPE_DIFF" "$PRECISION_OUTPUT"; then
         log "  Recipe precision stats saved to: $PRECISION_OUTPUT"
 
         # Display key metrics from the new script output

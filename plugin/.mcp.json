@@ -2,7 +2,7 @@
   "mcpServers": {
     "openrewrite-mcp": {
       "type": "stdio",
-      "command": "./mcp-server/scripts/startup.sh",
+      "command": "${CLAUDE_PLUGIN_ROOT}/mcp-server/scripts/startup.sh",
       "args": [],
       "env": {}
     }
