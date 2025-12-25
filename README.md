@@ -93,7 +93,7 @@ These constraints represent opportunities for future enhancement rather than fun
 
 ### Requirements
 
-- Java 21
+- Java 17
 - Docker & Docker Compose
 - Python 3.8+
 - Claude Code CLI
@@ -112,14 +112,15 @@ cd rewrite-claude-assisted
 
 # Start Claude Code and run setup assistant
 claude
-> /setup-assistant
+> /setup-development-prerequisites
 ```
 
 The setup assistant will:
-- Check all prerequisites interactively
-- Install and configure the MCP server
-- Auto-configure Claude Code integration
-- Verify the complete setup
+- Check all development prerequisites (Docker, Python, Git, etc.)
+- Set up Python virtual environment
+- Pull Docker image for MCP recipe database
+- Configure local MCP integration
+- Verify the configuration
 - Guide you to next steps
 
 **Option 2: Manual Setup**
@@ -128,8 +129,11 @@ The setup assistant will:
 git clone https://github.com/glebmish/rewrite-claude-assisted.git
 cd rewrite-claude-assisted
 
-# One-command setup (installs MCP server, pulls DB image)
-./scripts/quick-setup.sh
+# Check prerequisites
+./scripts/check-dev-prerequisites.sh
+
+# Run setup (creates venv, pulls Docker image)
+./scripts/setup-dev.sh
 ```
 
 ### Example Execution
@@ -195,20 +199,21 @@ See [docs/EVALUATION.md](docs/EVALUATION.md) for evaluation algorithm details
 ```
 rewrite-claude-assisted/
 ├── .claude/
-│   ├── commands/          # /setup-assistant, /create-recipe, /rewrite-assist, /fetch-repos, /extract-intent, /analyze-session
-│   └── agents/            # openrewrite-expert, openrewrite-recipe-validator, session-evaluator
-├── mcp-server/            # Custom MCP server with semantic search
-│   ├── src/               # Python MCP implementation
-│   └── scripts/           # Setup, startup scripts
+│   └── commands/          # /setup-development-prerequisites (dev setup)
+├── plugin/                # Distributable Claude Code plugin
+│   ├── .claude-plugin/    # Plugin manifest
+│   ├── commands/          # /rewrite-assist, /fetch-repos, /extract-intent, /verify-openrewrite-assist-prerequisites
+│   ├── agents/            # openrewrite-expert, openrewrite-recipe-validator
+│   ├── mcp-server/        # Bundled MCP server with semantic search
+│   └── scripts/           # Plugin setup/verify scripts
+├── scripts/               # Development setup scripts (check, setup)
 ├── data-ingestion/        # Recipe database pipeline (15-20 min full build)
 ├── eval/                  # Non-interactive workflow runner, test suite definitions
 ├── eval-checkpoints/      # Historical checkpoints with complete artifacts
-├── scripts/               # Scripts used for setup, workflow execution and workflow analysis
 └── docs/
-│   ├── ARCHITECTURE.md    # System design deep-dive including refinement
-│   ├── VALIDATION.md      # Empirical validation algorithm
-│   ├── EVALUATION.md      # Evaluation algorithm
-│   └── openrewrite.md     # Condensed OpenRewrite guide for user and LLM use
+    ├── ARCHITECTURE.md    # System design deep-dive including refinement
+    ├── VALIDATION.md      # Empirical validation algorithm
+    └── EVALUATION.md      # Evaluation algorithm
 └── DEVELOPMENT_DIARY.md   # 6-month evolution log with insights
 ```
 
