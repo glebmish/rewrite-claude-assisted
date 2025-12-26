@@ -81,6 +81,7 @@ jobs:
 
     container:
       image: glebmish/rewrite-assist
+      options: --user 1001:1001
       env:
         CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}

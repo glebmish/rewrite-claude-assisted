@@ -61,10 +61,10 @@ export CLAUDE_CODE_OAUTH_TOKEN
 export GH_TOKEN
 
 log "Setting up SSH key"
-mkdir -p /root/.ssh
-echo "$SSH_PRIVATE_KEY" > /root/.ssh/id_rsa
-chmod 600 /root/.ssh/id_rsa
-ssh-keyscan github.com >> /root/.ssh/known_hosts
+mkdir -p "$HOME/.ssh"
+echo "$SSH_PRIVATE_KEY" > "$HOME/.ssh/id_rsa"
+chmod 600 "$HOME/.ssh/id_rsa"
+ssh-keyscan github.com >> "$HOME/.ssh/known_hosts"
 log "SSH key configured successfully"
 
 # Setup MCP server environment
