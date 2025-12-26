@@ -1,0 +1,59 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
+}
+
+group = 'com.example'
+version = '1.0.0'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Dropwizard 2.0.x
+    implementation 'io.dropwizard:dropwizard-core:2.0.25'
+    implementation 'io.dropwizard:dropwizard-auth:2.0.25'
+    implementation 'io.dropwizard:dropwizard-jdbi3:2.0.25'
+    implementation 'io.dropwizard:dropwizard-migrations:2.0.25'
+
+    // Database
+    implementation 'org.postgresql:postgresql:42.2.24'
+
+    // Authentication
+    implementation 'org.springframework.security:spring-security-crypto:5.5.2'
+
+    // Older versions of Jackson and Guava
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.12.3'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.3'
+    implementation 'com.google.guava:guava:30.1.1-jre'
+
+    // Log4j2
+    implementation 'org.apache.logging.log4j:log4j-core:2.14.1'
+    implementation 'org.apache.logging.log4j:log4j-api:2.14.1'
+    implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.14.1'
+    testImplementation 'io.dropwizard:dropwizard-testing:2.0.25'
+    testImplementation "org.junit.jupiter:junit-jupiter-api:5.8.1"
+    testImplementation 'org.mockito:mockito-core:3.12.4'
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.8.1"
+    testImplementation 'com.h2database:h2:1.4.200'
+}
+
+application {
+    mainClassName = 'com.example.usermanagement.UserManagementApplication'
+}
+
+shadowJar {
+    archiveClassifier = 'fat'
+    mergeServiceFiles()
+}
+
+test {
+    useJUnitPlatform()
+}

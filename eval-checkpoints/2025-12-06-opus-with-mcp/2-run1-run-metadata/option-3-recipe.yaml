@@ -1,0 +1,121 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.example.PR3Option3
+displayName: Java 11 to 17 + JUnit 4 to 5 Migration (Optimized Hybrid)
+description: |
+  Optimized hybrid approach combining best elements from Option 1 and Option 2.
+  Uses narrow recipes for precision with gap-filling for known issues.
+  Targets: Java 17, Gradle 7.6.4, Shadow 7.1.2, JUnit 5.8.1
+
+recipeList:
+  # ============================================================================
+  # SECTION 1: Gradle Wrapper Update
+  # ============================================================================
+  # Update Gradle wrapper from 6.9 to 7.6.4
+  # Using addIfMissing: false to avoid SHA256 checksum addition (not in PR)
+  - org.openrewrite.gradle.UpdateGradleWrapper:
+      version: 7.6.4
+      addIfMissing: false
+
+  # ============================================================================
+  # SECTION 2: Java Version - Compatibility Style (matches UpdateJavaCompatibility behavior)
+  # ============================================================================
+  # Note: PR uses java.toolchain { languageVersion = JavaLanguageVersion.of(17) }
+  # but UpdateJavaCompatibility preserves sourceCompatibility/targetCompatibility style.
+  # This is functionally equivalent. A custom recipe would be needed for toolchain syntax.
+  - org.openrewrite.gradle.UpdateJavaCompatibility:
+      version: 17
+
+  # ============================================================================
+  # SECTION 3: Shadow Plugin Upgrade
+  # ============================================================================
+  # Upgrade Shadow plugin from 6.1.0 to 7.1.2
+  - org.openrewrite.gradle.plugins.UpgradePluginVersion:
+      pluginIdPattern: com.github.johnrengelman.shadow
+      newVersion: 7.1.2
+
+  # ============================================================================
+  # SECTION 4: GitHub Actions - Java Version Update
+  # ============================================================================
+  # Update actions/setup-java to use Java 17
+  - org.openrewrite.github.SetupJavaUpgradeJavaVersion:
+      minimumJavaMajorVersion: 17
+
+  # ============================================================================
+  # SECTION 5: GitHub Actions - Step Name Update
+  # ============================================================================
+  # Update step name from "Set up JDK 11" to "Set up JDK 17"
+  # Using simpler JsonPath without job-specific path since ci.yml uses 'test' job not 'build'
+  - org.openrewrite.yaml.ChangeValue:
+      keyPath: $.jobs.test.steps[?(@.name == 'Set up JDK 11')].name
+      value: Set up JDK 17
+      filePattern: .github/workflows/*.yml
+
+  # ============================================================================
+  # SECTION 6: JUnit 4 to JUnit 5 - Dependencies
+  # ============================================================================
+  # Remove JUnit 4 dependency
+  - org.openrewrite.gradle.RemoveDependency:
+      groupId: junit
+      artifactId: junit
+      configuration: testImplementation
+
+  # Add JUnit Jupiter API (specific version from PR)
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.junit.jupiter
+      artifactId: junit-jupiter-api
+      version: 5.8.1
+      configuration: testImplementation
+
+  # Add JUnit Jupiter Engine (specific version from PR)
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.junit.jupiter
+      artifactId: junit-jupiter-engine
+      version: 5.8.1
+      configuration: testRuntimeOnly
+
+  # ============================================================================
+  # SECTION 7: JUnit 4 to JUnit 5 - Test Configuration
+  # ============================================================================
+  # Configure test task to use JUnit Platform
+  - org.openrewrite.java.testing.junit5.GradleUseJunitJupiter
+
+  # ============================================================================
+  # SECTION 8: JUnit 4 to JUnit 5 - Annotation & Import Migrations
+  # ============================================================================
+  # Migrate @Test annotation
+  - org.openrewrite.java.testing.junit5.UpdateTestAnnotation
+
+  # Migrate @Before/@After annotations
+  - org.openrewrite.java.testing.junit5.UpdateBeforeAfterAnnotations
+
+  # Migrate Assert to Assertions
+  - org.openrewrite.java.testing.junit5.AssertToAssertions
+
+  # Clean up JUnit imports
+  - org.openrewrite.java.testing.junit5.CleanupJUnitImports
+
+  # ============================================================================
+  # SECTION 9: Gap Filling - mainClassName to mainClass (Gradle 7 deprecation)
+  # ============================================================================
+  # Note: This uses text-based replacement as last resort since no semantic
+  # recipe exists for application.mainClassName -> application.mainClass migration.
+  # The find/replace is specific enough to avoid false matches.
+  - org.openrewrite.text.FindAndReplace:
+      find: "mainClassName = "
+      replace: "mainClass = "
+      filePattern: "**/build.gradle"
+      plaintextOnly: false
+
+  # ============================================================================
+  # SECTION 10: Gap Filling - shadowJar mainClassName
+  # ============================================================================
+  # Add mainClassName to shadowJar block for Shadow plugin 7.x compatibility
+  # This is needed because application.mainClass is not automatically picked up
+  # Note: This uses regex to insert after mergeServiceFiles() in shadowJar block
+  - org.openrewrite.text.FindAndReplace:
+      find: "(shadowJar \\{[\\s\\S]*?mergeServiceFiles\\(\\))"
+      replace: "$1\n    mainClassName = 'com.example.usermanagement.UserManagementApplication'"
+      regex: true
+      filePattern: "**/build.gradle"
+      plaintextOnly: false

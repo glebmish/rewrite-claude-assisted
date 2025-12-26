@@ -1,0 +1,37 @@
+## Workflow Complete ✅
+
+### Summary
+
+**PR Analyzed**: https://github.com/openrewrite-assist-testing-dataset/user-management-service/pull/3
+
+**Transformation Intent**: Java 11 → 17 upgrade with JUnit 4 → 5 migration
+
+### Recipe Comparison
+
+| Option | Strategy | Precision | Recall | F1 Score |
+|--------|----------|-----------|--------|----------|
+| Option 1 | Broad | 64.52% | 64.52% | 64.52% |
+| **Option 2** | **Narrow** | **80.0%** | **64.5%** | **71.4%** |
+| Option 3 | Refined | 85.0% | 54.84% | 66.67% |
+
+### Recommended: Option 2 (Narrow Approach)
+- Best F1 score (71.4%)
+- Highest precision (80%) with minimal over-application
+- Uses specific recipes for controlled transformations
+
+### Output Directory
+`.output/2025-12-06-08-31/`
+
+**Key Files**:
+- `result/recommended-recipe.yaml` - Final recipe
+- `result/recommended-recipe.diff` - Recipe execution output
+- `result/pr.diff` - Original PR diff
+- `intent-tree.md` - Extracted transformation intents
+- `phase1-6.md` - Phase reports
+
+### Known Gaps
+No existing OpenRewrite recipes available for:
+1. Java toolchain syntax migration
+2. `application.mainClassName` → `mainClass`
+3. `shadowJar { mainClassName = ... }` addition
+4. Comment updates

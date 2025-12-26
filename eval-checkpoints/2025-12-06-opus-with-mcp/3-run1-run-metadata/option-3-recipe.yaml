@@ -1,0 +1,85 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.example.PR3Option3
+displayName: Dropwizard 2 to 3 Migration - Precision Refined
+description: >
+  Refined recipe for Dropwizard 2.x to 3.x migration with improved precision.
+  Uses a scoped sub-recipe for @Override removal that only targets files
+  containing Application subclasses, preventing false positives on HealthCheck.
+
+recipeList:
+  # ============================================================
+  # 1. Upgrade Java Version (11 -> 17)
+  # ============================================================
+  - org.openrewrite.gradle.UpdateJavaCompatibility:
+      version: 17
+
+  # ============================================================
+  # 2. Upgrade Dropwizard Dependencies (2.1.12 -> 3.0.0)
+  # ============================================================
+  - org.openrewrite.gradle.UpgradeDependencyVersion:
+      groupId: io.dropwizard
+      artifactId: dropwizard-core
+      newVersion: 3.0.0
+
+  - org.openrewrite.gradle.UpgradeDependencyVersion:
+      groupId: io.dropwizard
+      artifactId: dropwizard-jdbi3
+      newVersion: 3.0.0
+
+  - org.openrewrite.gradle.UpgradeDependencyVersion:
+      groupId: io.dropwizard
+      artifactId: dropwizard-auth
+      newVersion: 3.0.0
+
+  - org.openrewrite.gradle.UpgradeDependencyVersion:
+      groupId: io.dropwizard
+      artifactId: dropwizard-configuration
+      newVersion: 3.0.0
+
+  - org.openrewrite.gradle.UpgradeDependencyVersion:
+      groupId: io.dropwizard
+      artifactId: dropwizard-testing
+      newVersion: 3.0.0
+
+  # ============================================================
+  # 3. Import Relocations (io.dropwizard -> io.dropwizard.core)
+  # ============================================================
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: io.dropwizard.Application
+      newFullyQualifiedTypeName: io.dropwizard.core.Application
+
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: io.dropwizard.Configuration
+      newFullyQualifiedTypeName: io.dropwizard.core.Configuration
+
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: io.dropwizard.setup.Bootstrap
+      newFullyQualifiedTypeName: io.dropwizard.core.setup.Bootstrap
+
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: io.dropwizard.setup.Environment
+      newFullyQualifiedTypeName: io.dropwizard.core.setup.Environment
+
+  # ============================================================
+  # 4. Scoped @Override Removal
+  # ============================================================
+  # Sub-recipe with precondition to only affect Application files
+  - com.example.PR3Option3.ScopedOverrideRemoval
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.example.PR3Option3.ScopedOverrideRemoval
+displayName: Remove @Override from Dropwizard Application methods
+description: >
+  Scoped removal of @Override annotations. Only runs on files that contain
+  classes extending io.dropwizard.core.Application, preventing modification
+  of other classes like DatabaseHealthCheck that have valid @Override usages.
+
+preconditions:
+  - org.openrewrite.java.search.FindImplementations:
+      typeName: io.dropwizard.Application
+
+recipeList:
+  - org.openrewrite.java.dropwizard.method.RemoveUnnecessaryOverride:
+      ignoreAnonymousClassMethods: false

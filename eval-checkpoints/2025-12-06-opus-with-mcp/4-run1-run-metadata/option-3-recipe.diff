@@ -1,0 +1,85 @@
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 84a8453..863c545 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -20,7 +20,7 @@ jobs:
+         distribution: 'temurin'
+     
+     - name: Cache Gradle packages
+-      uses: actions/cache@v2
++      uses: actions/cache@v4
+       with:
+         path: ~/.gradle/caches
+         key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
+diff --git a/Dockerfile b/Dockerfile
+index f56a901..ffd718e 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,4 +1,4 @@
+-FROM openjdk:17-jre-slim
++FROM eclipse-temurin:17-jre-alpine
+ 
+ WORKDIR /app
+ 
+diff --git a/build.gradle b/build.gradle
+index 1b80db0..c043d3f 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -23,9 +23,6 @@ dependencies {
+     implementation 'io.dropwizard:dropwizard-jdbi3:2.1.12'
+     implementation 'io.dropwizard:dropwizard-migrations:2.1.12'
+     
+-    // H2 Database
+-    implementation 'com.h2database:h2:2.1.214'
+-    
+     // Authentication
+     implementation 'org.springframework.security:spring-security-crypto:5.7.2'
+     
+@@ -35,9 +32,13 @@ dependencies {
+     implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.20.0'
+     
+     // Testing - JUnit 4
++    implementation "org.postgresql:postgresql:42.6.0"
+     testImplementation 'junit:junit:4.13.2'
+     testImplementation 'io.dropwizard:dropwizard-testing:2.1.12'
+     testImplementation 'org.mockito:mockito-core:4.6.1'
++    testImplementation "org.testcontainers:junit-jupiter:1.17.6"
++    testImplementation "org.testcontainers:postgresql:1.17.6"
++    testImplementation "org.testcontainers:testcontainers:1.17.6"
+     testImplementation 'org.assertj:assertj-core:3.23.1'
+ }
+ 
+diff --git a/src/main/resources/config.yml b/src/main/resources/config.yml
+index 08c7166..0216d50 100644
+--- a/src/main/resources/config.yml
++++ b/src/main/resources/config.yml
+@@ -7,13 +7,13 @@ server:
+       port: 8081
+ 
+ database:
+-  driverClass: org.h2.Driver
+-  user: sa
+-  password: ""
+-  url: jdbc:h2:mem:blog;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
++  driverClass: org.postgresql.Driver
++  user: "{{ GET_ENV_VAR:DATABASE_USER }}"
++  password: "{{ GET_ENV_VAR:DATABASE_PASSWORD }}"
++  url: "{{ GET_ENV_VAR:DATABASE_URL }}"
+   properties:
+     charSet: UTF-8
+-    hibernate.dialect: org.hibernate.dialect.H2Dialect
++    hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
+     hibernate.hbm2ddl.auto: create-drop
+     hibernate.show_sql: true
+     hibernate.format_sql: true
+diff --git a/src/main/resources/db/migration/V1__Create_posts_table.sql b/src/main/resources/db/migration/V1__Create_posts_table.sql
+index 7fa4b8d..32aa77c 100644
+--- a/src/main/resources/db/migration/V1__Create_posts_table.sql
++++ b/src/main/resources/db/migration/V1__Create_posts_table.sql
+@@ -1,5 +1,5 @@
+ CREATE TABLE posts (
+-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
++    id BIGSERIAL PRIMARY KEY,
+     title VARCHAR(255) NOT NULL,
+     content TEXT,
+     author VARCHAR(255) NOT NULL,

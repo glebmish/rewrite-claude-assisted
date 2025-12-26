@@ -1,0 +1,54 @@
+# Option 3 Creation Analysis
+
+## Summary
+Option 3 combines validated learnings from Option 1 and Option 2 to create an optimized recipe.
+
+## Key Fix Applied
+
+### hibernate.dialect KeyPath Syntax
+```diff
+- keyPath: $.database.properties.hibernate.dialect    # Option 1 - FAILED
++ keyPath: "$.database.properties['hibernate.dialect']"  # Option 2/3 - WORKS
+```
+
+**Why Option 1 Failed:**
+- JSONPath `$.database.properties.hibernate.dialect` interprets dots as path separators
+- In YAML, `hibernate.dialect` is a single key name containing a dot
+- Parser tried to find `hibernate` -> `dialect` nested structure which doesn't exist
+
+**Why Option 2/3 Works:**
+- Bracket notation `['hibernate.dialect']` treats the entire string as a literal key
+- Correctly matches the YAML structure where `hibernate.dialect` is a single property name
+
+## Recipe Composition (Unchanged from validated Option 2)
+
+| Section | Recipes | Status |
+|---------|---------|--------|
+| Gradle Dependencies | RemoveDependency, AddDependency x5 | Validated |
+| Config.yml | ChangeValue x5 (with fixed keyPath) | Fixed |
+| SQL Migration | FindAndReplace | Validated |
+| Dockerfile | FindAndReplace | Validated |
+| GitHub Actions | ChangeActionVersion | Validated |
+
+## Expected Improvements Over Option 1
+
+| Metric | Option 1 | Expected Option 3 |
+|--------|----------|-------------------|
+| Precision | 76.19% | ~78% |
+| Recall | 69.57% | ~78% |
+| hibernate.dialect | MISSING | APPLIED |
+
+## Known Limitations (Cosmetic - Accepted)
+
+These are OpenRewrite behavioral characteristics that do not affect functionality:
+- Dependency placement differs from PR (alphabetical sorting)
+- Quote style uses double quotes instead of single
+- Comment `// H2 Database` removed but `// PostgreSQL` not added
+- Testcontainers dependency order differs
+
+## Files Modified by Recipe
+1. `build.gradle` - Dependency changes
+2. `config.yml` - Database configuration
+3. `src/main/resources/db/migration/V1__Create_posts_table.sql` - SQL syntax
+4. `Dockerfile` - Base image
+5. `.github/workflows/ci.yml` - Actions version

@@ -1,0 +1,144 @@
+# Option 1 Recipe Validation Analysis
+
+## Setup Summary
+- **Repository**: simple-blog-platform
+- **PR Tested**: PR #3 (H2 to PostgreSQL migration)
+- **Recipe**: com.example.PR3Option1 (Broad Approach)
+- **Java Version**: 17
+
+## Execution Results
+- **Status**: SUCCESS
+- **Files Modified**: 5
+- **Performance**: Build completed in ~1m 32s
+
+## Metrics Summary
+| Metric | Value |
+|--------|-------|
+| Precision | 76.19% |
+| Recall | 69.57% |
+| F1 Score | 72.73% |
+| True Positives | 16 |
+| False Positives | 5 |
+| False Negatives | 7 |
+
+## Gap Analysis (False Negatives - 7 changes missed)
+
+### 1. Hibernate Dialect Change MISSED
+**PR Expected:**
+```yaml
+-    hibernate.dialect: org.hibernate.dialect.H2Dialect
++    hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
+```
+
+**Recipe Result:** This change was NOT applied. The recipe diff shows `hibernate.dialect: org.hibernate.dialect.H2Dialect` remains unchanged.
+
+**Root Cause:** The YAML recipe `org.openrewrite.yaml.ChangeValue` with `keyPath: $.database.properties.hibernate.dialect` did not match. This is likely because the nested property path syntax doesn't work as expected with properties containing dots in YAML keys.
+
+### 2. Comment Removal Not Handled
+**PR Expected:**
+```gradle
+-    // H2 Database
+-    implementation 'com.h2database:h2:2.1.214'
++    // PostgreSQL
++    implementation 'org.postgresql:postgresql:42.6.0'
+```
+
+**Recipe Result:** The H2 dependency line was removed, but the comment `// H2 Database` was removed without being replaced by `// PostgreSQL`. The recipe does not add the comment.
+
+**Root Cause:** `org.openrewrite.gradle.RemoveDependency` removes the dependency but OpenRewrite's Gradle recipes don't handle associated comments. `AddDependency` adds without comments by default.
+
+## Over-Application Analysis (False Positives - 5 extra changes)
+
+### 1. Dependency Placement Differs
+**PR Expected:**
+```gradle
+    // PostgreSQL
+    implementation 'org.postgresql:postgresql:42.6.0'
+
+    // Authentication
+```
+(PostgreSQL dependency placed where H2 was)
+
+**Recipe Result:**
+```gradle
+    // Testing - JUnit 4
+    implementation "org.postgresql:postgresql:42.6.0"
+    testImplementation 'junit:junit:4.13.2'
+```
+(PostgreSQL dependency placed in testing section)
+
+**Root Cause:** `org.openrewrite.gradle.AddDependency` places dependencies by default sorting rules, not at specific locations. The dependency was added but in a different position than the PR.
+
+### 2. Testcontainers Dependency Order Differs
+**PR Expected:** (in order)
+```gradle
+    testImplementation 'org.testcontainers:testcontainers:1.17.6'
+    testImplementation 'org.testcontainers:postgresql:1.17.6'
+    testImplementation 'org.testcontainers:junit-jupiter:1.17.6'
+```
+
+**Recipe Result:**
+```gradle
+    testImplementation "org.testcontainers:junit-jupiter:1.17.6"
+    testImplementation "org.testcontainers:postgresql:1.17.6"
+    testImplementation "org.testcontainers:testcontainers:1.17.6"
+```
+
+**Root Cause:** OpenRewrite sorts dependencies alphabetically within configuration blocks. PR had them in a specific order (base -> specialized -> testing) which was not preserved.
+
+### 3. Quote Style Difference
+**PR Expected:** Single quotes for dependencies
+**Recipe Result:** Double quotes for new dependencies
+
+**Root Cause:** OpenRewrite Gradle recipes use double quotes by default. The project uses single quotes consistently.
+
+## Detailed File Comparison
+
+### build.gradle
+| Change | PR | Recipe | Match |
+|--------|-----|--------|-------|
+| Remove H2 | YES | YES | Partial (comment not handled) |
+| Add PostgreSQL | YES | YES | Position differs |
+| Add testcontainers | YES | YES | Order differs |
+| Add testcontainers:postgresql | YES | YES | Order differs |
+| Add junit-jupiter | YES | YES | Order differs |
+
+### config.yml
+| Change | PR | Recipe | Match |
+|--------|-----|--------|-------|
+| driverClass | YES | YES | EXACT |
+| user | YES | YES | EXACT |
+| password | YES | YES | EXACT |
+| url | YES | YES | EXACT |
+| hibernate.dialect | YES | NO | MISSING |
+
+### V1__Create_posts_table.sql
+| Change | PR | Recipe | Match |
+|--------|-----|--------|-------|
+| AUTO_INCREMENT -> BIGSERIAL | YES | YES | EXACT |
+
+### Dockerfile
+| Change | PR | Recipe | Match |
+|--------|-----|--------|-------|
+| Base image update | YES | YES | EXACT |
+
+### ci.yml
+| Change | PR | Recipe | Match |
+|--------|-----|--------|-------|
+| actions/cache@v4 | YES | YES | EXACT |
+
+## Actionable Recommendations
+
+### Critical Fix Required
+1. **Hibernate Dialect**: The YAML ChangeValue recipe with nested keyPath containing dots (`$.database.properties.hibernate.dialect`) is not working. Consider:
+   - Using `org.openrewrite.yaml.MergeYaml` for nested properties
+   - Using `org.openrewrite.text.FindAndReplace` as fallback for this specific property
+
+### Cosmetic Improvements (Lower Priority)
+2. **Dependency Placement**: Accept that OpenRewrite places dependencies differently. This is functionally equivalent but produces diff noise.
+3. **Quote Style**: Accept OpenRewrite's default double quotes. Functionally equivalent.
+4. **Dependency Order**: Accept alphabetical sorting. Functionally equivalent.
+5. **Comments**: Cannot be addressed with standard recipes. Would require custom recipe or text-based replacement.
+
+## Conclusion
+The recipe correctly identifies and applies the core transformation (H2 to PostgreSQL migration) with 76% precision and 70% recall. The main functional gap is the **missing hibernate.dialect change** which must be fixed. Other differences are cosmetic (ordering, quotes, placement) and do not affect functionality.

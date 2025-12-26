@@ -1,0 +1,43 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.weather.PR3Option1
+displayName: PR #3 Java 11 to 17 Migration - Broad Approach
+description: |
+  Comprehensive migration recipe for upgrading from Java 11 to Java 17 with Gradle
+  wrapper update and Docker base image changes. Uses broad umbrella recipes for
+  maximum coverage of Java migration patterns.
+
+recipeList:
+  # =============================================================================
+  # PHASE 1: Java 17 Migration (Comprehensive)
+  # =============================================================================
+  # The broad UpgradeToJava17 recipe covers:
+  # - Java 8 to 11 migration first (includes J2EE library dependencies)
+  # - Build file updates (sourceCompatibility/targetCompatibility)
+  # - Deprecated API replacements
+  # - Plugin version upgrades for Java 17 compatibility
+  # - Modern Java features (text blocks, instanceof pattern matching, etc.)
+  - org.openrewrite.java.migrate.UpgradeToJava17
+
+  # =============================================================================
+  # PHASE 2: Gradle Wrapper Upgrade
+  # =============================================================================
+  # Update Gradle wrapper from 6.7 to 7.6
+  - org.openrewrite.gradle.UpdateGradleWrapper:
+      version: "7.6"
+      distribution: all
+
+  # =============================================================================
+  # PHASE 3: Docker Base Image Updates
+  # =============================================================================
+  # Replace openjdk:11-jdk-slim with eclipse-temurin:17-jdk-alpine (builder stage)
+  - org.openrewrite.text.FindAndReplace:
+      find: "FROM openjdk:11-jdk-slim"
+      replace: "FROM eclipse-temurin:17-jdk-alpine"
+      filePattern: "**/Dockerfile"
+
+  # Replace openjdk:11-jre-slim with eclipse-temurin:17-jre-alpine (runtime stage)
+  - org.openrewrite.text.FindAndReplace:
+      find: "FROM openjdk:11-jre-slim"
+      replace: "FROM eclipse-temurin:17-jre-alpine"
+      filePattern: "**/Dockerfile"

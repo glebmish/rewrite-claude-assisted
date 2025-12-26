@@ -1,0 +1,81 @@
+# Option 3 Recipe Creation Analysis
+
+## Strategy: Optimized Hybrid
+
+Combined best elements from Option 1 and Option 2 based on validation results.
+
+## Key Decisions
+
+### From Option 2 (Narrow Approach) - ADOPTED
+- Specific JUnit dependency recipes (junit-jupiter-api + junit-jupiter-engine)
+- Individual annotation migration recipes for precision
+- Explicit version control (5.8.1 matches PR exactly)
+
+### From Option 1 - REJECTED
+- JUnit4to5Migration composite (adds aggregate artifact, wrong version)
+- UpgradeToJava17 (includes unwanted modernizations like Optional.isEmpty)
+
+## Gap Fixes Applied
+
+### 1. GitHub Actions Step Name
+- **Problem**: Option 1/2 used `$.jobs.build.steps[...]` but CI file has `jobs.test`
+- **Fix**: Changed JsonPath to `$.jobs.test.steps[?(@.name == 'Set up JDK 11')].name`
+
+### 2. mainClassName to mainClass Migration
+- **Problem**: No semantic recipe exists for Gradle application plugin deprecation
+- **Fix**: Used `FindAndReplace` with pattern `mainClassName = ` -> `mainClass = `
+- **Justification**: Pattern is specific enough to avoid false matches in build.gradle
+
+### 3. shadowJar mainClassName Addition
+- **Problem**: Shadow 7.x requires explicit mainClassName when using mainClass
+- **Fix**: Regex-based FindAndReplace to insert after mergeServiceFiles()
+- **Limitation**: Hardcoded main class value - works for this specific repo
+
+## Remaining Known Gaps
+
+### Java Toolchain Syntax
+- **Expected**: `java { toolchain { languageVersion = JavaLanguageVersion.of(17) } }`
+- **Actual**: `sourceCompatibility = JavaVersion.VERSION_17`
+- **Reason**: No recipe converts sourceCompatibility to toolchain DSL
+- **Impact**: Functionally equivalent, different syntax
+
+### Comment Preservation
+- **Expected**: `// Testing - JUnit 5` (updated comment)
+- **Actual**: Comment removed by dependency recipes
+- **Reason**: OpenRewrite dependency recipes don't preserve adjacent comments
+- **Impact**: Cosmetic only
+
+## Recipe Composition Summary
+
+```
+Section 1: Gradle Wrapper (7.6.4, no SHA256)
+Section 2: Java Compatibility (17)
+Section 3: Shadow Plugin (7.1.2)
+Section 4: GitHub Actions java-version (17)
+Section 5: GitHub Actions step name (JDK 17) - FIXED JSONPATH
+Section 6: JUnit Dependencies (specific artifacts)
+Section 7: Test Platform Configuration
+Section 8: JUnit Annotations Migration
+Section 9: mainClassName -> mainClass - TEXT REPLACEMENT
+Section 10: shadowJar mainClassName - REGEX INSERTION
+```
+
+## Expected Improvements over Option 1/2
+
+| Metric | Option 1 | Option 2 | Option 3 (Expected) |
+|--------|----------|----------|---------------------|
+| Precision | 64.5% | 80% | ~85% |
+| Recall | 64.5% | 64.5% | ~75% |
+| F1 Score | 64.5% | 71.4% | ~80% |
+
+## Text-Based Recipe Justification
+
+Two `FindAndReplace` recipes used as last resort:
+
+1. **mainClassName -> mainClass**: No semantic Gradle recipe exists for this specific
+   deprecation. The pattern is unique to application plugin configuration.
+
+2. **shadowJar mainClassName**: No recipe to add properties to arbitrary Gradle blocks.
+   Regex targets the specific shadowJar configuration structure.
+
+Both are scoped to `**/build.gradle` to minimize false positives.

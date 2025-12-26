@@ -1,0 +1,86 @@
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index f2eb61e..b52f6e2 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -29,10 +29,10 @@ jobs:
+     steps:
+     - uses: actions/checkout@v4
+     
+-    - name: Set up JDK 17
++    - name: Set up JDK 21
+       uses: actions/setup-java@v4
+       with:
+-        java-version: '17'
++        java-version: '21'
+         distribution: 'temurin'
+     
+     - name: Cache Gradle packages
+diff --git a/Dockerfile b/Dockerfile
+index 328c7cd..03046ff 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,5 +1,5 @@
+ # Multi-stage build
+-FROM eclipse-temurin:17-jdk-alpine as builder
++FROM eclipse-temurin:21-jdk-alpine as builder
+ 
+ WORKDIR /app
+ 
+@@ -15,7 +15,7 @@ COPY src/ ./src/
+ RUN ./gradlew clean build -x test
+ 
+ # Runtime stage
+-FROM eclipse-temurin:17-jre-alpine
++FROM eclipse-temurin:21-jre-alpine
+ 
+ WORKDIR /app
+ 
+diff --git a/README.md b/README.md
+index eb3f882..1fd9805 100644
+--- a/README.md
++++ b/README.md
+@@ -14,7 +14,7 @@ This service provides a comprehensive API for managing product catalogs, includi
+ ## Technology Stack
+ 
+ - **Framework**: Dropwizard 3.0.x
+-- **Java**: Java 17
++- **Java**: Java 21
+ - **Build Tool**: Gradle 8.1
+ - **Database**: MySQL with Flyway migrations
+ - **ORM**: Hibernate with Criteria Queries
+@@ -140,7 +140,7 @@ GET /catalog/v2/categories/{id}/products?offset=0&limit=20
+ ## Setup Instructions
+ 
+ ### Prerequisites
+-- Java 17
++- Java 21
+ - MySQL 8.0
+ - Gradle 8.1
+ 
+diff --git a/build.gradle b/build.gradle
+index 342f071..1706f89 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -8,8 +8,11 @@ repositories {
+     jcenter()
+ }
+ 
+-sourceCompatibility = '17'
+-targetCompatibility = '17'
++java {
++    toolchain {
++        languageVersion = JavaLanguageVersion.of(21)
++    }
++}
+ 
+ dependencies {
+     implementation 'io.dropwizard:dropwizard-core:3.0.7'
+@@ -43,7 +46,7 @@ application {
+ }
+ 
+ wrapper {
+-    gradleVersion = '8.1'
++    gradleVersion = '8.5'
+ }
+ 
+ test {

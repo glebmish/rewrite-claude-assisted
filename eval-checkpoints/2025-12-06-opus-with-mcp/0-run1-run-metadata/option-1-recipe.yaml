@@ -1,0 +1,46 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.example.PRRecipe2Option1
+displayName: Java 17 to 21 Upgrade (Broad Approach)
+description: |
+  Comprehensive Java 17 to 21 upgrade using broad migration recipes.
+  Uses UpgradeToJava21 as foundation which handles build files and GitHub Actions.
+  Adds Gradle wrapper upgrade, Dockerfile updates, CI step name, and README updates.
+recipeList:
+  # Foundation: Broad Java 21 migration recipe
+  # Covers: Gradle toolchain, sourceCompatibility/targetCompatibility migration,
+  # GitHub Actions setup-java version upgrade, deprecated API replacements
+  - org.openrewrite.java.migrate.UpgradeToJava21
+
+  # Gradle wrapper upgrade from 8.1 to 8.5
+  - org.openrewrite.gradle.UpdateGradleWrapper:
+      version: "8.5"
+
+  # Gap: Dockerfile base image updates (no semantic Docker recipe exists for version changes)
+  # Using YAML ChangeValue for Dockerfile would not work as Dockerfile is not YAML
+  # Must use text-based find and replace as last resort
+  - org.openrewrite.text.FindAndReplace:
+      find: "eclipse-temurin:17-jdk-alpine"
+      replace: "eclipse-temurin:21-jdk-alpine"
+      filePattern: "**/Dockerfile"
+  - org.openrewrite.text.FindAndReplace:
+      find: "eclipse-temurin:17-jre-alpine"
+      replace: "eclipse-temurin:21-jre-alpine"
+      filePattern: "**/Dockerfile"
+
+  # Gap: GitHub Actions step name update (semantic YAML recipe)
+  - org.openrewrite.yaml.ChangeValue:
+      keyPath: "$.jobs.build.steps[?(@.uses =~ 'actions/setup-java.*')].name"
+      value: "Set up JDK 21"
+      filePattern: ".github/workflows/*.yml"
+
+  # Gap: README.md Java version updates
+  # Using text find and replace for documentation files
+  - org.openrewrite.text.FindAndReplace:
+      find: "Java: Java 17"
+      replace: "Java: Java 21"
+      filePattern: "**/README.md"
+  - org.openrewrite.text.FindAndReplace:
+      find: "- Java 17"
+      replace: "- Java 21"
+      filePattern: "**/README.md"

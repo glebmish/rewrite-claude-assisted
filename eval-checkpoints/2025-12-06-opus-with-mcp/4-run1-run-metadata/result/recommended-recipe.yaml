@@ -1,0 +1,112 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.example.PR3Option3
+displayName: Migrate H2 to PostgreSQL with Infrastructure Updates (Optimized)
+description: >
+  Optimized recipe combining best practices from Option 1 and Option 2 validation.
+  Migrates from H2 to PostgreSQL database and updates infrastructure components.
+  Uses corrected YAML keyPath syntax for nested properties with dots.
+
+recipeList:
+  # =============================================================================
+  # GRADLE DEPENDENCY CHANGES
+  # =============================================================================
+
+  # Remove H2 database dependency
+  - org.openrewrite.gradle.RemoveDependency:
+      groupId: com.h2database
+      artifactId: h2
+
+  # Add PostgreSQL driver dependency
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.postgresql
+      artifactId: postgresql
+      version: 42.6.0
+      configuration: implementation
+
+  # Add Testcontainers core dependency
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.testcontainers
+      artifactId: testcontainers
+      version: 1.17.6
+      configuration: testImplementation
+
+  # Add Testcontainers PostgreSQL module
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.testcontainers
+      artifactId: postgresql
+      version: 1.17.6
+      configuration: testImplementation
+
+  # Add Testcontainers JUnit Jupiter integration
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.testcontainers
+      artifactId: junit-jupiter
+      version: 1.17.6
+      configuration: testImplementation
+
+  # =============================================================================
+  # CONFIG.YML - DATABASE CONFIGURATION CHANGES
+  # =============================================================================
+
+  # Change JDBC driver class from H2 to PostgreSQL
+  - org.openrewrite.yaml.ChangeValue:
+      keyPath: $.database.driverClass
+      value: org.postgresql.Driver
+      filePattern: "**/config.yml"
+
+  # Change database user to environment variable reference
+  - org.openrewrite.yaml.ChangeValue:
+      keyPath: $.database.user
+      value: "\"{{ GET_ENV_VAR:DATABASE_USER }}\""
+      filePattern: "**/config.yml"
+
+  # Change database password to environment variable reference
+  - org.openrewrite.yaml.ChangeValue:
+      keyPath: $.database.password
+      value: "\"{{ GET_ENV_VAR:DATABASE_PASSWORD }}\""
+      filePattern: "**/config.yml"
+
+  # Change database URL to environment variable reference
+  - org.openrewrite.yaml.ChangeValue:
+      keyPath: $.database.url
+      value: "\"{{ GET_ENV_VAR:DATABASE_URL }}\""
+      filePattern: "**/config.yml"
+
+  # Change Hibernate dialect from H2 to PostgreSQL
+  # CRITICAL FIX: Use bracket notation for properties with dots in key names
+  # Option 1 failed with: $.database.properties.hibernate.dialect
+  # Option 2 succeeded with: $.database.properties['hibernate.dialect']
+  - org.openrewrite.yaml.ChangeValue:
+      keyPath: "$.database.properties['hibernate.dialect']"
+      value: org.hibernate.dialect.PostgreSQLDialect
+      filePattern: "**/config.yml"
+
+  # =============================================================================
+  # SQL MIGRATION FILE CHANGES
+  # =============================================================================
+
+  # Change H2 AUTO_INCREMENT syntax to PostgreSQL BIGSERIAL
+  - org.openrewrite.text.FindAndReplace:
+      find: "BIGINT AUTO_INCREMENT PRIMARY KEY"
+      replace: "BIGSERIAL PRIMARY KEY"
+      filePattern: "**/db/migration/*.sql"
+
+  # =============================================================================
+  # DOCKERFILE CHANGES
+  # =============================================================================
+
+  # Update Docker base image from openjdk to Eclipse Temurin
+  - org.openrewrite.text.FindAndReplace:
+      find: "FROM openjdk:17-jre-slim"
+      replace: "FROM eclipse-temurin:17-jre-alpine"
+      filePattern: "**/Dockerfile"
+
+  # =============================================================================
+  # GITHUB ACTIONS CHANGES
+  # =============================================================================
+
+  # Upgrade actions/cache from v2 to v4
+  - org.openrewrite.github.ChangeActionVersion:
+      action: actions/cache
+      version: v4

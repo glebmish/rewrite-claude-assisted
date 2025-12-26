@@ -1,0 +1,55 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.example.PR3Option1
+displayName: Dropwizard 2.x to 3.x Migration (Composed Approach)
+description: >
+  Migrates Dropwizard 2.x applications to 3.x using existing OpenRewrite recipes.
+  Covers Java version upgrade, dependency updates, import relocations, and
+  @Override annotation cleanup.
+
+recipeList:
+  # 1. Upgrade Java version from 11 to 17 in Gradle
+  - org.openrewrite.gradle.UpdateJavaCompatibility:
+      version: 17
+      allowDowngrade: false
+
+  # 2. Upgrade Dropwizard dependencies from 2.1.12 to 3.0.0
+  - org.openrewrite.gradle.UpgradeDependencyVersion:
+      groupId: io.dropwizard
+      artifactId: dropwizard-core
+      newVersion: 3.0.0
+  - org.openrewrite.gradle.UpgradeDependencyVersion:
+      groupId: io.dropwizard
+      artifactId: dropwizard-jdbi3
+      newVersion: 3.0.0
+  - org.openrewrite.gradle.UpgradeDependencyVersion:
+      groupId: io.dropwizard
+      artifactId: dropwizard-auth
+      newVersion: 3.0.0
+  - org.openrewrite.gradle.UpgradeDependencyVersion:
+      groupId: io.dropwizard
+      artifactId: dropwizard-configuration
+      newVersion: 3.0.0
+  - org.openrewrite.gradle.UpgradeDependencyVersion:
+      groupId: io.dropwizard
+      artifactId: dropwizard-testing
+      newVersion: 3.0.0
+
+  # 3. Update Dropwizard core import relocations (io.dropwizard -> io.dropwizard.core)
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: io.dropwizard.Application
+      newFullyQualifiedTypeName: io.dropwizard.core.Application
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: io.dropwizard.Configuration
+      newFullyQualifiedTypeName: io.dropwizard.core.Configuration
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: io.dropwizard.setup.Bootstrap
+      newFullyQualifiedTypeName: io.dropwizard.core.setup.Bootstrap
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: io.dropwizard.setup.Environment
+      newFullyQualifiedTypeName: io.dropwizard.core.setup.Environment
+
+  # 4. Remove unnecessary @Override annotations from Application methods
+  # In Dropwizard 3.x, initialize() and run() are no longer abstract methods
+  - org.openrewrite.java.dropwizard.method.RemoveUnnecessaryOverride:
+      ignoreAnonymousClassMethods: false
