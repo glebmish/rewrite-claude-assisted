@@ -1,0 +1,334 @@
+{
+  "log_file": "/__w/rewrite-claude-assisted/rewrite-claude-assisted/.output/2025-12-06-21-38/log/06fa1d7c-6eff-4b12-a91b-aef59a5d4182.jsonl",
+  "analysis_timestamp": "2025-12-06T21:50:08.361782Z",
+  "main_agent": {
+    "agent_id": "main",
+    "usage": {
+      "input_tokens": 1615,
+      "output_tokens": 6157,
+      "cache_creation_input_tokens": 112258,
+      "cache_read_input_tokens": 2305310
+    },
+    "costs": {
+      "input_tokens_cost": 0.008075,
+      "output_tokens_cost": 0.153925,
+      "cache_creation_cost": 0.701612,
+      "cache_read_cost": 1.152655,
+      "total_cost": 2.016268
+    },
+    "by_model": {
+      "claude-opus-4-5-20251101": {
+        "usage": {
+          "input_tokens": 1615,
+          "output_tokens": 6157,
+          "cache_creation_input_tokens": 112258,
+          "cache_read_input_tokens": 2305310
+        },
+        "costs": {
+          "input_tokens_cost": 0.008075,
+          "output_tokens_cost": 0.153925,
+          "cache_creation_cost": 0.701612,
+          "cache_read_cost": 1.152655,
+          "total_cost": 2.016268
+        }
+      }
+    }
+  },
+  "subagents": [
+    {
+      "agent_id": "89251b3c",
+      "subagent_type": "openrewrite-recipe-validator",
+      "description": "Validate option-1 recipe",
+      "usage": {
+        "input_tokens": 8,
+        "output_tokens": 1952,
+        "cache_creation_input_tokens": 35178,
+        "cache_read_input_tokens": 383378
+      },
+      "costs": {
+        "input_tokens_cost": 4e-05,
+        "output_tokens_cost": 0.0488,
+        "cache_creation_cost": 0.219862,
+        "cache_read_cost": 0.191689,
+        "total_cost": 0.460392
+      },
+      "by_model": {
+        "claude-opus-4-5-20251101": {
+          "usage": {
+            "input_tokens": 8,
+            "output_tokens": 1952,
+            "cache_creation_input_tokens": 35178,
+            "cache_read_input_tokens": 383378
+          },
+          "costs": {
+            "input_tokens_cost": 4e-05,
+            "output_tokens_cost": 0.0488,
+            "cache_creation_cost": 0.219862,
+            "cache_read_cost": 0.191689,
+            "total_cost": 0.460392
+          }
+        }
+      }
+    },
+    {
+      "agent_id": "c5276273",
+      "subagent_type": "openrewrite-expert",
+      "description": "Create option-2 OpenRewrite recipe",
+      "usage": {
+        "input_tokens": 34,
+        "output_tokens": 3364,
+        "cache_creation_input_tokens": 189517,
+        "cache_read_input_tokens": 1189146
+      },
+      "costs": {
+        "input_tokens_cost": 0.00017,
+        "output_tokens_cost": 0.0841,
+        "cache_creation_cost": 1.184481,
+        "cache_read_cost": 0.594573,
+        "total_cost": 1.863324
+      },
+      "by_model": {
+        "claude-opus-4-5-20251101": {
+          "usage": {
+            "input_tokens": 34,
+            "output_tokens": 3364,
+            "cache_creation_input_tokens": 189517,
+            "cache_read_input_tokens": 1189146
+          },
+          "costs": {
+            "input_tokens_cost": 0.00017,
+            "output_tokens_cost": 0.0841,
+            "cache_creation_cost": 1.184481,
+            "cache_read_cost": 0.594573,
+            "total_cost": 1.863324
+          }
+        }
+      }
+    },
+    {
+      "agent_id": "b44f4e4a",
+      "subagent_type": "unknown",
+      "description": "Sidechain agent",
+      "usage": {
+        "input_tokens": 2,
+        "output_tokens": 2,
+        "cache_creation_input_tokens": 2225,
+        "cache_read_input_tokens": 0
+      },
+      "costs": {
+        "input_tokens_cost": 6e-06,
+        "output_tokens_cost": 3e-05,
+        "cache_creation_cost": 0.008344,
+        "cache_read_cost": 0.0,
+        "total_cost": 0.00838
+      },
+      "by_model": {
+        "claude-sonnet-4-5-20250929": {
+          "usage": {
+            "input_tokens": 2,
+            "output_tokens": 2,
+            "cache_creation_input_tokens": 2225,
+            "cache_read_input_tokens": 0
+          },
+          "costs": {
+            "input_tokens_cost": 6e-06,
+            "output_tokens_cost": 3e-05,
+            "cache_creation_cost": 0.008344,
+            "cache_read_cost": 0.0,
+            "total_cost": 0.00838
+          }
+        }
+      }
+    },
+    {
+      "agent_id": "92dd00a1",
+      "subagent_type": "unknown",
+      "description": "Sidechain agent",
+      "usage": {
+        "input_tokens": 2097,
+        "output_tokens": 1,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0
+      },
+      "costs": {
+        "input_tokens_cost": 0.002097,
+        "output_tokens_cost": 5e-06,
+        "cache_creation_cost": 0.0,
+        "cache_read_cost": 0.0,
+        "total_cost": 0.002102
+      },
+      "by_model": {
+        "claude-haiku-4-5-20251001": {
+          "usage": {
+            "input_tokens": 2097,
+            "output_tokens": 1,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 0
+          },
+          "costs": {
+            "input_tokens_cost": 0.002097,
+            "output_tokens_cost": 5e-06,
+            "cache_creation_cost": 0.0,
+            "cache_read_cost": 0.0,
+            "total_cost": 0.002102
+          }
+        }
+      }
+    },
+    {
+      "agent_id": "04d5f1a2",
+      "subagent_type": "openrewrite-expert",
+      "description": "Create option-1 OpenRewrite recipe",
+      "usage": {
+        "input_tokens": 28,
+        "output_tokens": 2796,
+        "cache_creation_input_tokens": 187271,
+        "cache_read_input_tokens": 1103513
+      },
+      "costs": {
+        "input_tokens_cost": 0.00014,
+        "output_tokens_cost": 0.0699,
+        "cache_creation_cost": 1.170444,
+        "cache_read_cost": 0.551756,
+        "total_cost": 1.79224
+      },
+      "by_model": {
+        "claude-opus-4-5-20251101": {
+          "usage": {
+            "input_tokens": 28,
+            "output_tokens": 2796,
+            "cache_creation_input_tokens": 187271,
+            "cache_read_input_tokens": 1103513
+          },
+          "costs": {
+            "input_tokens_cost": 0.00014,
+            "output_tokens_cost": 0.0699,
+            "cache_creation_cost": 1.170444,
+            "cache_read_cost": 0.551756,
+            "total_cost": 1.79224
+          }
+        }
+      }
+    },
+    {
+      "agent_id": "33e7622f",
+      "subagent_type": "openrewrite-expert",
+      "description": "Create refined option-3 recipe",
+      "usage": {
+        "input_tokens": 8,
+        "output_tokens": 2569,
+        "cache_creation_input_tokens": 27449,
+        "cache_read_input_tokens": 218724
+      },
+      "costs": {
+        "input_tokens_cost": 4e-05,
+        "output_tokens_cost": 0.064225,
+        "cache_creation_cost": 0.171556,
+        "cache_read_cost": 0.109362,
+        "total_cost": 0.345183
+      },
+      "by_model": {
+        "claude-opus-4-5-20251101": {
+          "usage": {
+            "input_tokens": 8,
+            "output_tokens": 2569,
+            "cache_creation_input_tokens": 27449,
+            "cache_read_input_tokens": 218724
+          },
+          "costs": {
+            "input_tokens_cost": 4e-05,
+            "output_tokens_cost": 0.064225,
+            "cache_creation_cost": 0.171556,
+            "cache_read_cost": 0.109362,
+            "total_cost": 0.345183
+          }
+        }
+      }
+    },
+    {
+      "agent_id": "4143618b",
+      "subagent_type": "openrewrite-recipe-validator",
+      "description": "Validate option-3 recipe",
+      "usage": {
+        "input_tokens": 8,
+        "output_tokens": 1651,
+        "cache_creation_input_tokens": 27241,
+        "cache_read_input_tokens": 431212
+      },
+      "costs": {
+        "input_tokens_cost": 4e-05,
+        "output_tokens_cost": 0.041275,
+        "cache_creation_cost": 0.170256,
+        "cache_read_cost": 0.215606,
+        "total_cost": 0.427177
+      },
+      "by_model": {
+        "claude-opus-4-5-20251101": {
+          "usage": {
+            "input_tokens": 8,
+            "output_tokens": 1651,
+            "cache_creation_input_tokens": 27241,
+            "cache_read_input_tokens": 431212
+          },
+          "costs": {
+            "input_tokens_cost": 4e-05,
+            "output_tokens_cost": 0.041275,
+            "cache_creation_cost": 0.170256,
+            "cache_read_cost": 0.215606,
+            "total_cost": 0.427177
+          }
+        }
+      }
+    },
+    {
+      "agent_id": "bd32a92d",
+      "subagent_type": "openrewrite-recipe-validator",
+      "description": "Validate option-2 recipe",
+      "usage": {
+        "input_tokens": 8,
+        "output_tokens": 1887,
+        "cache_creation_input_tokens": 35385,
+        "cache_read_input_tokens": 385474
+      },
+      "costs": {
+        "input_tokens_cost": 4e-05,
+        "output_tokens_cost": 0.047175,
+        "cache_creation_cost": 0.221156,
+        "cache_read_cost": 0.192737,
+        "total_cost": 0.461108
+      },
+      "by_model": {
+        "claude-opus-4-5-20251101": {
+          "usage": {
+            "input_tokens": 8,
+            "output_tokens": 1887,
+            "cache_creation_input_tokens": 35385,
+            "cache_read_input_tokens": 385474
+          },
+          "costs": {
+            "input_tokens_cost": 4e-05,
+            "output_tokens_cost": 0.047175,
+            "cache_creation_cost": 0.221156,
+            "cache_read_cost": 0.192737,
+            "total_cost": 0.461108
+          }
+        }
+      }
+    }
+  ],
+  "totals": {
+    "usage": {
+      "input_tokens": 3808,
+      "output_tokens": 20379,
+      "cache_creation_input_tokens": 616524,
+      "cache_read_input_tokens": 6016757
+    },
+    "costs": {
+      "input_tokens_cost": 0.010648,
+      "output_tokens_cost": 0.509435,
+      "cache_creation_cost": 3.847711,
+      "cache_read_cost": 3.008378,
+      "total_cost": 7.376174
+    }
+  }
+}

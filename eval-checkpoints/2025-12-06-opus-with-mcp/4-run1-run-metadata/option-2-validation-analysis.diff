@@ -1,0 +1,100 @@
+# Option 2 Recipe Validation Analysis
+
+## Setup Summary
+- **Repository**: simple-blog-platform
+- **PR**: #3 (H2 to PostgreSQL migration)
+- **Recipe**: Option 2 (narrow approach) - com.example.PR3Option2
+- **Java Version**: 17
+
+## Execution Results
+- **Status**: SUCCESS
+- **Recipe Execution**: Completed without errors
+- **Files Modified**: 5 (ci.yml, Dockerfile, build.gradle, config.yml, V1__Create_posts_table.sql)
+
+## Metrics
+- **Precision**: 78.26%
+- **Recall**: 78.26%
+- **F1 Score**: 78.26%
+- **Total Expected Changes**: 23
+- **Total Resulting Changes**: 23
+- **True Positives**: 18
+- **False Positives**: 5
+- **False Negatives**: 5
+
+## Gap Analysis (False Negatives)
+
+### build.gradle Comment Preservation
+**Issue**: PR includes comment change from `// H2 Database` to `// PostgreSQL`
+**Recipe Result**: Recipe removes H2 dependency but doesn't add the comment replacement
+
+PR Expected:
+```diff
+-    // H2 Database
+-    implementation 'com.h2database:h2:2.1.214'
++    // PostgreSQL
++    implementation 'org.postgresql:postgresql:42.6.0'
+```
+
+Recipe Result:
+```diff
+-    // H2 Database
+-    implementation 'com.h2database:h2:2.1.214'
+-
+...
++    implementation "org.postgresql:postgresql:42.6.0"
+```
+
+**Root Cause**: `org.openrewrite.gradle.RemoveDependency` removes the dependency line with preceding comment, and `org.openrewrite.gradle.AddDependency` places the new dependency in a different location without preserving the comment context.
+
+## Over-application Analysis (False Positives)
+
+### Dependency Placement Differences
+**Issue**: PostgreSQL and Testcontainers dependencies placed in different locations than PR
+
+PR places dependencies:
+- `implementation 'org.postgresql:postgresql:42.6.0'` - where H2 was
+- Testcontainers grouped at end of existing testImplementation block
+
+Recipe places dependencies:
+- `implementation "org.postgresql:postgresql:42.6.0"` - in Testing section (line 35)
+- Testcontainers added after mockito-core, before assertj
+
+**Impact**: Functionally equivalent but differs from PR's logical grouping
+
+### Quote Style Difference
+**Issue**: Recipe uses double quotes for dependency strings
+- PR: `implementation 'org.postgresql:postgresql:42.6.0'`
+- Recipe: `implementation "org.postgresql:postgresql:42.6.0"`
+
+**Root Cause**: OpenRewrite's Gradle dependency recipes use double quotes by default
+
+## File-by-File Comparison
+
+| File | PR Lines Changed | Recipe Lines Changed | Match |
+|------|------------------|---------------------|-------|
+| .github/workflows/ci.yml | 2 | 2 | EXACT |
+| Dockerfile | 2 | 2 | EXACT |
+| build.gradle | 8 | 10 | PARTIAL |
+| config.yml | 10 | 10 | EXACT |
+| V1__Create_posts_table.sql | 2 | 2 | EXACT |
+
+## Summary
+
+**Matching Changes (4/5 files exact):**
+- ci.yml: actions/cache@v2 -> v4 (exact match)
+- Dockerfile: openjdk:17-jre-slim -> eclipse-temurin:17-jre-alpine (exact match)
+- config.yml: All database properties updated correctly (exact match)
+- V1__Create_posts_table.sql: AUTO_INCREMENT -> BIGSERIAL (exact match)
+
+**Partial Match (1/5 files):**
+- build.gradle: Correct dependencies added/removed but placement and comment handling differs
+
+## Actionable Recommendations
+
+1. **Comment Handling**: Consider adding `org.openrewrite.text.FindAndReplace` to replace "H2 Database" comment with "PostgreSQL" comment, though this may conflict with dependency removal
+
+2. **Dependency Ordering**: The `AddDependency` recipe doesn't support precise placement. This is an OpenRewrite limitation that cannot be addressed without custom recipe development
+
+3. **Quote Style**: Minor cosmetic difference - not actionable within standard OpenRewrite recipes
+
+4. **Overall Assessment**: Option 2 achieves functionally correct migration. The differences are cosmetic/organizational rather than functional. The 78.26% precision/recall reflects these structural differences rather than missing functionality.

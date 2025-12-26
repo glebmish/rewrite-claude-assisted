@@ -1,0 +1,69 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.example.PRRecipe2Option2
+displayName: Java 17 to 21 Upgrade - Targeted Approach
+description: >
+  Narrow/surgical recipe composition for upgrading Java 17 to 21.
+  Uses specific, targeted recipes for each individual change with minimal side effects.
+
+recipeList:
+  # 1. GitHub Actions: Update java-version in setup-java action (semantic YAML transformation)
+  - org.openrewrite.github.SetupJavaUpgradeJavaVersion:
+      minimumJavaMajorVersion: 21
+
+  # 2. GitHub Actions: Update step name from "Set up JDK 17" to "Set up JDK 21" (semantic YAML)
+  - org.openrewrite.yaml.ChangeValue:
+      keyPath: $.jobs.test.steps[?(@.name == 'Set up JDK 17')].name
+      value: Set up JDK 21
+      filePattern: .github/workflows/*.yml
+
+  # 3. Gradle: Update wrapper gradleVersion from 8.1 to 8.5
+  #    Note: UpdateGradleWrapper updates gradle-wrapper.properties, not build.gradle
+  #    For build.gradle wrapper block, we use text replacement as no semantic recipe exists
+  - org.openrewrite.text.FindAndReplace:
+      find: "gradleVersion = '8.1'"
+      replace: "gradleVersion = '8.5'"
+      filePattern: "**/build.gradle"
+      plaintextOnly: false
+
+  # 4. Gradle: Migrate from sourceCompatibility/targetCompatibility to Java toolchain
+  #    Note: No semantic recipe exists for this structural transformation
+  #    Using regex to replace the old pattern with the new toolchain block
+  - org.openrewrite.text.FindAndReplace:
+      find: "sourceCompatibility = '17'\ntargetCompatibility = '17'"
+      replace: |-
+        java {
+            toolchain {
+                languageVersion = JavaLanguageVersion.of(21)
+            }
+        }
+      filePattern: "**/build.gradle"
+      plaintextOnly: false
+
+  # 5. Dockerfile: Update builder stage base image (text replacement - no Dockerfile semantic recipe)
+  - org.openrewrite.text.FindAndReplace:
+      find: "FROM eclipse-temurin:17-jdk-alpine"
+      replace: "FROM eclipse-temurin:21-jdk-alpine"
+      filePattern: "**/Dockerfile"
+      plaintextOnly: false
+
+  # 6. Dockerfile: Update runtime stage base image
+  - org.openrewrite.text.FindAndReplace:
+      find: "FROM eclipse-temurin:17-jre-alpine"
+      replace: "FROM eclipse-temurin:21-jre-alpine"
+      filePattern: "**/Dockerfile"
+      plaintextOnly: false
+
+  # 7. README.md: Update Technology Stack section
+  - org.openrewrite.text.FindAndReplace:
+      find: "**Java**: Java 17"
+      replace: "**Java**: Java 21"
+      filePattern: "**/README.md"
+      plaintextOnly: false
+
+  # 8. README.md: Update Prerequisites section
+  - org.openrewrite.text.FindAndReplace:
+      find: "- Java 17"
+      replace: "- Java 21"
+      filePattern: "**/README.md"
+      plaintextOnly: false

@@ -268,7 +268,7 @@ The analysis is advisory rather than authoritative—Gemini's suggestions are ma
 
 ## Evolution Tracking
 
-**5 checkpoints** documenting system improvements:
+**6 checkpoints** documenting system improvements:
 
 | Date | F1 | Precision | Recall | Cost | Key Change |
 |------|-----|-----------|--------|------|------------|
@@ -277,6 +277,9 @@ The analysis is advisory rather than authoritative—Gemini's suggestions are ma
 | 2025-11-23 | 0.54 | 0.61 | 0.52 | $4.15 | Context optimization (-35% tokens) |
 | 2025-11-25 | 0.51 | 0.64 | 0.49 | $4.13 | MCP semantic search |
 | **2025-11-29** | **0.85** | **0.90** | **0.82** | **$5.42** | **Refinement phase (+66% F1)** |
+| 2025-12-06 | 0.71 | 0.92 | 0.69 | $9.97 | Opus 4.5 (full workflow) |
+
+*Bold indicates best overall result (by F1 score)*
 
 Checkpoints enable regression detection, A/B testing of workflow changes, and quantified measurement of improvement strategies. Each checkpoint captures the complete evaluation state at a point in time, allowing historical comparison and trend analysis across 6 months of development.
 
