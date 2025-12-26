@@ -1,0 +1,28 @@
+## Workflow Complete ✓
+
+### Summary
+
+**PR Analyzed**: https://github.com/openrewrite-assist-testing-dataset/ecommerce-catalog/pull/2
+
+**Task**: Java 17 to Java 21 upgrade across Gradle, Dockerfile, GitHub Actions CI, and README
+
+### Results
+
+| Option | F1 Score | Strategy |
+|--------|----------|----------|
+| Option 1 | 38.46% | Broad (UpgradeToJava21) - over-application |
+| Option 2 | **100%** | Narrow/targeted - **RECOMMENDED** |
+| Option 3 | 100% | Hybrid - equivalent to Option 2 |
+
+### Recommended Recipe
+**Option 2** (`com.example.PRRecipe2Option2`) achieved perfect precision and recall with:
+- 2 semantic recipes: `SetupJavaUpgradeJavaVersion`, `ChangeValue` (YAML)
+- 6 targeted text replacements for Gradle toolchain, Dockerfile, and README
+
+### Output Location
+`.output/2025-12-05-20-07/`
+
+**Key Files:**
+- `result/recommended-recipe.yaml` - Production-ready recipe
+- `result/recommended-recipe.diff` - Validated output (perfect match)
+- `result/pr.diff` - Original PR changes

@@ -1,0 +1,107 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.example.PR3Option1
+displayName: Migrate from H2 to PostgreSQL - Broad Approach
+description: >
+  Migrates the application from H2 to PostgreSQL database with infrastructure updates.
+  Uses broader semantic recipes for YAML and GitHub Actions modifications.
+
+recipeList:
+  # ============================================================
+  # 1. GRADLE DEPENDENCY CHANGES
+  # ============================================================
+
+  # Remove H2 database dependency
+  - org.openrewrite.gradle.RemoveDependency:
+      groupId: com.h2database
+      artifactId: h2
+
+  # Add PostgreSQL driver
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.postgresql
+      artifactId: postgresql
+      version: "42.6.0"
+      configuration: implementation
+
+  # Add Testcontainers dependencies for PostgreSQL testing
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.testcontainers
+      artifactId: testcontainers
+      version: "1.17.6"
+      configuration: testImplementation
+
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.testcontainers
+      artifactId: postgresql
+      version: "1.17.6"
+      configuration: testImplementation
+
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.testcontainers
+      artifactId: junit-jupiter
+      version: "1.17.6"
+      configuration: testImplementation
+
+  # ============================================================
+  # 2. YAML CONFIGURATION CHANGES (config.yml)
+  # Uses semantic YAML recipe for structured modifications
+  # ============================================================
+
+  # Change database driver class
+  - org.openrewrite.yaml.ChangeValue:
+      keyPath: $.database.driverClass
+      value: org.postgresql.Driver
+      filePattern: "**/config.yml"
+
+  # Change database user to environment variable
+  - org.openrewrite.yaml.ChangeValue:
+      keyPath: $.database.user
+      value: "\"{{ GET_ENV_VAR:DATABASE_USER }}\""
+      filePattern: "**/config.yml"
+
+  # Change database password to environment variable
+  - org.openrewrite.yaml.ChangeValue:
+      keyPath: $.database.password
+      value: "\"{{ GET_ENV_VAR:DATABASE_PASSWORD }}\""
+      filePattern: "**/config.yml"
+
+  # Change database URL to environment variable
+  - org.openrewrite.yaml.ChangeValue:
+      keyPath: $.database.url
+      value: "\"{{ GET_ENV_VAR:DATABASE_URL }}\""
+      filePattern: "**/config.yml"
+
+  # Change Hibernate dialect
+  - org.openrewrite.yaml.ChangeValue:
+      keyPath: $.database.properties.hibernate.dialect
+      value: org.hibernate.dialect.PostgreSQLDialect
+      filePattern: "**/config.yml"
+
+  # ============================================================
+  # 3. SQL MIGRATION CHANGES
+  # Change H2 AUTO_INCREMENT to PostgreSQL BIGSERIAL
+  # ============================================================
+
+  - org.openrewrite.text.FindAndReplace:
+      find: "BIGINT AUTO_INCREMENT PRIMARY KEY"
+      replace: "BIGSERIAL PRIMARY KEY"
+      filePattern: "**/db/migration/*.sql"
+
+  # ============================================================
+  # 4. DOCKERFILE CHANGES
+  # Update base image from openjdk to eclipse-temurin
+  # ============================================================
+
+  - org.openrewrite.text.FindAndReplace:
+      find: "FROM openjdk:17-jre-slim"
+      replace: "FROM eclipse-temurin:17-jre-alpine"
+      filePattern: "**/Dockerfile"
+
+  # ============================================================
+  # 5. GITHUB ACTIONS CHANGES
+  # Uses semantic GitHub Actions recipe for version updates
+  # ============================================================
+
+  - org.openrewrite.github.ChangeActionVersion:
+      action: actions/cache
+      version: v4
