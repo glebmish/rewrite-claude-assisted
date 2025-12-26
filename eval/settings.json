@@ -33,29 +33,14 @@
       "mcp__plugin_openrewrite-assist_openrewrite-mcp__find_recipes",
       "mcp__plugin_openrewrite-assist_openrewrite-mcp__get_recipe",
       "mcp__log-mcp-server__log",
-
-      "Bash(scripts/fetch-session.sh:*)",
-      "Bash(./scripts/fetch-session.sh:*)",
-      "Bash(bash scripts/fetch-session.sh:*)",
-      "Bash(bash ./scripts/fetch-session.sh:*)",
-
-      "Bash(scripts/get-session-id.sh:*)",
-      "Bash(scripts/validate-recipe.sh:*)",
-      "Bash(scripts/analysis/recipe-diff-precision.sh:*)",
-
-      "Bash(./scripts/get-session-id.sh:*)",
-      "Bash(./scripts/validate-recipe.sh:*)",
-      "Bash(./scripts/analysis/recipe-diff-precision.sh:*)",
-
-      "Bash(bash scripts/get-session-id.sh:*)",
-      "Bash(bash scripts/validate-recipe.sh:*)",
-      "Bash(bash -x scripts/validate-recipe.sh:*)",
-      "Bash(bash scripts/analysis/recipe-diff-precision.sh:*)",
-
-      "Bash(bash ./scripts/get-session-id.sh:*)",
-      "Bash(bash ./scripts/validate-recipe.sh:*)",
-      "Bash(bash -x ./scripts/validate-recipe.sh:*)",
-      "Bash(bash ./scripts/analysis/recipe-diff-precision.sh:*)"
+      "Bash(/__w/rewrite-claude-assisted/rewrite-claude-assisted/plugin/scripts/validate-recipe.sh:*)",
+      "Bash(bash /__w/rewrite-claude-assisted/rewrite-claude-assisted/plugin/scripts/validate-recipe.sh:*)",
+      "Bash(/__w/rewrite-claude-assisted/rewrite-claude-assisted/plugin/scripts/get-session-id.sh:*)",
+      "Bash(bash /__w/rewrite-claude-assisted/rewrite-claude-assisted/plugin/scripts/get-session-id.sh:*)",
+      "Bash(/__w/rewrite-claude-assisted/rewrite-claude-assisted/plugin/scripts/analysis/recipe-diff-precision.sh:*)",
+      "Bash(bash /__w/rewrite-claude-assisted/rewrite-claude-assisted/plugin/scripts/analysis/recipe-diff-precision.sh:*)",
+      "Bash(/__w/rewrite-claude-assisted/rewrite-claude-assisted/plugin/scripts/fetch-session.sh:*)",
+      "Bash(bash /__w/rewrite-claude-assisted/rewrite-claude-assisted/plugin/scripts/fetch-session.sh:*)"
     ],
     "deny": [
       "Bash(git push:*)",
