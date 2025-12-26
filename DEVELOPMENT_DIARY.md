@@ -278,3 +278,8 @@ dependencies for both docs and embeddings.
   * MAJOR: add code recipes writing - probably much more difficult task to handle
   * Close the loop - create a PR with a recipe in a correct directory and add a pipeline to release artifacts
     * Going from an example PR to fully functional artifact to apply on the rest of the codebase
+
+## 2025-12-26
+* Putting workflow into plugin
+  * How on earth am I supposed to work with dynamically resolved $CLAUDE_PLUGIN_ROOT? How do I set permissions on it when
+it doesn't exist for agent trying to run it?
