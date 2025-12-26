@@ -178,7 +178,7 @@ CLAUDE_CMD="$CLAUDE_CMD --plugin-dir $PLUGIN_DIR"
 # Add log-mcp-server
 CLAUDE_CMD="$CLAUDE_CMD --mcp-config '{\"mcpServers\":{\"log-mcp-server\":{\"type\":\"stdio\",\"command\":\"$LOG_MCP_DIR/venv/bin/python\",\"args\":[\"$LOG_MCP_DIR/server.py\",\"--log-file\",\"$MCP_LOG_FILE\"],\"env\":{}}}}' --strict-mcp-config"
 
-CLAUDE_PROMPT="/rewrite-assist $PR_URL."
+CLAUDE_PROMPT="/openrewrite-assist:rewrite-assist $PR_URL."
 if [[ "$STRICT_MODE" == "true" ]]; then
     CLAUDE_PROMPT="$CLAUDE_PROMPT Give up IMMEDIATELY when something fails (tool access is not granted, tool use failed). Finish the conversation and explicitly state the reason you did. Print full tool name and command."
 fi
