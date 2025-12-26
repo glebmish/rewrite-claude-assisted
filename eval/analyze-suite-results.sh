@@ -25,6 +25,10 @@ failed_runs=0
 perfect_runs=0
 total_cost=0
 total_duration=0
+total_precision=0
+total_recall=0
+total_f1=0
+runs_with_metrics=0
 
 # Helper function to safely extract JSON values using jq
 extract_json_value() {
@@ -178,8 +182,16 @@ for run_dir in $run_dirs; do
         if [ "$is_perfect_match" = "true" ]; then
             perfect_runs=$((perfect_runs + 1))
         fi
+
+        # Accumulate precision/recall/f1 for averaging (only if valid numbers)
+        if [ "$precision" != "N/A" ] && [ "$recall" != "N/A" ] && [ "$f1_score" != "N/A" ]; then
+            total_precision=$(safe_add "$total_precision" "$precision")
+            total_recall=$(safe_add "$total_recall" "$recall")
+            total_f1=$(safe_add "$total_f1" "$f1_score")
+            runs_with_metrics=$((runs_with_metrics + 1))
+        fi
     fi
-    
+
     total_runs=$((total_runs + 1))
     total_cost=$(safe_add "$total_cost" "$cost")
     total_duration=$(safe_add "$total_duration" "$duration")
@@ -217,6 +229,16 @@ total_duration_min=$(safe_divide "$total_duration" "60" "1")
 avg_duration_per_run=$(safe_divide "$total_duration_min" "$total_runs" "1")
 avg_cost_per_run=$(safe_divide "$total_cost" "$total_runs" "2")
 
+# Calculate average precision metrics
+avg_precision=0
+avg_recall=0
+avg_f1=0
+if [ $runs_with_metrics -gt 0 ]; then
+    avg_precision=$(safe_divide "$total_precision" "$runs_with_metrics" "2")
+    avg_recall=$(safe_divide "$total_recall" "$runs_with_metrics" "2")
+    avg_f1=$(safe_divide "$total_f1" "$runs_with_metrics" "2")
+fi
+
 # Count unique PRs
 unique_prs=0
 if [ -n "${!pr_runs[*]}" ]; then
@@ -241,6 +263,9 @@ summary_file="$OUTPUT_DIR/summary.md"
     echo "| Workflow Success Rate | ${success_rate}% |"
     echo "| Perfect Matches | $perfect_runs $GREEN |"
     echo "| Perfect Match Rate | ${perfect_rate}% |"
+    echo "| Avg Precision | ${avg_precision} |"
+    echo "| Avg Recall | ${avg_recall} |"
+    echo "| Avg F1 Score | ${avg_f1} |"
     echo "| Total Cost | \$$(printf '%.2f' $total_cost) |"
     echo "| Total Duration | ${total_duration_min} minutes |"
     echo "| Avg Duration/Run | ${avg_duration_per_run} minutes |"
@@ -337,6 +362,10 @@ json_file="$OUTPUT_DIR/suite-results.json"
     echo "    \"workflow_success_rate\": $success_rate,"
     echo "    \"perfect_runs\": $perfect_runs,"
     echo "    \"perfect_match_rate\": $perfect_rate,"
+    echo "    \"avg_precision\": $avg_precision,"
+    echo "    \"avg_recall\": $avg_recall,"
+    echo "    \"avg_f1\": $avg_f1,"
+    echo "    \"runs_with_metrics\": $runs_with_metrics,"
     echo "    \"total_cost\": $total_cost,"
     echo "    \"total_duration_seconds\": $total_duration,"
     echo "    \"total_duration_minutes\": $total_duration_min"
@@ -400,5 +429,8 @@ echo "  • Total PRs: $unique_prs"
 echo "  • Total Runs: $total_runs"
 echo "  • Workflow Success Rate: ${success_rate}%"
 echo "  • Perfect Match Rate: ${perfect_rate}%"
+echo "  • Avg Precision: ${avg_precision}"
+echo "  • Avg Recall: ${avg_recall}"
+echo "  • Avg F1 Score: ${avg_f1}"
 echo "  • Total Cost: \$$(printf '%.2f' $total_cost)"
 echo "  • Total Duration: ${total_duration_min} minutes"
