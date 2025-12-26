@@ -1,0 +1,33 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.weather.PR3Option2
+displayName: "PR #3 - Java 11 to 17 Upgrade (Targeted Approach)"
+description: >
+  Targeted recipe for PR #3 changes focusing on high-confidence, automatable transformations.
+  Uses specific recipes for each individual change to maximize precision.
+  Covers: Java version upgrade in Gradle, Gradle wrapper upgrade, Docker base image updates.
+
+recipeList:
+  # 1. Update Java source/target compatibility from 11 to 17
+  - org.openrewrite.gradle.UpdateJavaCompatibility:
+      version: 17
+      declarationStyle: String
+
+  # 2. Update Gradle wrapper from 6.7 to 7.6
+  - org.openrewrite.gradle.UpdateGradleWrapper:
+      version: "7.6"
+      distribution: all
+
+  # 3. Docker: Replace builder stage base image (openjdk:11-jdk-slim -> eclipse-temurin:17-jdk-alpine)
+  - org.openrewrite.text.FindAndReplace:
+      find: "FROM openjdk:11-jdk-slim"
+      replace: "FROM eclipse-temurin:17-jdk-alpine"
+      filePattern: "**/Dockerfile"
+      plaintextOnly: true
+
+  # 4. Docker: Replace runtime stage base image (openjdk:11-jre-slim -> eclipse-temurin:17-jre-alpine)
+  - org.openrewrite.text.FindAndReplace:
+      find: "FROM openjdk:11-jre-slim"
+      replace: "FROM eclipse-temurin:17-jre-alpine"
+      filePattern: "**/Dockerfile"
+      plaintextOnly: true

@@ -1,0 +1,45 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.weather.PR3Option3
+displayName: "PR #3 - Java 11 to 17 Upgrade (Refined Approach)"
+description: >
+  Refined recipe combining learnings from Option 1 and Option 2 validation.
+  Uses targeted recipes for maximum precision while avoiding over-application.
+  Key improvements:
+  - Uses UpdateJavaCompatibility (not UpgradeToJava17) to avoid CI workflow changes
+  - Uses ChangePropertyValue for gradle wrapper URL to avoid SHA256 addition and binary updates
+  - Maintains precise Docker image replacements
+
+recipeList:
+  # 1. Update Java source/target compatibility from 11 to 17
+  # Using UpdateJavaCompatibility (from Option 2) for targeted precision
+  # Avoids broad UpgradeToJava17 which over-applies to CI workflow
+  - org.openrewrite.gradle.UpdateJavaCompatibility:
+      version: 17
+      declarationStyle: String
+
+  # 2. Update Gradle wrapper distributionUrl from 6.7 to 7.6
+  # Using ChangePropertyValue instead of UpdateGradleWrapper to:
+  # - Avoid adding distributionSha256Sum (not in original PR)
+  # - Avoid updating gradlew script (not in original PR)
+  # - Avoid updating gradle-wrapper.jar (not in original PR)
+  - org.openrewrite.properties.ChangePropertyValue:
+      propertyKey: distributionUrl
+      oldValue: "https\\://services.gradle.org/distributions/gradle-6.7-all.zip"
+      newValue: "https\\://services.gradle.org/distributions/gradle-7.6-all.zip"
+      regex: false
+      relaxedBinding: false
+
+  # 3. Docker: Replace builder stage base image
+  - org.openrewrite.text.FindAndReplace:
+      find: "FROM openjdk:11-jdk-slim"
+      replace: "FROM eclipse-temurin:17-jdk-alpine"
+      filePattern: "**/Dockerfile"
+      plaintextOnly: true
+
+  # 4. Docker: Replace runtime stage base image
+  - org.openrewrite.text.FindAndReplace:
+      find: "FROM openjdk:11-jre-slim"
+      replace: "FROM eclipse-temurin:17-jre-alpine"
+      filePattern: "**/Dockerfile"
+      plaintextOnly: true

@@ -1,0 +1,53 @@
+# Option 2 Analysis: Narrow Recipe Approach
+
+## Strategy
+
+Uses **14 specific, targeted recipes** for maximum control over each transformation. Each change is isolated and can be individually tested or disabled.
+
+## Recipe Mapping
+
+| Intent | Recipe Used | Rationale |
+|--------|-------------|-----------|
+| Remove H2 dependency | `org.openrewrite.gradle.RemoveDependency` | Semantic Gradle DSL understanding |
+| Add PostgreSQL driver | `org.openrewrite.gradle.AddDependency` | Proper configuration placement |
+| Add Testcontainers deps (x3) | `org.openrewrite.gradle.AddDependency` | Each dependency added separately |
+| Change driverClass | `org.openrewrite.yaml.ChangeValue` | JsonPath-based YAML navigation |
+| Change user | `org.openrewrite.yaml.ChangeValue` | Semantic YAML structure |
+| Change password | `org.openrewrite.yaml.ChangeValue` | Semantic YAML structure |
+| Change url | `org.openrewrite.yaml.ChangeValue` | Semantic YAML structure |
+| Change hibernate.dialect | `org.openrewrite.yaml.ChangeValue` | Handles nested properties |
+| SQL syntax change | `org.openrewrite.text.FindAndReplace` | No semantic SQL H2->PG recipe exists |
+| Dockerfile base image | `org.openrewrite.text.FindAndReplace` | No semantic Docker recipe exists |
+| GitHub Action version | `org.openrewrite.github.ChangeActionVersion` | Semantic GitHub Actions support |
+
+## Coverage Analysis
+
+**Full Coverage (Semantic)**:
+- Gradle dependencies: 5/5 changes covered semantically
+- YAML configuration: 5/5 changes covered semantically
+- GitHub Actions: 1/1 change covered semantically
+
+**Gap Coverage (Text-based)**:
+- SQL migration: Text replacement (no H2->PostgreSQL recipe exists)
+- Dockerfile: Text replacement (no Docker FROM recipe exists)
+
+## Comparison with Broad Approach
+
+| Aspect | Option 2 (Narrow) | Broad Approach |
+|--------|-------------------|----------------|
+| Recipes | 14 | Fewer composite |
+| Control | Maximum | Limited |
+| Verbosity | High | Low |
+| Debugging | Easy to isolate | Harder |
+| Maintenance | Each recipe version | Composite version |
+
+## Gaps Identified
+
+1. **No semantic H2-to-PostgreSQL SQL recipe**: `org.openrewrite.sql.MigrateOracleToPostgres` exists but not H2->PostgreSQL
+2. **No semantic Dockerfile recipe**: `org.openrewrite.docker.search.FindDockerImageUses` is search-only
+
+## Risk Assessment
+
+- **Low Risk**: Gradle and YAML changes use semantic recipes
+- **Medium Risk**: Text replacements are exact-match dependent
+- **Mitigation**: FilePattern constraints limit scope of text changes
