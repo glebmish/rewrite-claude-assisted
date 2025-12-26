@@ -278,3 +278,11 @@ dependencies for both docs and embeddings.
   * MAJOR: add code recipes writing - probably much more difficult task to handle
   * Close the loop - create a PR with a recipe in a correct directory and add a pipeline to release artifacts
     * Going from an example PR to fully functional artifact to apply on the rest of the codebase
+
+## 2025-12-26
+* Finally added and analyzed eval with Opus. It wasn't available on Pro subscription before, was very happy to see it added there.
+* Metrics without context look awful - almost twice as expensive with the worse performance
+  * In reality, the whole regression comes from a test with complicated code changes. It's not automatable with just a combination of existing recipes.
+  * Sonnet decided to go as far as it can - deleted deprecated files, but didn't update usages. As a result the repo was left in the broken state but with better recall metric
+  * Opus decided to not touch this part - working state, but much worse recall.
+* Recipes look more robust and nuanced
