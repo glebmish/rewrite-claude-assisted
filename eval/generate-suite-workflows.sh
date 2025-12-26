@@ -164,6 +164,8 @@ jobs:
     steps:
       - name: 'Checkout repository'
         uses: actions/checkout@v4
+        with:
+          ref: \${{ github.ref }}
 
       - name: 'Download artifacts from batch runs'
         env:
