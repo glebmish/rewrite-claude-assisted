@@ -87,13 +87,13 @@ For example, for the following intent tree at least 7 find commands must be exec
 ```
 Expected commands (use your judgement to add limits):
 ```
-mcp__openrewrite-mcp__find_recipes('intent 1', 'intent 1 variant 1', 'intent 1 variant 2', ...)
-mcp__openrewrite-mcp__find_recipes('intent 1.1', ...)
-mcp__openrewrite-mcp__find_recipes('intent 1.1.1', ...)
-mcp__openrewrite-mcp__find_recipes('intent 1.1.2', ...)
-mcp__openrewrite-mcp__find_recipes('intent 1.2', ...)
-mcp__openrewrite-mcp__find_recipes('intent 2', ...)
-mcp__openrewrite-mcp__find_recipes('intent 2.1', ...)
+mcp__plugin_openrewrite-assist_openrewrite-mcp__find_recipes('intent 1', 'intent 1 variant 1', 'intent 1 variant 2', ...)
+mcp__plugin_openrewrite-assist_openrewrite-mcp__find_recipes('intent 1.1', ...)
+mcp__plugin_openrewrite-assist_openrewrite-mcp__find_recipes('intent 1.1.1', ...)
+mcp__plugin_openrewrite-assist_openrewrite-mcp__find_recipes('intent 1.1.2', ...)
+mcp__plugin_openrewrite-assist_openrewrite-mcp__find_recipes('intent 1.2', ...)
+mcp__plugin_openrewrite-assist_openrewrite-mcp__find_recipes('intent 2', ...)
+mcp__plugin_openrewrite-assist_openrewrite-mcp__find_recipes('intent 2.1', ...)
 ```
 
 Under no circumstances you can shortcut and skip any intents.

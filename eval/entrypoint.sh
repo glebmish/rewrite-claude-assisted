@@ -136,19 +136,12 @@ else
     log "Warning: log-mcp-server directory not found at $LOG_MCP_DIR"
 fi
 
-# Source shared settings parser
-source "$(dirname "$0")/parse-settings.sh"
-
-# Parse settings file to get tool restrictions
-log "Parsing settings file: $SETTINGS_FILE"
-parse_settings_file "$SETTINGS_FILE"
-
 # Execute rewrite-assist command
 log "Executing rewrite-assist command"
 START_TIME=$(date +%s)
 
 # Build the claude command
-CLAUDE_CMD="claude --model sonnet --dangerously-skip-permissions"
+CLAUDE_CMD="claude --model sonnet --settings $SETTINGS_FILE"
 
 # Define MCP log file
 MCP_LOG_FILE="/tmp/mcp-claude-log-$$.txt"
@@ -162,14 +155,6 @@ log "Started background tail for MCP logs (PID: $TAIL_PID)"
 # Add debug flag if enabled
 if [[ "$DEBUG_MODE" == "true" ]]; then
     CLAUDE_CMD="$CLAUDE_CMD --debug"
-fi
-
-# Add tool restrictions if available
-if [[ -n "$CLAUDE_ALLOWED_TOOLS" ]]; then
-    CLAUDE_CMD="$CLAUDE_CMD --allowedTools \"$CLAUDE_ALLOWED_TOOLS\""
-fi
-if [[ -n "$CLAUDE_DISALLOWED_TOOLS" ]]; then
-    CLAUDE_CMD="$CLAUDE_CMD --disallowedTools \"$CLAUDE_DISALLOWED_TOOLS\""
 fi
 
 # Add plugin directory
