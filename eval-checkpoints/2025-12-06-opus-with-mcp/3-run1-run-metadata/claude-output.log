@@ -1,0 +1,33 @@
+## Workflow Complete ✅
+
+### Summary
+Successfully analyzed PR #3 (Dropwizard 2→3 migration) and created an OpenRewrite recipe.
+
+### Final Recommendation: Option 3
+| Metric | Value |
+|--------|-------|
+| Precision | 100% |
+| Recall | 100% |
+| F1 Score | 100% |
+
+### Key Insight
+Options 1 and 2 had a false positive - `RemoveUnnecessaryOverride` incorrectly modified `DatabaseHealthCheck.java`. Option 3 fixed this by adding a precondition that scopes the recipe to `io.dropwizard.Application` subclasses only.
+
+### Output Directory
+`.output/2025-12-06-13-54/`
+
+### Generated Files
+| File | Description |
+|------|-------------|
+| `session-id.txt` | Session identifier |
+| `pr-3.diff` | Original PR diff |
+| `intent-tree.md` | Extracted transformation intents |
+| `option-{1,2,3}-recipe.yaml` | Recipe compositions |
+| `option-{1,2,3}-recipe.diff` | Recipe execution diffs |
+| `option-{1,2,3}-stats.json` | Precision/recall metrics |
+| `option-{1,2,3}-creation-analysis.md` | Recipe creation analysis |
+| `option-{1,2,3}-validation-analysis.md` | Validation analysis |
+| `phase{1-6}.md` | Phase reports |
+| `result/pr.diff` | PR diff (final) |
+| `result/recommended-recipe.yaml` | Recommended recipe |
+| `result/recommended-recipe.diff` | Recommended recipe output |

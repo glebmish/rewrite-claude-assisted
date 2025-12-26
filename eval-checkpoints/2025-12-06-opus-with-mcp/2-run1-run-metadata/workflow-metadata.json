@@ -1,0 +1,9 @@
+{
+  "pr_url": "https://github.com/openrewrite-assist-testing-dataset/user-management-service/pull/3",
+  "commit_hash": "6f429aa14f29e8dbb7ab96acab7c51fa08bffdcd",
+  "status": "success",
+  "exit_code": 0,
+  "duration_seconds": 1006,
+  "start_time": "2025-12-06T08:31:27Z",
+  "end_time": "2025-12-06T08:48:13Z"
+}

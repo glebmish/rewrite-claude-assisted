@@ -1,0 +1,69 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.example.PR3Option1
+displayName: Java 11 to 17 with JUnit 4 to 5 Migration (Broad Approach)
+description: |
+  Comprehensive migration using broad composite recipes for Java 11 to Java 17 upgrade
+  with JUnit 4 to JUnit 5 migration. This approach prioritizes coverage over precision
+  by leveraging framework-level recipes that handle multiple transformations.
+
+recipeList:
+  # =============================================================================
+  # PHASE 1: Java 17 Migration (Broad Recipe)
+  # =============================================================================
+  # UpgradeToJava17 is a comprehensive recipe that:
+  # - Updates build files to use Java 17 as target/source
+  # - Upgrades plugins to Java 17 compatible versions
+  # - Applies Java 8->11->17 migration patterns
+  # - Replaces deprecated APIs with equivalents
+  # Note: This will set java.toolchain.languageVersion in Gradle
+  - org.openrewrite.java.migrate.UpgradeToJava17
+
+  # =============================================================================
+  # PHASE 2: Gradle Wrapper Update
+  # =============================================================================
+  # Update Gradle wrapper from 6.9 to 7.6.4
+  # MigrateToGradle7 includes UpdateGradleWrapper but defaults to latest 7.x
+  # We use specific version 7.6.4 as per the PR requirements
+  - org.openrewrite.gradle.UpdateGradleWrapper:
+      version: 7.6.4
+
+  # =============================================================================
+  # PHASE 3: Shadow Plugin Upgrade
+  # =============================================================================
+  # Upgrade Shadow plugin from 6.1.0 to 7.1.2
+  # Using semantic Gradle plugin version upgrade recipe
+  - org.openrewrite.gradle.plugins.UpgradePluginVersion:
+      pluginIdPattern: com.github.johnrengelman.shadow
+      newVersion: 7.1.2
+
+  # =============================================================================
+  # PHASE 4: JUnit 4 to JUnit 5 Migration (Broad Recipe)
+  # =============================================================================
+  # JUnit4to5Migration is comprehensive and handles:
+  # - Dependency changes (removes junit:junit, adds jupiter dependencies)
+  # - Annotation migrations (@Before -> @BeforeEach, @Test, etc.)
+  # - Import changes (org.junit -> org.junit.jupiter.api)
+  # - Assert -> Assertions migration
+  # - Gradle test task configuration (adds useJUnitPlatform())
+  # - And many more edge cases
+  - org.openrewrite.java.testing.junit5.JUnit4to5Migration
+
+  # =============================================================================
+  # PHASE 5: GitHub Actions Java Version Update
+  # =============================================================================
+  # Update actions/setup-java to use Java 17
+  # This recipe understands GitHub Actions YAML structure semantically
+  - org.openrewrite.github.SetupJavaUpgradeJavaVersion:
+      minimumJavaMajorVersion: 17
+
+  # =============================================================================
+  # PHASE 6: Gap Filling - GitHub Actions Step Name
+  # =============================================================================
+  # The SetupJavaUpgradeJavaVersion recipe updates the java-version value
+  # but does not update the step name. We use ChangeValue to update it.
+  # This uses YAML semantic understanding via JsonPath
+  - org.openrewrite.yaml.ChangeValue:
+      keyPath: $.jobs.build.steps[?(@.name == 'Set up JDK 11')].name
+      value: Set up JDK 17
+      filePattern: .github/workflows/*.yml

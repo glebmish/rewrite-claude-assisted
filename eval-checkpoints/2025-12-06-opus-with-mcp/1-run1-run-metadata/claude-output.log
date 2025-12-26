@@ -1,0 +1,38 @@
+## Workflow Complete
+
+### Summary
+
+**PR Analyzed**: https://github.com/openrewrite-assist-testing-dataset/weather-monitoring-service/pull/3
+
+**Recommended Recipe**: Option 3 (Refined approach)
+- **Precision**: 100%
+- **Recall**: 3.39%
+
+### Recipe Comparison
+
+| Option | Precision | Approach | Issues |
+|--------|-----------|----------|--------|
+| Option 1 | 76.92% | Broad (UpgradeToJava17) | Over-applied to CI, added unwanted files |
+| Option 2 | 90.91% | Narrow (UpdateJavaCompatibility) | Added SHA256, binary updates |
+| **Option 3** | **100%** | Refined | Perfect precision for automatable changes |
+
+### Coverage Notes
+The PR contains ~95% manual authentication refactoring (ChainedAuthFilter → BasicCredentialAuthFilter, file deletions, User class changes) which cannot be automated with declarative recipes. The recommended recipe correctly covers the automatable infrastructure changes:
+- Java 11 → 17 in build.gradle
+- Gradle wrapper 6.7 → 7.6
+- Docker images (openjdk → eclipse-temurin)
+
+### Output Files
+All files saved to `.output/2025-12-06-01-16/`:
+- `session-id.txt` - Session ID
+- `intent-tree.md` - Extracted transformation intents
+- `option-{1,2,3}-recipe.yaml` - Recipe definitions
+- `option-{1,2,3}-recipe.diff` - Recipe execution diffs
+- `option-{1,2,3}-stats.json` - Precision/recall metrics
+- `option-{1,2,3}-creation-analysis.diff` - Creation analysis
+- `option-{1,2,3}-validation-analysis.diff` - Validation analysis
+- `phase{1-6}.md` - Phase reports
+- `pr-3.diff` - Original PR diff
+- `result/pr.diff` - Final PR diff
+- `result/recommended-recipe.yaml` - Final recipe
+- `result/recommended-recipe.diff` - Final recipe output

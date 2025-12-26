@@ -1,0 +1,112 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.example.PR3Option2
+displayName: Java 11 to 17 + JUnit 4 to 5 Migration (Narrow/Specific Approach)
+description: |
+  Performs Java 11 to Java 17 upgrade with JUnit 4 to JUnit 5 migration using targeted,
+  single-purpose recipes for maximum precision and control. Each recipe handles one
+  specific transformation.
+
+recipeList:
+  # ============================================================================
+  # SECTION 1: Gradle Wrapper & Build Infrastructure
+  # ============================================================================
+
+  # 1.2 Upgrade Gradle Wrapper from 6.9 to 7.6.4
+  # Specific recipe that updates gradle-wrapper.properties distributionUrl
+  - org.openrewrite.gradle.UpdateGradleWrapper:
+      version: 7.6.4
+      addIfMissing: false
+
+  # ============================================================================
+  # SECTION 2: Gradle Build Configuration - Java Version
+  # ============================================================================
+
+  # 1.1.1 Update Java compatibility to 17 (handles sourceCompatibility/targetCompatibility -> toolchain)
+  # This recipe understands Gradle DSL structure and updates java.toolchain.languageVersion
+  - org.openrewrite.gradle.UpdateJavaCompatibility:
+      version: 17
+
+  # ============================================================================
+  # SECTION 3: Gradle Plugin Updates
+  # ============================================================================
+
+  # 1.1.2 Upgrade Shadow plugin from 6.1.0 to 7.1.2
+  # Specific recipe targeting plugin version by ID
+  - org.openrewrite.gradle.plugins.UpgradePluginVersion:
+      pluginIdPattern: com.github.johnrengelman.shadow
+      newVersion: 7.1.2
+
+  # ============================================================================
+  # SECTION 4: GitHub Actions CI Configuration
+  # ============================================================================
+
+  # 1.3 Update GitHub Actions setup-java to use Java 17
+  # Semantic recipe that understands GitHub Actions YAML structure
+  - org.openrewrite.github.SetupJavaUpgradeJavaVersion:
+      minimumJavaMajorVersion: 17
+
+  # 1.3 Update step name from "Set up JDK 11" to "Set up JDK 17"
+  # YAML-aware recipe using JsonPath to target specific value
+  - org.openrewrite.yaml.ChangeValue:
+      keyPath: $.jobs.build.steps[?(@.name == 'Set up JDK 11')].name
+      value: Set up JDK 17
+      filePattern: .github/workflows/*.yml
+
+  # ============================================================================
+  # SECTION 5: JUnit 4 to JUnit 5 - Test Dependencies
+  # ============================================================================
+
+  # 2.1 Remove JUnit 4 dependency
+  # Specific recipe for Gradle dependency removal
+  - org.openrewrite.gradle.RemoveDependency:
+      groupId: junit
+      artifactId: junit
+      configuration: testImplementation
+
+  # 2.1 Add JUnit Jupiter API dependency
+  # Specific recipe for Gradle dependency addition with exact version
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.junit.jupiter
+      artifactId: junit-jupiter-api
+      version: 5.8.1
+      configuration: testImplementation
+
+  # 2.1 Add JUnit Jupiter Engine dependency
+  # Specific recipe for test runtime dependency
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.junit.jupiter
+      artifactId: junit-jupiter-engine
+      version: 5.8.1
+      configuration: testRuntimeOnly
+
+  # ============================================================================
+  # SECTION 6: JUnit 4 to JUnit 5 - Test Runner Configuration
+  # ============================================================================
+
+  # 2.2 Configure Gradle test task to use JUnit Platform
+  # Specific recipe that adds useJUnitPlatform() to test configuration
+  - org.openrewrite.java.testing.junit5.GradleUseJunitJupiter
+
+  # ============================================================================
+  # SECTION 7: JUnit 4 to JUnit 5 - Annotation Migrations
+  # ============================================================================
+
+  # 2.3.1 & 2.3.2 Migrate @Test annotation and imports
+  # Semantic recipe: org.junit.Test -> org.junit.jupiter.api.Test
+  - org.openrewrite.java.testing.junit5.UpdateTestAnnotation
+
+  # 2.3.1 & 2.3.2 Migrate lifecycle annotations (@Before -> @BeforeEach, etc.)
+  # Semantic recipe handling @Before, @BeforeClass, @After, @AfterClass
+  - org.openrewrite.java.testing.junit5.UpdateBeforeAfterAnnotations
+
+  # 2.3.1 Migrate Assert to Assertions
+  # Semantic recipe: org.junit.Assert -> org.junit.jupiter.api.Assertions
+  - org.openrewrite.java.testing.junit5.AssertToAssertions
+
+  # ============================================================================
+  # SECTION 8: Cleanup
+  # ============================================================================
+
+  # Remove unused JUnit 4 imports after migration
+  - org.openrewrite.java.testing.junit5.CleanupJUnitImports

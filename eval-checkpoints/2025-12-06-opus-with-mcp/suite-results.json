@@ -1,0 +1,142 @@
+{
+  "suite_metadata": {
+    "execution_date": "2025-12-06T22:08:11Z",
+    "total_prs": 5,
+    "total_runs": 5,
+    "successful_runs": 5,
+    "failed_runs": 0,
+    "workflow_success_rate": 100.00,
+    "perfect_runs": 2,
+    "perfect_match_rate": 40.00,
+    "total_cost": 49.863802,
+    "total_duration_seconds": 4552,
+    "total_duration_minutes": 75.8
+  },
+  "runs": [
+    {
+      "pr_key": "ecommerce-catalog/2",
+      "pr_number": "2",
+      "pr_url": "https://github.com/openrewrite-assist-testing-dataset/ecommerce-catalog/pull/2",
+      "repo_name": "ecommerce-catalog",
+      "run_number": 1,
+      "status": "success",
+      "duration_seconds": 839,
+      "duration_minutes": 13.9,
+      "cost": 9.554253,
+      "tool_metrics": {
+        "total_messages": 456,
+        "tool_calls": 205,
+        "successful_tool_calls": 202,
+        "tool_success_rate": 0.9854
+      },
+      "precision_metrics": {
+        "false_positives": "0",
+        "false_negatives": "0",
+        "precision": "1",
+        "recall": "1",
+        "f1_score": "1",
+        "is_perfect_match": "true"
+      }
+    }    ,
+    {
+      "pr_key": "weather-monitoring-service/3",
+      "pr_number": "3",
+      "pr_url": "https://github.com/openrewrite-assist-testing-dataset/weather-monitoring-service/pull/3",
+      "repo_name": "weather-monitoring-service",
+      "run_number": 1,
+      "status": "success",
+      "duration_seconds": 1021,
+      "duration_minutes": 17.0,
+      "cost": 9.560495,
+      "tool_metrics": {
+        "total_messages": 416,
+        "tool_calls": 179,
+        "successful_tool_calls": 171,
+        "tool_success_rate": 0.9553
+      },
+      "precision_metrics": {
+        "false_positives": "0",
+        "false_negatives": "285",
+        "precision": "1",
+        "recall": "0.0339",
+        "f1_score": "0.0656",
+        "is_perfect_match": "false"
+      }
+    }    ,
+    {
+      "pr_key": "user-management-service/3",
+      "pr_number": "3",
+      "pr_url": "https://github.com/openrewrite-assist-testing-dataset/user-management-service/pull/3",
+      "repo_name": "user-management-service",
+      "run_number": 1,
+      "status": "success",
+      "duration_seconds": 1006,
+      "duration_minutes": 16.7,
+      "cost": 13.89958,
+      "tool_metrics": {
+        "total_messages": 539,
+        "tool_calls": 231,
+        "successful_tool_calls": 222,
+        "tool_success_rate": 0.961
+      },
+      "precision_metrics": {
+        "false_positives": "5",
+        "false_negatives": "11",
+        "precision": "0.8",
+        "recall": "0.6452",
+        "f1_score": "0.7143",
+        "is_perfect_match": "false"
+      }
+    }    ,
+    {
+      "pr_key": "task-management-api/3",
+      "pr_number": "3",
+      "pr_url": "https://github.com/openrewrite-assist-testing-dataset/task-management-api/pull/3",
+      "repo_name": "task-management-api",
+      "run_number": 1,
+      "status": "success",
+      "duration_seconds": 1004,
+      "duration_minutes": 16.7,
+      "cost": 9.4733,
+      "tool_metrics": {
+        "total_messages": 490,
+        "tool_calls": 208,
+        "successful_tool_calls": 196,
+        "tool_success_rate": 0.9423
+      },
+      "precision_metrics": {
+        "false_positives": "0",
+        "false_negatives": "0",
+        "precision": "1",
+        "recall": "1",
+        "f1_score": "1",
+        "is_perfect_match": "true"
+      }
+    }    ,
+    {
+      "pr_key": "simple-blog-platform/3",
+      "pr_number": "3",
+      "pr_url": "https://github.com/openrewrite-assist-testing-dataset/simple-blog-platform/pull/3",
+      "repo_name": "simple-blog-platform",
+      "run_number": 1,
+      "status": "success",
+      "duration_seconds": 682,
+      "duration_minutes": 11.3,
+      "cost": 7.376174,
+      "tool_metrics": {
+        "total_messages": 377,
+        "tool_calls": 166,
+        "successful_tool_calls": 160,
+        "tool_success_rate": 0.9639
+      },
+      "precision_metrics": {
+        "false_positives": "5",
+        "false_negatives": "5",
+        "precision": "0.7826",
+        "recall": "0.7826",
+        "f1_score": "0.7826",
+        "is_perfect_match": "false"
+      }
+    }
+  ]
+}
