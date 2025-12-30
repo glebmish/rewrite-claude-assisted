@@ -213,10 +213,10 @@ if [ -f "$CLAUDE_OUTPUT_LOG" ]; then
     log "Claude output saved to: $OUTPUT_DIR/claude-output.log"
 fi
 
-# Move MCP log to the output directory
+# Move MCP application log to the output directory
 if [ -f "$MCP_LOG_FILE" ]; then
     mv "$MCP_LOG_FILE" "$OUTPUT_DIR/mcp-log.txt"
-    log "MCP log saved to: $OUTPUT_DIR/mcp-log.txt"
+    log "MCP application log saved to: $OUTPUT_DIR/mcp-log.txt"
 fi
 
 # Create final metadata
