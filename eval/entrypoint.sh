@@ -186,6 +186,10 @@ JSONL_FILE=$(find ~/.claude/projects -name "*.jsonl" -type f -printf '%T@ %p\n' 
 CLAUDE_LOGS_DIR=$(dirname "$JSONL_FILE")
 echo "claude_logs=$CLAUDE_LOGS_DIR" >> $GITHUB_OUTPUT
 
+# Export MCP cache directory
+MCP_CACHE_DIR="$HOME/.cache/claude-cli"
+echo "mcp_cache_dir=$MCP_CACHE_DIR" >> $GITHUB_OUTPUT
+
 # Check for session limit in output
 if grep -qi "session limit reached" "$CLAUDE_OUTPUT_LOG"; then
     log "Session limit detected in Claude output"

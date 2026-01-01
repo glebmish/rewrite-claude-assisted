@@ -136,7 +136,7 @@ jobs:
           name: ${{ inputs.artifact_prefix && format('{0}-mcp-logs', inputs.artifact_prefix) || format('{0}-mcp-logs', github.run_number) }}
           path: |
             ${{steps.run_claude_code_workflow.outputs.output_dir}}/mcp-log.txt
-            /root/.cache/claude-cli/
+            ${{steps.run_claude_code_workflow.outputs.mcp_cache_dir}}
           if-no-files-found: ignore
 
       - name: 'Upload Run results'
