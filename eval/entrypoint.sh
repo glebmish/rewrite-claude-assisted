@@ -88,10 +88,10 @@ if [[ -d "$MCP_DIR" ]]; then
     # Configure MCP database connection
     if [[ "${MCP_USE_EXTERNAL_DB:-false}" == "true" ]]; then
         log "Using external PostgreSQL service (GitHub Actions mode)"
-        log "Database host: ${MCP_DB_HOST:-postgres}"
+        log "Database host: ${_DB_HOST:-postgres}"
 
         # Copy .env.example and override for external database
-        if [[ -f "$MCP_DIR/.env.example" ]]; then
+        if [[ -f "$_DIR/.env.example" ]]; then
             cp "$MCP_DIR/.env.example" "$MCP_DIR/.env"
             # Override connection settings for external database
             sed -i "s/^DB_HOST=.*/DB_HOST=${MCP_DB_HOST:-postgres}/" "$MCP_DIR/.env"
@@ -188,6 +188,7 @@ echo "claude_logs=$CLAUDE_LOGS_DIR" >> $GITHUB_OUTPUT
 
 # Export MCP cache directory
 MCP_CACHE_DIR="$HOME/.cache/claude-cli"
+tree "$MCP_CACHE_DIR"
 echo "mcp_cache_dir=$MCP_CACHE_DIR" >> $GITHUB_OUTPUT
 
 # Check for session limit in output
