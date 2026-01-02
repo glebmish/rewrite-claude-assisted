@@ -91,7 +91,7 @@ if [[ -d "$MCP_DIR" ]]; then
         log "Database host: ${_DB_HOST:-postgres}"
 
         # Copy .env.example and override for external database
-        if [[ -f "$_DIR/.env.example" ]]; then
+        if [[ -f "$MCP_DIR/.env.example" ]]; then
             cp "$MCP_DIR/.env.example" "$MCP_DIR/.env"
             # Override connection settings for external database
             sed -i "s/^DB_HOST=.*/DB_HOST=${MCP_DB_HOST:-postgres}/" "$MCP_DIR/.env"
